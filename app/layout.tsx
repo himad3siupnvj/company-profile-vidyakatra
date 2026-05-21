@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'HIMA D3 SI Admin Dashboard',
-  description: 'Admin CMS Dashboard for HIMA D3 Sistem Informasi',
+  title: 'HIMA D3 Sistem Informasi',
+  description: 'Website resmi Himpunan Mahasiswa D3 Sistem Informasi - Wadah pengembangan potensi dan kreativitas mahasiswa dalam bidang teknologi informasi.',
 }
 
 export default function RootLayout({

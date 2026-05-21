@@ -15,7 +15,8 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
-  GraduationCap,
+  Zap,
+  ExternalLink,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -76,26 +77,26 @@ export function AdminSidebar() {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
+          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
           collapsed ? "w-16" : "w-64"
         )}
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           {!collapsed && (
-            <Link href="/admin" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <GraduationCap className="h-5 w-5 text-primary-foreground" />
+            <Link href="/admin" className="group flex items-center gap-2">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand transition-all duration-300 group-hover:glow-primary-sm">
+                <Zap className="h-5 w-5 text-primary-foreground" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-sidebar-foreground">HIMA D3 SI</span>
+                <span className="text-sm font-bold tracking-wide text-sidebar-foreground">HIMA D3 SI</span>
                 <span className="text-xs text-sidebar-muted">Admin Panel</span>
               </div>
             </Link>
           )}
           {collapsed && (
-            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand">
+              <Zap className="h-5 w-5 text-primary-foreground" />
             </div>
           )}
         </div>
@@ -110,10 +111,10 @@ export function AdminSidebar() {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    ? "bg-sidebar-primary/10 text-sidebar-primary border border-sidebar-primary/20 glow-primary-sm"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 )}
               >
                 <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary")} />
@@ -125,7 +126,7 @@ export function AdminSidebar() {
               return (
                 <Tooltip key={item.name}>
                   <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                  <TooltipContent side="right" className="bg-secondary text-secondary-foreground">
+                  <TooltipContent side="right" className="border-border bg-card text-card-foreground">
                     {item.name}
                   </TooltipContent>
                 </Tooltip>
@@ -136,13 +137,46 @@ export function AdminSidebar() {
           })}
         </nav>
 
+        {/* View Site Button */}
+        <div className="border-t border-sidebar-border p-3">
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/" target="_blank">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-center text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="border-border bg-card text-card-foreground">
+                View Site
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Link href="/" target="_blank">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Site
+              </Button>
+            </Link>
+          )}
+        </div>
+
         {/* Collapse Button */}
         <div className="border-t border-sidebar-border p-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full justify-center text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="w-full justify-center text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-300"
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />
