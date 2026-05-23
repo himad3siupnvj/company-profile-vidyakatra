@@ -43,7 +43,7 @@ interface User {
   id: number
   name: string
   email: string
-  role: "super_admin" | "media_admin" | "secretary_admin"
+  role: "super_admin" | "content_admin" | "secretary_admin"
   status: "active" | "inactive"
   lastLogin: string
   createdAt: string
@@ -52,9 +52,9 @@ interface User {
 
 const initialUsers: User[] = [
   { id: 1, name: "Super Admin", email: "admin@himad3si.ac.id", role: "super_admin", status: "active", lastLogin: "2024-12-14 10:30", createdAt: "2024-01-01", avatar: "" },
-  { id: 2, name: "Ahmad Rizki", email: "ahmad@himad3si.ac.id", role: "media_admin", status: "active", lastLogin: "2024-12-14 09:15", createdAt: "2024-02-15", avatar: "" },
+  { id: 2, name: "Ahmad Rizki", email: "ahmad@himad3si.ac.id", role: "content_admin", status: "active", lastLogin: "2024-12-14 09:15", createdAt: "2024-02-15", avatar: "" },
   { id: 3, name: "Siti Nurhaliza", email: "siti@himad3si.ac.id", role: "secretary_admin", status: "active", lastLogin: "2024-12-13 14:45", createdAt: "2024-02-15", avatar: "" },
-  { id: 4, name: "Budi Santoso", email: "budi@himad3si.ac.id", role: "media_admin", status: "inactive", lastLogin: "2024-11-20 11:00", createdAt: "2024-03-10", avatar: "" },
+  { id: 4, name: "Budi Santoso", email: "budi@himad3si.ac.id", role: "content_admin", status: "inactive", lastLogin: "2024-11-20 11:00", createdAt: "2024-03-10", avatar: "" },
   { id: 5, name: "Dian Permata", email: "dian@himad3si.ac.id", role: "secretary_admin", status: "active", lastLogin: "2024-12-12 16:30", createdAt: "2024-04-01", avatar: "" },
 ]
 
@@ -63,13 +63,13 @@ const rolePermissions = {
     label: "Super Admin",
     description: "Full access to all features and settings",
     color: "bg-primary text-primary-foreground",
-    permissions: ["Dashboard", "Home Page", "Organization", "Vision & Mission", "News & Events", "Media Gallery", "Settings", "User Management"],
+    permissions: ["Dashboard", "Home Page", "Organization", "Vision & Mission", "News & Events", "Settings", "User Management"],
   },
-  media_admin: {
-    label: "Media Admin",
-    description: "Manage media, news, and events",
-    color: "bg-blue-100 text-blue-700",
-    permissions: ["Dashboard", "News & Events", "Media Gallery"],
+  content_admin: {
+    label: "Content Admin",
+    description: "Manage public content, social overview, news, and events",
+    color: "bg-primary/10 text-primary",
+    permissions: ["Dashboard", "Home Page", "News & Events", "Settings"],
   },
   secretary_admin: {
     label: "Secretary Admin",
@@ -194,7 +194,7 @@ export default function UserManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
-                    <SelectItem value="media_admin">Media Admin</SelectItem>
+                    <SelectItem value="content_admin">Content Admin</SelectItem>
                     <SelectItem value="secretary_admin">Secretary Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -245,8 +245,8 @@ export default function UserManagement() {
               <UserCog className="h-5 w-5 text-blue-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Media Admins</p>
-              <p className="text-xl font-bold">{users.filter(u => u.role === "media_admin").length}</p>
+              <p className="text-sm text-muted-foreground">Content Admins</p>
+              <p className="text-xl font-bold">{users.filter(u => u.role === "content_admin").length}</p>
             </div>
           </CardContent>
         </Card>
@@ -307,7 +307,7 @@ export default function UserManagement() {
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="super_admin">Super Admin</SelectItem>
-                  <SelectItem value="media_admin">Media Admin</SelectItem>
+                  <SelectItem value="content_admin">Content Admin</SelectItem>
                   <SelectItem value="secretary_admin">Secretary Admin</SelectItem>
                 </SelectContent>
               </Select>

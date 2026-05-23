@@ -13,7 +13,6 @@ import {
   Users,
   Target,
   Newspaper,
-  Image as ImageIcon,
   Settings,
   UserCog,
   ChevronLeft,
@@ -31,45 +30,69 @@ import {
 const navigation = [
   {
     name: "Dashboard",
-    href: "/admin",
+    href: "/x-panel",
     icon: LayoutDashboard,
   },
   {
     name: "Home Page",
-    href: "/admin/home",
+    href: "/x-panel/home",
     icon: Home,
   },
   {
     name: "Organization",
-    href: "/admin/organization",
+    href: "/x-panel/organization",
     icon: Users,
   },
   {
     name: "Vision & Mission",
-    href: "/admin/vision-mission",
+    href: "/x-panel/vision-mission",
     icon: Target,
   },
   {
     name: "Berita Acara",
-    href: "/admin/news",
+    href: "/x-panel/news",
     icon: Newspaper,
   },
   {
-    name: "Galeri Media",
-    href: "/admin/gallery",
-    icon: ImageIcon,
-  },
-  {
     name: "Settings",
-    href: "/admin/settings",
+    href: "/x-panel/settings",
     icon: Settings,
   },
   {
     name: "User Management",
-    href: "/admin/users",
+    href: "/x-panel/users",
     icon: UserCog,
   },
 ]
+
+function LogoBadge({
+  src,
+  alt,
+  className,
+  imageClassName,
+}: {
+  src: typeof logoHima
+  alt: string
+  className?: string
+  imageClassName?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_6px_18px_rgba(0,0,0,0.22)] ring-1 ring-white/30 transition-transform duration-300 group-hover:scale-105",
+        className
+      )}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        width={40}
+        height={40}
+        className={cn("h-[82%] w-[82%] object-contain", imageClassName)}
+      />
+    </div>
+  )
+}
 
 export function AdminSidebar() {
   const pathname = usePathname()
@@ -86,25 +109,24 @@ export function AdminSidebar() {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           {!collapsed && (
-            <Link href="/admin" className="group flex items-center gap-2">
+            <Link href="/x-panel" className="group flex items-center gap-2">
               <div className="flex shrink-0 items-center gap-1.5">
-                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
-                  <Image src={logoHima} alt="Logo HIMA D3 SI UPNVJ" width={36} height={36} className="h-full w-full object-contain" />
-                </div>
-                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
-                  <Image src={logoKabinet} alt="Logo Kabinet Vidyakatra" width={36} height={36} className="h-full w-full object-contain" />
-                </div>
+                <LogoBadge src={logoHima} alt="Logo HIMA D3 SI UPNVJ" className="h-9 w-9 bg-yellow-300" />
+                <LogoBadge
+                  src={logoKabinet}
+                  alt="Logo Kabinet Vidyakatra"
+                  className="h-9 w-9"
+                  imageClassName="h-[90%] w-[90%] -translate-x-[2px] -translate-y-[1px]"
+                />
               </div>
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-bold tracking-wide text-sidebar-foreground">HIMA D3 SI UPNVJ</span>
-                <span className="text-xs text-sidebar-muted">Kabinet Vidyakatra CMS</span>
+                <span className="text-xs text-sidebar-primary">Kabinet Vidyakatra</span>
               </div>
             </Link>
           )}
           {collapsed && (
-            <div className="mx-auto flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
-              <Image src={logoHima} alt="Logo HIMA D3 SI UPNVJ" width={36} height={36} className="h-full w-full object-contain" />
-            </div>
+            <LogoBadge src={logoHima} alt="Logo HIMA D3 SI UPNVJ" className="mx-auto h-9 w-9 bg-yellow-300" />
           )}
         </div>
 
@@ -112,7 +134,7 @@ export function AdminSidebar() {
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {navigation.map((item) => {
             const isActive = pathname === item.href || 
-              (item.href !== "/admin" && pathname.startsWith(item.href))
+              (item.href !== "/x-panel" && pathname.startsWith(item.href))
             
             const linkContent = (
               <Link
@@ -120,7 +142,7 @@ export function AdminSidebar() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300",
                   isActive
-                    ? "bg-sidebar-primary/10 text-sidebar-primary border border-sidebar-primary/20 glow-primary-sm"
+                    ? "border border-sidebar-primary/20 bg-sidebar-primary/10 text-sidebar-primary shadow-[0_0_18px_rgba(250,204,21,0.12)]"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 )}
               >

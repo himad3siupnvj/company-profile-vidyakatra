@@ -20,7 +20,7 @@ export function StatsCard({
   iconColor = "bg-primary/10 text-primary",
 }: StatsCardProps) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-white/10 bg-card/80 shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(250,204,21,0.1)]">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
@@ -30,7 +30,7 @@ export function StatsCard({
               <p
                 className={cn(
                   "text-sm font-medium",
-                  changeType === "positive" && "text-green-600",
+                  changeType === "positive" && "text-primary",
                   changeType === "negative" && "text-destructive",
                   changeType === "neutral" && "text-muted-foreground"
                 )}

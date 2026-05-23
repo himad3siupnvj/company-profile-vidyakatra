@@ -8,45 +8,42 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube, Linkedin, Github } from "lucide-react"
+import { Save, Globe, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Music2 } from "lucide-react"
 
 export default function SettingsPage() {
   const [contactInfo, setContactInfo] = useState({
     email: "himpunand3si@gmail.com",
     phone: "+62 812 3456 7890",
     whatsapp: "+62 812 3456 7890",
-    address: "UPN Veteran Jakarta\nJl. RS. Fatmawati Raya, Pondok Labu\nJakarta Selatan 12430",
+    address: "Jl. R.S. Fatmawati No.1, Pondok Labu\nKec. Cilandak, Kota Jakarta Selatan\nDKI Jakarta 12450",
   })
 
   const [socialMedia, setSocialMedia] = useState({
-    instagram: "https://instagram.com/himad3si_its",
-    facebook: "https://facebook.com/himad3siupnvj",
-    twitter: "https://twitter.com/himad3siupnvj",
-    youtube: "https://youtube.com/@himad3siupnvj",
-    linkedin: "https://linkedin.com/company/himad3siupnvj",
-    github: "https://github.com/himad3siupnvj",
+    instagram: "https://www.instagram.com/himad3si_upnvj?igsh=cDEzaTl3Y3dnbm0=",
+    youtube: "https://youtube.com/@himad3siupnvj?si=8PEq4uJAALyE4cHJ",
+    linkedin: "https://www.linkedin.com/company/hima-d3si-upnvj-himpunan-mahasiswa-d3-sistem-informasi-upnvj/",
+    tiktok: "https://www.tiktok.com/@himad3si_upnvj?_r=1&_t=ZS-96bDCzDu1o1",
   })
 
   const [footerSettings, setFooterSettings] = useState({
     showSocialMedia: true,
     showContactInfo: true,
     showQuickLinks: true,
-    showNewsletter: true,
-    copyrightText: "© 2026 HIMA D3 Sistem Informasi UPNVJ - Kabinet Vidyakatra. All rights reserved.",
+    showNewsletter: false,
+    copyrightText: "© 2026 HIMA D3 Sistem Informasi UPNVJ. Kabinet Vidyakatra.",
   })
 
   const [quickLinks, setQuickLinks] = useState([
-    { id: 1, label: "Tentang Kami", url: "/about", enabled: true },
-    { id: 2, label: "Visi & Misi", url: "/vision-mission", enabled: true },
-    { id: 3, label: "Struktur Organisasi", url: "/organization", enabled: true },
+    { id: 1, label: "Beranda", url: "/", enabled: true },
+    { id: 2, label: "Profil", url: "/profil", enabled: true },
+    { id: 3, label: "Struktur Organisasi", url: "/profil#struktur", enabled: true },
     { id: 4, label: "Berita Acara", url: "/berita", enabled: true },
-    { id: 5, label: "Galeri", url: "/galeri", enabled: true },
-    { id: 6, label: "Kontak", url: "/kontak", enabled: true },
+    { id: 5, label: "Collaborate", url: "/kontak", enabled: true },
   ])
 
   const [siteSettings, setSiteSettings] = useState({
     siteName: "HIMA D3 Sistem Informasi UPNVJ",
-    siteDescription: "Website resmi Himpunan Mahasiswa D3 Sistem Informasi UPNVJ - Kabinet Vidyakatra",
+    siteDescription: "Website resmi Himpunan Mahasiswa D3 Sistem Informasi UPNVJ Kabinet Vidyakatra",
     maintenanceMode: false,
     analyticsEnabled: true,
   })
@@ -62,22 +59,22 @@ export default function SettingsPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Settings</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengaturan Website</h1>
           <p className="text-muted-foreground">
-            Configure website settings, contact information, and footer.
+            Kelola informasi publik, social media overview, dan footer sesuai tampilan terbaru.
           </p>
         </div>
         <Button className="gap-2">
           <Save className="h-4 w-4" />
-          Save Changes
+          Simpan Perubahan
         </Button>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="general" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="contact">Contact</TabsTrigger>
+          <TabsTrigger value="general">Umum</TabsTrigger>
+          <TabsTrigger value="contact">Kontak</TabsTrigger>
           <TabsTrigger value="social">Social Media</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
         </TabsList>
@@ -86,14 +83,14 @@ export default function SettingsPage() {
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Site Settings</CardTitle>
+              <CardTitle>Identitas Website</CardTitle>
               <CardDescription>
-                General website configuration and preferences.
+                Konfigurasi dasar untuk metadata dan identitas publik.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="site-name">Site Name</Label>
+                <Label htmlFor="site-name">Nama Website</Label>
                 <Input
                   id="site-name"
                   value={siteSettings.siteName}
@@ -101,14 +98,14 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="site-description">Site Description</Label>
+                <Label htmlFor="site-description">Deskripsi Website</Label>
                 <Input
                   id="site-description"
                   value={siteSettings.siteDescription}
                   onChange={(e) => setSiteSettings({ ...siteSettings, siteDescription: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Used for SEO and social media sharing.
+                  Dipakai untuk SEO dan preview saat website dibagikan.
                 </p>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
@@ -143,15 +140,15 @@ export default function SettingsPage() {
         <TabsContent value="contact" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
+              <CardTitle>Informasi Kontak</CardTitle>
               <CardDescription>
-                Organization contact details displayed on the website.
+                Detail kontak ringkas yang ditampilkan di footer.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">Alamat Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -164,7 +161,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Nomor Telepon</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -189,7 +186,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">Alamat</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Textarea
@@ -209,9 +206,9 @@ export default function SettingsPage() {
         <TabsContent value="social" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Social Media Links</CardTitle>
+              <CardTitle>Social Media Overview</CardTitle>
               <CardDescription>
-                Connect your organization&apos;s social media accounts.
+                Kanal resmi yang dipakai di section collaborate dan footer.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -226,32 +223,6 @@ export default function SettingsPage() {
                       value={socialMedia.instagram}
                       onChange={(e) => setSocialMedia({ ...socialMedia, instagram: e.target.value })}
                       placeholder="https://instagram.com/..."
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="facebook">Facebook</Label>
-                  <div className="relative">
-                    <Facebook className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="facebook"
-                      className="pl-9"
-                      value={socialMedia.facebook}
-                      onChange={(e) => setSocialMedia({ ...socialMedia, facebook: e.target.value })}
-                      placeholder="https://facebook.com/..."
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="twitter">Twitter / X</Label>
-                  <div className="relative">
-                    <Twitter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="twitter"
-                      className="pl-9"
-                      value={socialMedia.twitter}
-                      onChange={(e) => setSocialMedia({ ...socialMedia, twitter: e.target.value })}
-                      placeholder="https://twitter.com/..."
                     />
                   </div>
                 </div>
@@ -282,15 +253,15 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="github">GitHub</Label>
+                  <Label htmlFor="tiktok">TikTok</Label>
                   <div className="relative">
-                    <Github className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Music2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      id="github"
+                      id="tiktok"
                       className="pl-9"
-                      value={socialMedia.github}
-                      onChange={(e) => setSocialMedia({ ...socialMedia, github: e.target.value })}
-                      placeholder="https://github.com/..."
+                      value={socialMedia.tiktok}
+                      onChange={(e) => setSocialMedia({ ...socialMedia, tiktok: e.target.value })}
+                      placeholder="https://tiktok.com/..."
                     />
                   </div>
                 </div>
@@ -303,9 +274,9 @@ export default function SettingsPage() {
         <TabsContent value="footer" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Footer Configuration</CardTitle>
+              <CardTitle>Konfigurasi Footer</CardTitle>
               <CardDescription>
-                Customize the footer sections and content.
+                Sesuaikan footer dengan versi public site terbaru.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

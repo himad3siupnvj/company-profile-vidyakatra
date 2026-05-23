@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import {
   UserPlus,
   FileEdit,
-  ImagePlus,
   Calendar,
   Settings,
   ArrowRight,
@@ -15,29 +14,29 @@ const actions = [
     title: "Tambah Pengurus",
     description: "Tambahkan pengurus kabinet Vidyakatra",
     icon: UserPlus,
-    href: "/admin/organization?action=add",
-    color: "bg-green-100 text-green-700",
+    href: "/x-panel/organization?action=add",
+    color: "bg-primary/10 text-primary",
   },
   {
     title: "Buat Berita Acara",
     description: "Tulis dan publikasikan berita acara",
     icon: FileEdit,
-    href: "/admin/news?action=create",
-    color: "bg-blue-100 text-blue-700",
+    href: "/x-panel/news?action=create",
+    color: "bg-primary/10 text-primary",
   },
   {
-    title: "Upload Media",
-    description: "Tambahkan foto ke galeri",
-    icon: ImagePlus,
-    href: "/admin/gallery?action=upload",
-    color: "bg-purple-100 text-purple-700",
+    title: "Atur Social Overview",
+    description: "Perbarui kanal dan insight sosial media",
+    icon: Settings,
+    href: "/x-panel/settings?tab=social",
+    color: "bg-primary/10 text-primary",
   },
   {
     title: "Buat Agenda",
     description: "Jadwalkan kegiatan kabinet",
     icon: Calendar,
-    href: "/admin/news?tab=events&action=create",
-    color: "bg-orange-100 text-orange-700",
+    href: "/x-panel/news?tab=events&action=create",
+    color: "bg-primary/10 text-primary",
   },
 ]
 
@@ -52,7 +51,7 @@ export function QuickActions() {
           <Link key={action.title} href={action.href}>
             <Button
               variant="outline"
-              className="h-auto w-full justify-start gap-4 p-4 text-left hover:bg-muted/50"
+              className="h-auto w-full justify-start gap-4 border-white/10 bg-white/[0.02] p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.05] hover:shadow-[0_12px_30px_rgba(250,204,21,0.08)]"
             >
               <div className={`rounded-lg p-2 ${action.color}`}>
                 <action.icon className="h-4 w-4" />
@@ -65,8 +64,8 @@ export function QuickActions() {
             </Button>
           </Link>
         ))}
-        <Link href="/admin/settings" className="mt-2">
-          <Button variant="secondary" className="w-full gap-2">
+        <Link href="/x-panel/settings" className="mt-2">
+          <Button variant="secondary" className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
             <Settings className="h-4 w-4" />
             Kelola Pengaturan
           </Button>

@@ -1,4 +1,4 @@
-import { Users, Building2, Eye, TrendingUp } from "lucide-react"
+import { Building2, Eye, Newspaper, Share2 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 import { RecentActivity } from "@/components/admin/recent-activity"
 import { QuickActions } from "@/components/admin/quick-actions"
@@ -14,13 +14,13 @@ const upcomingEvents = [
   },
   {
     id: 2,
-    title: "Company Profile Release",
+    title: "Review Social Media Overview",
     date: "Jun 20, 2026",
     status: "upcoming",
   },
   {
     id: 3,
-    title: "Evaluasi Tengah Kabinet",
+    title: "Update Berita Acara",
     date: "Jun 28, 2026",
     status: "planning",
   },
@@ -33,43 +33,43 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back! Here&apos;s an overview of HIMA D3 Sistem Informasi UPNVJ - Kabinet Vidyakatra.
+          Pantau konten public site, agenda, dan kanal digital Kabinet Vidyakatra dalam satu dashboard.
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Total Members"
-          value={156}
-          change="+12 from last month"
+          title="Section Public"
+          value={4}
+          change="Beranda, Profil, Berita, Collaborate"
           changeType="positive"
-          icon={Users}
+          icon={Eye}
           iconColor="bg-primary/10 text-primary"
         />
         <StatsCard
           title="Unit Kerja"
-          value={8}
-          change="All active"
+          value={6}
+          change="4 departemen, 2 biro"
           changeType="neutral"
           icon={Building2}
-          iconColor="bg-secondary/80 text-secondary-foreground"
+          iconColor="bg-primary/10 text-primary"
         />
         <StatsCard
-          title="Website Visitors"
-          value="2,847"
-          change="+18% this week"
+          title="Social Reach"
+          value="2.5K+"
+          change="Instagram akun terjangkau"
           changeType="positive"
-          icon={Eye}
-          iconColor="bg-green-100 text-green-700"
+          icon={Share2}
+          iconColor="bg-primary/10 text-primary"
         />
         <StatsCard
           title="Berita Acara"
-          value={42}
-          change="+5 this month"
+          value={6}
+          change="Konten dummy aktif"
           changeType="positive"
-          icon={TrendingUp}
-          iconColor="bg-blue-100 text-blue-700"
+          icon={Newspaper}
+          iconColor="bg-primary/10 text-primary"
         />
       </div>
 

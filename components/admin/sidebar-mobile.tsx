@@ -12,21 +12,48 @@ import {
   Users,
   Target,
   Newspaper,
-  Image as ImageIcon,
   Settings,
   UserCog,
 } from "lucide-react"
 
 const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Home Page", href: "/admin/home", icon: Home },
-  { name: "Organization", href: "/admin/organization", icon: Users },
-  { name: "Vision & Mission", href: "/admin/vision-mission", icon: Target },
-  { name: "Berita Acara", href: "/admin/news", icon: Newspaper },
-  { name: "Galeri Media", href: "/admin/gallery", icon: ImageIcon },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-  { name: "User Management", href: "/admin/users", icon: UserCog },
+  { name: "Dashboard", href: "/x-panel", icon: LayoutDashboard },
+  { name: "Home Page", href: "/x-panel/home", icon: Home },
+  { name: "Organization", href: "/x-panel/organization", icon: Users },
+  { name: "Vision & Mission", href: "/x-panel/vision-mission", icon: Target },
+  { name: "Berita Acara", href: "/x-panel/news", icon: Newspaper },
+  { name: "Settings", href: "/x-panel/settings", icon: Settings },
+  { name: "User Management", href: "/x-panel/users", icon: UserCog },
 ]
+
+function LogoBadge({
+  src,
+  alt,
+  className,
+  imageClassName,
+}: {
+  src: typeof logoHima
+  alt: string
+  className?: string
+  imageClassName?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_6px_18px_rgba(0,0,0,0.22)] ring-1 ring-white/30",
+        className
+      )}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        width={40}
+        height={40}
+        className={cn("h-[82%] w-[82%] object-contain", imageClassName)}
+      />
+    </div>
+  )
+}
 
 export function AdminSidebarMobile() {
   const pathname = usePathname()
@@ -35,18 +62,19 @@ export function AdminSidebarMobile() {
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-sidebar-border px-4">
-        <Link href="/admin" className="flex items-center gap-2">
+        <Link href="/x-panel" className="flex items-center gap-2">
           <div className="flex shrink-0 items-center gap-1.5">
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
-              <Image src={logoHima} alt="Logo HIMA D3 SI UPNVJ" width={36} height={36} className="h-full w-full object-contain" />
-            </div>
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
-              <Image src={logoKabinet} alt="Logo Kabinet Vidyakatra" width={36} height={36} className="h-full w-full object-contain" />
-            </div>
+            <LogoBadge src={logoHima} alt="Logo HIMA D3 SI UPNVJ" className="h-9 w-9 bg-yellow-300" />
+            <LogoBadge
+              src={logoKabinet}
+              alt="Logo Kabinet Vidyakatra"
+              className="h-9 w-9"
+              imageClassName="h-[90%] w-[90%] -translate-x-[2px] -translate-y-[1px]"
+            />
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-sidebar-foreground">HIMA D3 SI UPNVJ</span>
-            <span className="text-xs text-sidebar-muted">Kabinet Vidyakatra CMS</span>
+            <span className="text-xs text-sidebar-primary">Kabinet Vidyakatra</span>
           </div>
         </Link>
       </div>
@@ -55,7 +83,7 @@ export function AdminSidebarMobile() {
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {navigation.map((item) => {
           const isActive = pathname === item.href || 
-            (item.href !== "/admin" && pathname.startsWith(item.href))
+            (item.href !== "/x-panel" && pathname.startsWith(item.href))
           
           return (
             <Link
@@ -64,7 +92,7 @@ export function AdminSidebarMobile() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-primary"
+                  ? "border border-sidebar-primary/20 bg-sidebar-primary/10 text-sidebar-primary"
                   : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >

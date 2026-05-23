@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Search, Menu, LogOut, User, Settings } from "lucide-react"
+import Link from "next/link"
+import { Bell, ExternalLink, Search, Menu, LogOut, User, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -29,7 +30,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/10 bg-background/55 px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-background/35 md:px-6">
       {/* Mobile Menu */}
       <Sheet>
         <SheetTrigger asChild>
@@ -48,8 +49,8 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search..."
-            className="w-full bg-muted/50 pl-9 focus:bg-card"
+            placeholder="Cari konten, pengurus, agenda..."
+            className="w-full border-white/10 bg-white/[0.03] pl-9 focus:bg-card"
           />
         </div>
       </div>
@@ -82,26 +83,33 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <p className="font-medium">New member registered</p>
-              <p className="text-sm text-muted-foreground">Ahmad Rizki joined the organization</p>
-              <p className="text-xs text-muted-foreground">2 hours ago</p>
+              <p className="font-medium">Pengurus baru ditambahkan</p>
+              <p className="text-sm text-muted-foreground">Data struktur Kabinet Vidyakatra diperbarui</p>
+              <p className="text-xs text-muted-foreground">2 jam lalu</p>
             </DropdownMenuItem>
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <p className="font-medium">Berita acara published</p>
-              <p className="text-sm text-muted-foreground">Company profile Vidyakatra has been published</p>
-              <p className="text-xs text-muted-foreground">5 hours ago</p>
+              <p className="font-medium">Berita acara dipublikasikan</p>
+              <p className="text-sm text-muted-foreground">Konten sosial media overview sudah tayang</p>
+              <p className="text-xs text-muted-foreground">5 jam lalu</p>
             </DropdownMenuItem>
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <p className="font-medium">Event reminder</p>
-              <p className="text-sm text-muted-foreground">Rapat kabinet tomorrow at 9 AM</p>
-              <p className="text-xs text-muted-foreground">1 day ago</p>
+              <p className="font-medium">Pengingat agenda</p>
+              <p className="text-sm text-muted-foreground">Rapat kabinet besok pukul 09.00</p>
+              <p className="text-xs text-muted-foreground">1 hari lalu</p>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="justify-center text-primary">
-              View all notifications
+              Lihat semua notifikasi
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Button asChild variant="outline" size="sm" className="hidden gap-2 border-white/10 bg-white/[0.03] hover:bg-white/[0.06] md:inline-flex">
+          <Link href="/" target="_blank">
+            <ExternalLink className="h-4 w-4" />
+            Lihat Site
+          </Link>
+        </Button>
 
         {/* User Menu */}
         <DropdownMenu>
@@ -120,20 +128,20 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Akun Admin</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
-              Profile
+              Profil
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              Pengaturan
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
-              Log out
+              Keluar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -145,7 +153,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder="Cari konten..."
               className="w-full pl-9"
               autoFocus
             />

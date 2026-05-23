@@ -9,7 +9,7 @@ const activities = [
     avatar: "AR",
     action: "mempublikasikan berita acara",
     target: "Company Profile Vidyakatra",
-    time: "2 hours ago",
+    time: "2 jam lalu",
     type: "news",
   },
   {
@@ -18,7 +18,7 @@ const activities = [
     avatar: "SN",
     action: "menambahkan pengurus",
     target: "Budi Santoso",
-    time: "4 hours ago",
+    time: "4 jam lalu",
     type: "member",
   },
   {
@@ -27,17 +27,17 @@ const activities = [
     avatar: "DP",
     action: "memperbarui agenda",
     target: "Rapat Kabinet",
-    time: "6 hours ago",
+    time: "6 jam lalu",
     type: "event",
   },
   {
     id: 4,
     user: "Reza Firmansyah",
     avatar: "RF",
-    action: "mengunggah media ke",
-    target: "Galeri Kabinet Vidyakatra",
-    time: "1 day ago",
-    type: "media",
+    action: "memperbarui insight",
+    target: "Social Media Overview",
+    time: "1 hari lalu",
+    type: "social",
   },
   {
     id: 5,
@@ -45,16 +45,16 @@ const activities = [
     avatar: "MI",
     action: "mengedit konten",
     target: "Visi & Misi",
-    time: "2 days ago",
+    time: "2 hari lalu",
     type: "content",
   },
 ]
 
 const typeColors: Record<string, string> = {
-  news: "bg-blue-100 text-blue-700",
-  member: "bg-green-100 text-green-700",
-  event: "bg-orange-100 text-orange-700",
-  media: "bg-purple-100 text-purple-700",
+  news: "bg-primary/10 text-primary",
+  member: "bg-primary/10 text-primary",
+  event: "bg-primary/10 text-primary",
+  social: "bg-primary/10 text-primary",
   content: "bg-primary/10 text-primary",
 }
 
