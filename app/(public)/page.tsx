@@ -1,8 +1,9 @@
-import Link from "next/link"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import Link from "next/link";
+import Image from "next/image";
+import kabinetImage from "@/assets/kabinet.jpg";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Zap,
   Users,
@@ -13,17 +14,22 @@ import {
   Code,
   Megaphone,
   BookOpen,
-  ChevronRight,
   Cpu,
+  Instagram,
+  Linkedin,
+  Music2,
   Rocket,
-} from "lucide-react"
+  Sparkles,
+  Play,
+  Youtube,
+} from "lucide-react";
 
 const stats = [
-  { label: "Anggota Aktif", value: "150+", icon: Users },
+  { label: "Anggota Aktif", value: "50+", icon: Users },
   { label: "Program Kerja", value: "25+", icon: Calendar },
   { label: "Prestasi", value: "50+", icon: Trophy },
-  { label: "Tahun Berdiri", value: "2010", icon: Zap },
-]
+  { label: "Tahun Berdiri", value: "2023  ", icon: Zap },
+];
 
 const divisions = [
   {
@@ -46,128 +52,140 @@ const divisions = [
     description: "Menjalin hubungan dengan pihak internal dan eksternal",
     icon: Megaphone,
   },
-]
+];
 
 const latestNews = [
   {
     id: 1,
     title: "Workshop UI/UX Design Bersama Praktisi Industri",
-    excerpt: "Tingkatkan kemampuan desain interface dengan bimbingan langsung dari profesional...",
+    excerpt:
+      "Tingkatkan kemampuan desain interface dengan bimbingan langsung dari profesional...",
     date: "15 Mei 2026",
     category: "Workshop",
-    image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&h=600&fit=crop",
   },
   {
     id: 2,
     title: "Seminar Nasional Teknologi Informasi 2026",
-    excerpt: "Menghadirkan pembicara dari berbagai perusahaan teknologi terkemuka...",
+    excerpt:
+      "Menghadirkan pembicara dari berbagai perusahaan teknologi terkemuka...",
     date: "10 Mei 2026",
     category: "Seminar",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
   },
   {
     id: 3,
     title: "Kompetisi Hackathon Internal HIMA",
-    excerpt: "Ajang adu kreativitas dan kemampuan coding antar mahasiswa D3 SI...",
+    excerpt:
+      "Ajang adu kreativitas dan kemampuan coding antar mahasiswa D3 SI...",
     date: "5 Mei 2026",
     category: "Kompetisi",
-    image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=600&fit=crop",
   },
-]
+];
 
-const achievements = [
-  "Juara 1 Lomba Web Development Nasional 2025",
-  "Best Innovation Award GEMASTIK 2024",
-  "Juara 2 UI/UX Competition 2024",
-  "Finalis Hackathon Surabaya 2025",
-]
+const socialMedia = [
+  {
+    icon: Instagram,
+    name: "Instagram",
+    handle: "@himad3si_upnvj",
+    value: "2.5K+",
+    caption: "akun terjangkau",
+    url: "https://instagram.com/himad3si_upnvj",
+    className: "border-pink-500/30 bg-pink-500/10 text-pink-300",
+  },
+  {
+    icon: Youtube,
+    name: "YouTube",
+    handle: "HIMA D3SI UPNVJ",
+    value: "50+",
+    caption: "konten kegiatan",
+    url: "https://youtube.com/@himad3siupnvj?si=AxW5-zV-xXaZjR6n",
+    className: "border-red-500/30 bg-red-500/10 text-red-300",
+  },
+  {
+    icon: Linkedin,
+    name: "LinkedIn",
+    handle: "HIMA D3SI UPNVJ",
+    value: "20+",
+    caption: "jejaring profesional",
+    url: "https://linkedin.com",
+    className: "border-blue-500/30 bg-blue-500/10 text-blue-300",
+  },
+  {
+    icon: Music2,
+    name: "TikTok",
+    handle: "@himad3si",
+    value: "600K+",
+    caption: "views each year",
+    url: "https://tiktok.com",
+    className: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200",
+  },
+];
 
 export default function HomePage() {
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        {/* Background Grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        {/* Gradient Orbs */}
-        <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-secondary/10 blur-[100px]" />
-        
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="space-y-8">
-              <Badge className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/20">
-                <Cpu className="mr-1.5 h-3 w-3" />
-                Himpunan Mahasiswa D3 Sistem Informasi
+      {/* Cabinet Banner */}
+      <section className="py-4 md:py-5">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <div className="relative aspect-[21/9] overflow-hidden rounded-xl border border-border/50 bg-muted">
+            <Image
+              src={kabinetImage}
+              alt="Foto kabinet HIMA D3 SI"
+              fill
+              sizes="(min-width: 1280px) 1216px, calc(100vw - 2rem)"
+              className="object-cover object-center"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-x-0 top-6 flex flex-col items-center px-6 text-center md:top-8 md:px-8">
+              <Badge className="mb-5 border-primary/40 bg-primary/15 px-4 py-1.5 text-sm text-yellow-400 shadow-[0_0_24px_rgba(250,204,21,0.18)] backdrop-blur">
+                <Sparkles className="mr-1.5 h-3 w-3" />
+                Kabinet Vidyakatra
               </Badge>
-              <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-balance">
-                Membangun Generasi
-                <span className="text-gradient"> Digital</span> yang Unggul
-              </h1>
-              <p className="max-w-lg text-lg text-muted-foreground leading-relaxed">
-                Wadah pengembangan potensi, kreativitas, dan profesionalisme mahasiswa D3 Sistem Informasi dalam bidang teknologi informasi.
+              <h2 className="max-w-5xl text-balance text-2xl font-bold leading-tight text-white/90 drop-shadow-[0_4px_18px_rgba(0,0,0,0.7)] sm:text-3xl md:text-5xl">
+                Himpunan Mahasiswa D3 Sistem Informasi
+              </h2>
+              <p className="mt-2 text-xl font-semibold text-white/80 drop-shadow-[0_3px_14px_rgba(0,0,0,0.65)] sm:text-2xl md:text-4xl">
+                UPN "Veteran" Jakarta
               </p>
-              <div className="flex flex-wrap gap-4">
-                <Link href="/profil">
-                  <Button size="lg" className="gap-2 bg-gradient-brand text-primary-foreground hover:opacity-90 transition-all duration-300 hover:glow-primary-sm">
-                    Tentang Kami
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/kontak">
-                  <Button size="lg" variant="outline" className="gap-2 border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
-                    Hubungi Kami
-                  </Button>
-                </Link>
-              </div>
             </div>
-            <div className="relative hidden lg:block">
-              <div className="relative aspect-square">
-                {/* Decorative elements */}
-                <div className="absolute left-8 top-8 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-                <div className="absolute bottom-8 right-8 h-48 w-48 rounded-full bg-secondary/20 blur-3xl" />
-                <div className="relative grid h-full grid-cols-2 gap-4 p-8">
-                  <div className="space-y-4">
-                    <Card className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                      <CardContent className="p-6">
-                        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-brand transition-transform group-hover:scale-110">
-                          <Code className="h-6 w-6 text-primary-foreground" />
-                        </div>
-                        <h3 className="font-semibold">Programming</h3>
-                        <p className="text-sm text-muted-foreground">Web, Mobile, IoT</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-secondary/30 hover:glow-secondary">
-                      <CardContent className="p-6">
-                        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary transition-transform group-hover:scale-110">
-                          <Users className="h-6 w-6 text-secondary-foreground" />
-                        </div>
-                        <h3 className="font-semibold">Networking</h3>
-                        <p className="text-sm text-muted-foreground">Kolaborasi & Relasi</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  <div className="mt-12 space-y-4">
-                    <Card className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                      <CardContent className="p-6">
-                        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary transition-transform group-hover:scale-110">
-                          <Lightbulb className="h-6 w-6 text-primary-foreground" />
-                        </div>
-                        <h3 className="font-semibold">Innovation</h3>
-                        <p className="text-sm text-muted-foreground">Ide & Kreativitas</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-secondary/30 hover:glow-secondary">
-                      <CardContent className="p-6">
-                        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-brand transition-transform group-hover:scale-110">
-                          <Trophy className="h-6 w-6 text-primary-foreground" />
-                        </div>
-                        <h3 className="font-semibold">Achievement</h3>
-                        <p className="text-sm text-muted-foreground">Prestasi & Kompetisi</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Company Profile Video */}
+      <section className="border-y border-border/50 bg-card/30 py-14 md:py-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <div className="grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="max-w-xl">
+              <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
+                <Play className="mr-1.5 h-3 w-3" />
+                Company Profile
+              </Badge>
+              <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+                Kenali Kabinet Vidyakatra Lebih Dekat
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                Video singkat tentang arah gerak, budaya kerja, dan ruang
+                kolaborasi HIMA D3 Sistem Informasi UPNVJ.
+              </p>
+            </div>
+
+            <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-lg">
+              <div className="aspect-video">
+                <iframe
+                  src="https://www.youtube.com/embed/WV3rSsxRyb4?si=gA9Nrks6Grfqx0sm"
+                  className="h-full w-full"
+                  title="Video company profile HIMA D3 Sistem Informasi UPNVJ Kabinet Vidyakatra"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                ></iframe>
               </div>
             </div>
           </div>
@@ -183,114 +201,92 @@ export default function HomePage() {
                 <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 transition-all duration-300 group-hover:border-primary/40 group-hover:glow-primary-sm">
                   <stat.icon className="h-6 w-6 text-primary" />
                 </div>
-                <div className="text-3xl font-bold text-gradient">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div className="text-3xl font-bold text-gradient">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section className="py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="relative">
-              <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-border/50 bg-muted">
-                <Image
-                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&h=600&fit=crop"
-                  alt="Kegiatan HIMA D3 SI"
-                  width={800}
-                  height={600}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-6 -right-6 rounded-xl border border-primary/30 bg-card p-6 shadow-xl glow-primary-sm">
-                <div className="text-3xl font-bold text-gradient">14+</div>
-                <div className="text-sm text-muted-foreground">Tahun Pengalaman</div>
-              </div>
-            </div>
-            <div className="space-y-6">
-              <Badge className="border-primary/30 bg-primary/10 text-primary">
-                <Rocket className="mr-1.5 h-3 w-3" />
-                Tentang Kami
+      {/* Social Media Overview */}
+      <section className="relative overflow-hidden py-16 md:py-20">
+        <div className="absolute left-16 top-1/4 h-80 w-80 rounded-full bg-primary/10 blur-[140px]" />
+        <div className="absolute bottom-1/4 right-16 h-96 w-96 rounded-full bg-secondary/10 blur-[160px]" />
+        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
+          <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="max-w-xl">
+              <Badge className="mb-5 border-primary/30 bg-primary/10 text-primary">
+                <Megaphone className="mr-1.5 h-3 w-3" />
+                Social Media Overview
               </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-balance">
-                Mewadahi Aspirasi dan Kreativitas Mahasiswa
+              <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl text-balance">
+                Social Media <span className="text-gradient">Overview</span>
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                HIMA D3 Sistem Informasi adalah organisasi kemahasiswaan yang bergerak dalam pengembangan soft skill dan hard skill mahasiswa program studi D3 Sistem Informasi. Kami berkomitmen untuk menciptakan lingkungan yang mendukung pertumbuhan akademik dan profesional.
+              <p className="mt-6 text-lg leading-relaxed text-[#b8b8b8]">
+                Memuat kanal resmi HIMA D3 Sistem Informasi UPN "Veteran" Jakarta untuk membangun jangkauan, meningkatkan interaksi, dan bertumbuh bersama mahasiswa.
               </p>
-              <ul className="space-y-3">
-                {achievements.map((achievement, index) => (
-                  <li key={index} className="flex items-center gap-3 group">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-primary/10 transition-all duration-300 group-hover:bg-primary/20">
-                      <ChevronRight className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-sm">{achievement}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/profil">
-                <Button className="gap-2 bg-gradient-brand text-primary-foreground hover:opacity-90 transition-all duration-300">
-                  Selengkapnya
+              <a href="mailto:himpunand3si@gmail.com" className="mt-8 inline-flex">
+                <Button className="gap-2 bg-gradient-brand px-6 text-primary-foreground shadow-[0_14px_40px_rgba(250,204,21,0.22)] transition-all duration-300 hover:-translate-y-1 hover:opacity-95">
+                  Let&apos;s Collaborate!
                   <ArrowRight className="h-4 w-4" />
                 </Button>
-              </Link>
+              </a>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Divisions Section */}
-      <section className="border-y border-border/50 bg-card/30 py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="mb-12 text-center">
-            <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Users className="mr-1.5 h-3 w-3" />
-              Divisi Kami
-            </Badge>
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Struktur Organisasi
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              Berbagai divisi yang bekerja sama untuk mewujudkan visi dan misi organisasi
-            </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {divisions.map((division) => (
-              <Card 
-                key={division.name} 
-                className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:-translate-y-1 hover:glow-primary-sm"
-              >
-                <CardContent className="p-6">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 transition-all duration-300 group-hover:bg-gradient-brand group-hover:border-transparent">
-                    <division.icon className="h-6 w-6 text-primary transition-colors group-hover:text-primary-foreground" />
+            <div className="grid gap-5 sm:grid-cols-2">
+              {socialMedia.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group min-h-52 rounded-2xl bg-white/[0.04] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.3)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-[0_24px_80px_rgba(250,204,21,0.12)]"
+                >
+                  <div className="flex h-full flex-col">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-11 w-11 items-center justify-center rounded-xl border ${social.className}`}>
+                        <social.icon className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <div className="text-xl font-bold text-white">{social.name}</div>
+                        <div className="text-xs text-[#b8b8b8]">{social.handle}</div>
+                      </div>
+                    </div>
+                    <div className="mt-auto pt-8 text-center">
+                      <div className="text-5xl font-black tracking-tight text-white">{social.value}</div>
+                      <div className="mt-2 text-lg font-medium leading-tight text-[#b8b8b8]">{social.caption}</div>
+                    </div>
                   </div>
-                  <h3 className="mb-2 font-semibold">{division.name}</h3>
-                  <p className="text-sm text-muted-foreground">{division.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* News Section */}
-      <section className="py-20 md:py-28">
+      <section className="py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
                 <Zap className="mr-1.5 h-3 w-3" />
-                Berita Terbaru
+                Berita Acara Terbaru
               </Badge>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                Kegiatan & Informasi
+                Kegiatan & Berita Acara
               </h2>
             </div>
             <Link href="/berita">
-              <Button variant="outline" className="gap-2 border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
+              <Button
+                variant="outline"
+                className="gap-2 border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+              >
                 Lihat Semua
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -298,8 +294,8 @@ export default function HomePage() {
           </div>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {latestNews.map((news) => (
-              <Card 
-                key={news.id} 
+              <Card
+                key={news.id}
                 className="group overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm"
               >
                 <div className="aspect-[16/10] overflow-hidden">
@@ -316,7 +312,9 @@ export default function HomePage() {
                     <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30 text-xs">
                       {news.category}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{news.date}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {news.date}
+                    </span>
                   </div>
                   <h3 className="mb-2 font-semibold leading-tight line-clamp-2 transition-colors group-hover:text-primary">
                     {news.title}
@@ -332,29 +330,28 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative overflow-hidden border-t border-border/50 py-20 md:py-28">
+      <section className="relative overflow-hidden border-t border-border/50 py-16 md:py-20">
         {/* Background elements */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.2)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
         <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[150px]" />
-        
+
         <div className="relative mx-auto max-w-7xl px-4 md:px-6">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-balance">
-              Siap Bergabung dengan <span className="text-gradient">HIMA D3 SI</span>?
+              Kenali Arah Gerak{" "}
+              <span className="text-gradient">Kabinet Vidyakatra</span>
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Mari bersama-sama mengembangkan potensi dan membangun masa depan yang lebih baik
+              Lihat profil, nilai, dan struktur kerja kabinet yang menggerakkan HIMA D3 Sistem Informasi.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link href="/kontak">
-                <Button size="lg" className="gap-2 bg-gradient-brand text-primary-foreground hover:opacity-90 transition-all duration-300 hover:glow-primary">
-                  Hubungi Kami
+              <Link href="/profil">
+                <Button
+                  size="lg"
+                  className="gap-2 bg-gradient-brand text-primary-foreground hover:opacity-90 transition-all duration-300 hover:glow-primary"
+                >
+                  Lihat Profil Kabinet
                   <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/galeri">
-                <Button size="lg" variant="outline" className="gap-2 border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
-                  Lihat Galeri
                 </Button>
               </Link>
             </div>
@@ -362,5 +359,5 @@ export default function HomePage() {
         </div>
       </section>
     </>
-  )
+  );
 }

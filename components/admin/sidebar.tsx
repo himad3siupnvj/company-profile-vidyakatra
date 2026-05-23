@@ -1,8 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import logoHima from "@/assets/hima.png"
+import logoKabinet from "@/assets/logoKabinet.png"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -10,12 +13,11 @@ import {
   Users,
   Target,
   Newspaper,
-  Image,
+  Image as ImageIcon,
   Settings,
   UserCog,
   ChevronLeft,
   ChevronRight,
-  Zap,
   ExternalLink,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -48,14 +50,14 @@ const navigation = [
     icon: Target,
   },
   {
-    name: "News & Events",
+    name: "Berita Acara",
     href: "/admin/news",
     icon: Newspaper,
   },
   {
-    name: "Media Gallery",
+    name: "Galeri Media",
     href: "/admin/gallery",
-    icon: Image,
+    icon: ImageIcon,
   },
   {
     name: "Settings",
@@ -85,18 +87,23 @@ export function AdminSidebar() {
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           {!collapsed && (
             <Link href="/admin" className="group flex items-center gap-2">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand transition-all duration-300 group-hover:glow-primary-sm">
-                <Zap className="h-5 w-5 text-primary-foreground" />
+              <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
+                  <Image src={logoHima} alt="Logo HIMA D3 SI UPNVJ" width={36} height={36} className="h-full w-full object-contain" />
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
+                  <Image src={logoKabinet} alt="Logo Kabinet Vidyakatra" width={36} height={36} className="h-full w-full object-contain" />
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold tracking-wide text-sidebar-foreground">HIMA D3 SI</span>
-                <span className="text-xs text-sidebar-muted">Admin Panel</span>
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm font-bold tracking-wide text-sidebar-foreground">HIMA D3 SI UPNVJ</span>
+                <span className="text-xs text-sidebar-muted">Kabinet Vidyakatra CMS</span>
               </div>
             </Link>
           )}
           {collapsed && (
-            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand">
-              <Zap className="h-5 w-5 text-primary-foreground" />
+            <div className="mx-auto flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
+              <Image src={logoHima} alt="Logo HIMA D3 SI UPNVJ" width={36} height={36} className="h-full w-full object-contain" />
             </div>
           )}
         </div>

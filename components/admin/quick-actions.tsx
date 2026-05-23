@@ -12,29 +12,29 @@ import {
 
 const actions = [
   {
-    title: "Add Member",
-    description: "Register a new organization member",
+    title: "Tambah Pengurus",
+    description: "Tambahkan pengurus kabinet Vidyakatra",
     icon: UserPlus,
     href: "/admin/organization?action=add",
     color: "bg-green-100 text-green-700",
   },
   {
-    title: "Create Article",
-    description: "Write and publish a news article",
+    title: "Buat Berita Acara",
+    description: "Tulis dan publikasikan berita acara",
     icon: FileEdit,
     href: "/admin/news?action=create",
     color: "bg-blue-100 text-blue-700",
   },
   {
     title: "Upload Media",
-    description: "Add photos to the gallery",
+    description: "Tambahkan foto ke galeri",
     icon: ImagePlus,
     href: "/admin/gallery?action=upload",
     color: "bg-purple-100 text-purple-700",
   },
   {
-    title: "Create Event",
-    description: "Schedule a new event",
+    title: "Buat Agenda",
+    description: "Jadwalkan kegiatan kabinet",
     icon: Calendar,
     href: "/admin/news?tab=events&action=create",
     color: "bg-orange-100 text-orange-700",
@@ -45,7 +45,7 @@ export function QuickActions() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+        <CardTitle className="text-lg font-semibold">Aksi Cepat</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3">
         {actions.map((action) => (
@@ -68,7 +68,7 @@ export function QuickActions() {
         <Link href="/admin/settings" className="mt-2">
           <Button variant="secondary" className="w-full gap-2">
             <Settings className="h-4 w-4" />
-            Manage Settings
+            Kelola Pengaturan
           </Button>
         </Link>
       </CardContent>

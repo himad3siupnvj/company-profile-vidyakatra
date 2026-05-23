@@ -11,7 +11,7 @@ import { Search, Calendar, User, ArrowRight, Clock, Zap, Cpu } from "lucide-reac
 
 const categories = [
   { id: "all", label: "Semua" },
-  { id: "berita", label: "Berita" },
+  { id: "berita", label: "Berita Acara" },
   { id: "kegiatan", label: "Kegiatan" },
   { id: "pengumuman", label: "Pengumuman" },
   { id: "prestasi", label: "Prestasi" },
@@ -132,7 +132,7 @@ export default function BeritaPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-28">
+      <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden py-16 md:py-20">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px]" />
         <div className="absolute left-1/4 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]" />
         <div className="absolute right-1/4 bottom-0 h-64 w-64 rounded-full bg-secondary/10 blur-[100px]" />
@@ -141,74 +141,20 @@ export default function BeritaPage() {
           <div className="mx-auto max-w-3xl text-center">
             <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
               <Zap className="mr-1.5 h-3 w-3" />
-              Berita & Kegiatan
+              Berita Acara & Kegiatan
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl text-balance">
-              Informasi Terkini <span className="text-gradient">HIMA D3 SI</span>
+              Berita Acara <span className="text-gradient">HIMA D3 SI</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground">
-              Ikuti perkembangan kegiatan, prestasi, dan pengumuman terbaru dari kami
+              Ikuti dokumentasi kegiatan, prestasi, dan pengumuman terbaru dari kami
             </p>
           </div>
         </div>
       </section>
 
       {/* Featured News */}
-      <section className="py-12 md:py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <h2 className="mb-8 text-2xl font-bold">Berita Utama</h2>
-          <div className="grid gap-8 lg:grid-cols-2">
-            {featuredNews.map((news, index) => (
-              <Card key={news.id} className={`group overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm ${index === 0 ? "lg:col-span-2" : ""}`}>
-                <div className={`grid ${index === 0 ? "md:grid-cols-2" : ""}`}>
-                  <div className={`aspect-[16/10] overflow-hidden ${index === 0 ? "md:aspect-auto" : ""}`}>
-                    <Image
-                      src={news.image}
-                      alt={news.title}
-                      width={800}
-                      height={500}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  <CardContent className={`flex flex-col justify-center p-6 ${index === 0 ? "md:p-8" : ""}`}>
-                    <div className="mb-3 flex flex-wrap items-center gap-3">
-                      <Badge className="capitalize bg-secondary/20 text-secondary hover:bg-secondary/30">{news.category}</Badge>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {news.date}
-                      </span>
-                    </div>
-                    <h3 className={`mb-3 font-bold leading-tight transition-colors group-hover:text-primary ${
-                      index === 0 ? "text-2xl md:text-3xl" : "text-xl"
-                    }`}>
-                      {news.title}
-                    </h3>
-                    <p className="mb-4 text-muted-foreground line-clamp-3">
-                      {news.excerpt}
-                    </p>
-                    <div className="mt-auto flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          {news.author}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {news.readTime}
-                        </span>
-                      </div>
-                      <Button variant="ghost" size="sm" className="gap-1 hover:text-primary hover:bg-primary/10">
-                        Baca
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       {/* All News */}
       <section className="border-y border-border/50 bg-card/30 py-12 md:py-16">
@@ -227,7 +173,7 @@ export default function BeritaPage() {
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Cari berita..."
+                placeholder="Cari berita acara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 bg-muted/50 border-border/50 focus:border-primary/50"
@@ -278,7 +224,7 @@ export default function BeritaPage() {
 
           {filteredNews.length === 0 && (
             <div className="py-16 text-center">
-              <p className="text-muted-foreground">Tidak ada berita yang ditemukan</p>
+              <p className="text-muted-foreground">Tidak ada berita acara yang ditemukan</p>
             </div>
           )}
 
@@ -294,7 +240,7 @@ export default function BeritaPage() {
       </section>
 
       {/* Subscribe Section */}
-      <section className="relative overflow-hidden py-20 md:py-28">
+      <section className="relative overflow-hidden py-16 md:py-20">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.2)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
         <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[150px]" />
         
@@ -310,7 +256,7 @@ export default function BeritaPage() {
                   Jangan Lewatkan Informasi Terbaru
                 </h2>
                 <p className="mt-4 text-muted-foreground">
-                  Berlangganan newsletter kami untuk mendapatkan update berita dan kegiatan langsung di email Anda
+                  Berlangganan newsletter kami untuk mendapatkan update berita acara dan kegiatan langsung di email Anda
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                   <Input

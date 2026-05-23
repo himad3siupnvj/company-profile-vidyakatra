@@ -87,13 +87,13 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
               <p className="text-xs text-muted-foreground">2 hours ago</p>
             </DropdownMenuItem>
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <p className="font-medium">News article published</p>
-              <p className="text-sm text-muted-foreground">Seminar IT 2024 has been published</p>
+              <p className="font-medium">Berita acara published</p>
+              <p className="text-sm text-muted-foreground">Company profile Vidyakatra has been published</p>
               <p className="text-xs text-muted-foreground">5 hours ago</p>
             </DropdownMenuItem>
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
               <p className="font-medium">Event reminder</p>
-              <p className="text-sm text-muted-foreground">Workshop tomorrow at 9 AM</p>
+              <p className="text-sm text-muted-foreground">Rapat kabinet tomorrow at 9 AM</p>
               <p className="text-xs text-muted-foreground">1 day ago</p>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -115,7 +115,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
               </Avatar>
               <div className="hidden flex-col items-start md:flex">
                 <span className="text-sm font-medium">Super Admin</span>
-                <span className="text-xs text-muted-foreground">admin@himad3si.ac.id</span>
+                <span className="text-xs text-muted-foreground">admin@himad3siupnvj.id</span>
               </div>
             </Button>
           </DropdownMenuTrigger>

@@ -7,8 +7,8 @@ const activities = [
     id: 1,
     user: "Ahmad Rizki",
     avatar: "AR",
-    action: "published a new article",
-    target: "Seminar IT 2024",
+    action: "mempublikasikan berita acara",
+    target: "Company Profile Vidyakatra",
     time: "2 hours ago",
     type: "news",
   },
@@ -16,7 +16,7 @@ const activities = [
     id: 2,
     user: "Siti Nurhaliza",
     avatar: "SN",
-    action: "added a new member",
+    action: "menambahkan pengurus",
     target: "Budi Santoso",
     time: "4 hours ago",
     type: "member",
@@ -25,8 +25,8 @@ const activities = [
     id: 3,
     user: "Dian Permata",
     avatar: "DP",
-    action: "updated the event",
-    target: "Workshop Programming",
+    action: "memperbarui agenda",
+    target: "Rapat Kabinet",
     time: "6 hours ago",
     type: "event",
   },
@@ -34,8 +34,8 @@ const activities = [
     id: 4,
     user: "Reza Firmansyah",
     avatar: "RF",
-    action: "uploaded images to",
-    target: "Gallery Kegiatan 2024",
+    action: "mengunggah media ke",
+    target: "Galeri Kabinet Vidyakatra",
     time: "1 day ago",
     type: "media",
   },
@@ -43,8 +43,8 @@ const activities = [
     id: 5,
     user: "Maya Indah",
     avatar: "MI",
-    action: "edited the",
-    target: "Vision & Mission",
+    action: "mengedit konten",
+    target: "Visi & Misi",
     time: "2 days ago",
     type: "content",
   },
@@ -62,7 +62,7 @@ export function RecentActivity() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
+        <CardTitle className="text-lg font-semibold">Aktivitas Terbaru</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {activities.map((activity) => (

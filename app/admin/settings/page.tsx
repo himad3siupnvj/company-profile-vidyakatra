@@ -12,19 +12,19 @@ import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube
 
 export default function SettingsPage() {
   const [contactInfo, setContactInfo] = useState({
-    email: "hima.d3si@politeknik.ac.id",
-    phone: "+62 21 1234567",
+    email: "himpunand3si@gmail.com",
+    phone: "+62 812 3456 7890",
     whatsapp: "+62 812 3456 7890",
-    address: "Gedung Jurusan Sistem Informasi, Lantai 2\nJl. Kampus Raya No. 1\nKota Bandung, Jawa Barat 40123",
+    address: "UPN Veteran Jakarta\nJl. RS. Fatmawati Raya, Pondok Labu\nJakarta Selatan 12430",
   })
 
   const [socialMedia, setSocialMedia] = useState({
-    instagram: "https://instagram.com/himad3si",
-    facebook: "https://facebook.com/himad3si",
-    twitter: "https://twitter.com/himad3si",
-    youtube: "https://youtube.com/@himad3si",
-    linkedin: "https://linkedin.com/company/himad3si",
-    github: "https://github.com/himad3si",
+    instagram: "https://instagram.com/himad3si_its",
+    facebook: "https://facebook.com/himad3siupnvj",
+    twitter: "https://twitter.com/himad3siupnvj",
+    youtube: "https://youtube.com/@himad3siupnvj",
+    linkedin: "https://linkedin.com/company/himad3siupnvj",
+    github: "https://github.com/himad3siupnvj",
   })
 
   const [footerSettings, setFooterSettings] = useState({
@@ -32,21 +32,21 @@ export default function SettingsPage() {
     showContactInfo: true,
     showQuickLinks: true,
     showNewsletter: true,
-    copyrightText: "© 2024 HIMA D3 Sistem Informasi. All rights reserved.",
+    copyrightText: "© 2026 HIMA D3 Sistem Informasi UPNVJ - Kabinet Vidyakatra. All rights reserved.",
   })
 
   const [quickLinks, setQuickLinks] = useState([
     { id: 1, label: "Tentang Kami", url: "/about", enabled: true },
     { id: 2, label: "Visi & Misi", url: "/vision-mission", enabled: true },
     { id: 3, label: "Struktur Organisasi", url: "/organization", enabled: true },
-    { id: 4, label: "Berita & Acara", url: "/news", enabled: true },
-    { id: 5, label: "Galeri", url: "/gallery", enabled: true },
-    { id: 6, label: "Kontak", url: "/contact", enabled: true },
+    { id: 4, label: "Berita Acara", url: "/berita", enabled: true },
+    { id: 5, label: "Galeri", url: "/galeri", enabled: true },
+    { id: 6, label: "Kontak", url: "/kontak", enabled: true },
   ])
 
   const [siteSettings, setSiteSettings] = useState({
-    siteName: "HIMA D3 Sistem Informasi",
-    siteDescription: "Website resmi Himpunan Mahasiswa D3 Sistem Informasi",
+    siteName: "HIMA D3 Sistem Informasi UPNVJ",
+    siteDescription: "Website resmi Himpunan Mahasiswa D3 Sistem Informasi UPNVJ - Kabinet Vidyakatra",
     maintenanceMode: false,
     analyticsEnabled: true,
   })

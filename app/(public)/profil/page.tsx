@@ -1,69 +1,206 @@
-import Image from "next/image"
+import Image, { type StaticImageData } from "next/image"
+import ekrafLogo from "@/assets/organ/ekraf.png"
+import humsiwaLogo from "@/assets/organ/humsiwa.png"
+import ketuaLead from "@/assets/lead/Sakhaa_BPH_Final.jpg"
+import wakilLead from "@/assets/lead/Latanza_BPH.jpg"
+import koorDeptLogo from "@/assets/organ/koor dept.png"
+import logoKabinet from "@/assets/logoKabinet.png"
+import medkomLogo from "@/assets/organ/medkom.png"
+import pendidikanLogo from "@/assets/organ/pendidikan.png"
+import psdmLogo from "@/assets/organ/psdm.png"
+import sekbenLogo from "@/assets/organ/sekben.png"
+import sospolLogo from "@/assets/organ/sospol.png"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import {
-  Target,
-  Eye,
-  Users,
   Award,
-  BookOpen,
-  Code,
-  Lightbulb,
-  Megaphone,
-  Heart,
-  Zap,
-  Shield,
   Cpu,
+  Eye,
+  Heart,
   Rocket,
+  Shield,
+  Target,
+  Users,
+  Zap,
 } from "lucide-react"
 
-const timeline = [
+const cabinetLeads = [
   {
-    year: "2010",
-    title: "Pendirian HIMA",
-    description: "HIMA D3 Sistem Informasi resmi didirikan sebagai wadah aspirasi mahasiswa.",
+    group: "Ketua Umum",
+    people: [
+      {
+        name: "Sakhaa Sayyidah Kurniawan",
+        position: "Ketua Umum",
+        description: "Mengawal arah gerak kabinet, menjaga visi organisasi, serta memastikan setiap program kerja berjalan selaras dengan kebutuhan mahasiswa. Ketua umum berperan dalam membangun komunikasi strategis, menjaga budaya kolaboratif, dan mengarahkan kabinet agar tetap produktif, inklusif, dan berdampak.",
+        image: ketuaLead,
+      },
+    ],
   },
   {
-    year: "2015",
-    title: "Ekspansi Program",
-    description: "Penambahan berbagai program kerja baru dan pembentukan divisi-divisi strategis.",
-  },
-  {
-    year: "2020",
-    title: "Transformasi Digital",
-    description: "Adaptasi kegiatan ke format hybrid dan pengembangan platform digital organisasi.",
-  },
-  {
-    year: "2024",
-    title: "Era Baru",
-    description: "Pencapaian berbagai prestasi nasional dan perluasan jaringan kerjasama.",
+    group: "Wakil Ketua",
+    people: [
+      {
+        name: "Latanza Akbar Fadilah",
+        position: "Wakil Ketua",
+        description: "Mendampingi ketua umum dalam menjaga ritme kerja kabinet, memperkuat koordinasi internal, serta memastikan setiap departemen dan biro dapat bergerak secara terarah. Wakil ketua berperan dalam menjaga kesinambungan program, evaluasi kerja, dan komunikasi antarbagian agar kabinet tetap solid.",
+        image: wakilLead,
+      },
+    ],
   },
 ]
 
-const divisions = [
+type CabinetLeadPerson = {
+  name: string
+  position: string
+  description: string
+  image: StaticImageData
+}
+
+type LeaderProfileProps = {
+  person: CabinetLeadPerson
+  reversed?: boolean
+}
+
+function LeaderPhotoCard({ person, reversed }: LeaderProfileProps) {
+  return (
+    <div
+      className={cn(
+        "group relative mx-auto w-full max-w-60 overflow-hidden rounded-2xl bg-white/[0.035] p-2 shadow-[0_18px_60px_rgba(0,0,0,0.28)] ring-1 ring-white/[0.06] backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.05] hover:shadow-[0_22px_70px_rgba(250,204,21,0.12)] md:max-w-64",
+        reversed && "md:order-2"
+      )}
+    >
+      <div className="absolute inset-x-8 bottom-5 h-24 rounded-full bg-primary/20 blur-3xl" />
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-black/30">
+        <Image
+          src={person.image}
+          alt={person.name}
+          width={360}
+          height={450}
+          className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+        />
+      </div>
+    </div>
+  )
+}
+
+function LeaderBio({ person, reversed }: LeaderProfileProps) {
+  return (
+    <div className={cn("pt-3 text-center md:text-left", reversed && "md:order-1")}>
+      <div>
+        <h3 className="text-3xl font-bold tracking-tight text-primary md:text-4xl">
+          {person.name}
+        </h3>
+        <p className="mt-1 text-base font-semibold text-[#b8b8b8]">
+          {person.position}
+        </p>
+      </div>
+      <p className="mx-auto mt-5 max-w-2xl text-justify text-sm leading-7 text-muted-foreground md:mx-0">
+        {person.description}
+      </p>
+    </div>
+  )
+}
+
+function LeaderProfile({ person, reversed = false }: LeaderProfileProps) {
+  return (
+    <div
+      className={cn(
+        "grid items-center gap-8",
+        reversed
+          ? "md:grid-cols-[minmax(0,1fr)_16rem]"
+          : "md:grid-cols-[16rem_minmax(0,1fr)]"
+      )}
+    >
+      <LeaderPhotoCard person={person} reversed={reversed} />
+      <LeaderBio person={person} reversed={reversed} />
+    </div>
+  )
+}
+
+const workUnits = [
   {
-    name: "Bidang Akademik",
-    description: "Mengelola kegiatan yang berkaitan dengan pengembangan akademik dan keilmuan mahasiswa D3 SI.",
-    icon: BookOpen,
-    programs: ["Tutorial Mata Kuliah", "Seminar Akademik", "Study Club"],
+    type: "Departemen",
+    name: "Pendidikan",
+    description: "Mengelola program pengembangan akademik, study club, dan pendampingan belajar mahasiswa.",
+    logo: pendidikanLogo,
+    programs: ["Study Club", "Tutor Sebaya", "Seminar Akademik"],
   },
   {
-    name: "Bidang Teknologi",
-    description: "Wadah pengembangan skill programming, networking, dan teknologi informasi.",
-    icon: Code,
-    programs: ["Workshop Coding", "Hackathon Internal", "Tech Talk"],
+    type: "Departemen",
+    name: "Media dan Komunikasi",
+    description: "Mengembangkan ruang belajar praktis untuk programming, product building, dan eksplorasi teknologi.",
+    logo: medkomLogo,
+    programs: ["Workshop Coding", "Hackathon", "Tech Talk"],
   },
   {
-    name: "Bidang Kreativitas",
-    description: "Mengasah kreativitas dan bakat mahasiswa melalui berbagai kegiatan seni dan budaya.",
-    icon: Lightbulb,
-    programs: ["Design Contest", "Photography Club", "Creative Campaign"],
+    type: "Departemen",
+    name: "Eknomi Kreatif",
+    description: "Mewadahi karya visual, kampanye kreatif, dokumentasi, dan ekspresi mahasiswa.",
+    logo: ekrafLogo,
+    programs: ["Design Sprint", "Creative Campaign", "Content Lab"],
   },
   {
-    name: "Bidang Humas",
-    description: "Menjalin hubungan baik dengan pihak internal dan eksternal organisasi.",
-    icon: Megaphone,
-    programs: ["Media Sosial", "Partnership", "Public Relations"],
+    type: "Departemen",
+    name: "Pengembangan Sumber Daya Manusia",
+    description: "Menjaga komunikasi internal dan membangun relasi strategis dengan pihak eksternal.",
+    logo: psdmLogo,
+    programs: ["Partnership", "Public Relations", "Media Sosial"],
+  },
+  {
+    type: "Biro",
+    name: "Sosial Politik",
+    description: "Mengarsipkan dokumen, surat, notulensi, dan kebutuhan administrasi organisasi.",
+    logo: sospolLogo,
+    programs: ["Arsip Surat", "Notulensi", "Database Dokumen"],
+  },
+  {
+    type: "Biro",
+    name: "Hubungan Mahasiswa",
+    description: "Menjaga ritme kerja kabinet, koordinasi anggota, dan budaya organisasi yang sehat.",
+    logo: humsiwaLogo,
+    programs: ["Rapat Internal", "Kaderisasi", "Evaluasi Kabinet"],
+  },
+]
+
+const etymology = [
+  {
+    term: "Vidya",
+    script: "विद्या",
+    meaning: "Ilmu pengetahuan, kebijaksanaan, wawasan.",
+  },
+  {
+    term: "Ekatra",
+    script: "एकत्र",
+    meaning: "Bersatu, bersama, dalam satu tujuan.",
+  },
+]
+
+const philosophyPoints = [
+  "Vidyakatra menggambarkan harmoni antara intelektualitas dan solidaritas. Ilmu tidak berdiri sendiri. Ia tumbuh dan bermakna karena ada kebersamaan yang menguatkan. Kabinet Vidyakatra hadir sebagai simbol integrasi antara kecerdasan intelektual dan empati sosial. Melalui nilai-nilai ini, Kabinet Vidyakatra berupaya mewujudkan lingkungan yang produktif, inklusif, dan berkelanjutan bagi seluruh keluarga besar mahasiswa D3 Sistem Informasi.",
+]
+
+const coreTeams = [
+  {
+    type: "Pengurus Inti",
+    name: "Sekretaris",
+    description: "Mengelola administrasi, surat-menyurat, notulensi, dan kerapian dokumen organisasi.",
+    logo: sekbenLogo,
+    programs: ["Surat Menyurat", "Notulensi", "Arsip Kabinet"],
+  },
+  {
+    type: "Pengurus Inti",
+    name: "Bendahara",
+    description: "Mengatur pencatatan keuangan, perencanaan anggaran, dan transparansi kebutuhan dana kegiatan.",
+    logo: sekbenLogo,
+    programs: ["Anggaran", "Laporan Keuangan", "Kas Kegiatan"],
+  },
+  {
+    type: "Pengurus Inti",
+    name: "Koordinator",
+    description: "Menjaga sinkronisasi antarbidang, mengawal ritme program kerja, dan memastikan koordinasi kabinet berjalan efektif.",
+    logo: koorDeptLogo,
+    programs: ["Koordinasi Bidang", "Monitoring Program", "Evaluasi Kerja"],
   },
 ]
 
@@ -90,50 +227,21 @@ const coreValues = [
   },
 ]
 
-const leadership = [
-  {
-    name: "Ahmad Fauzi Rahman",
-    position: "Ketua Umum",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-    quote: "Bersama membangun generasi digital yang unggul",
-  },
-  {
-    name: "Siti Nurhaliza",
-    position: "Wakil Ketua",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
-    quote: "Kolaborasi adalah kunci kesuksesan",
-  },
-  {
-    name: "Budi Santoso",
-    position: "Sekretaris Umum",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face",
-    quote: "Dokumentasi yang baik, organisasi yang kuat",
-  },
-  {
-    name: "Dewi Lestari",
-    position: "Bendahara Umum",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
-    quote: "Transparansi adalah fondasi kepercayaan",
-  },
-]
-
 const missions = [
-  "Mengembangkan potensi akademik dan soft skill mahasiswa D3 Sistem Informasi",
-  "Menjadi wadah aspirasi dan kreativitas mahasiswa dalam bidang teknologi",
-  "Membangun jejaring kerjasama dengan berbagai pihak internal dan eksternal",
-  "Menyelenggarakan kegiatan yang bermanfaat bagi pengembangan diri mahasiswa",
-  "Meningkatkan peran aktif mahasiswa dalam pembangunan bangsa",
+  "Mengembangkan dan memfasilitasi kegiatan akademik maupun non-akademik untuk meningkatkan kemampuan, menyalurkan bakat, dan memperkuat solidaritas mahasiswa melalui pendekatan adaptif dan kolaboratif.",
+  "Menjadi penghubung yang responsif dan transparan antara fakultas dan mahasiswa dalam penyampaian informasi serta komunikasi.",
+  "Meningkatkan kapasitas kepemimpinan dan keorganisasian anggota melalui pembinaan, pelatihan, dan keterlibatan aktif di HIMA.",
+  "Membangun lingkungan organisasi yang suportif dan kolaboratif yang berorientasi pada pemberdayaan individu dan budaya kerja berkelanjutan."
 ]
 
 export default function ProfilPage() {
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-28">
+      <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden py-16 md:py-20">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px]" />
         <div className="absolute left-1/4 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]" />
         <div className="absolute right-1/4 bottom-0 h-64 w-64 rounded-full bg-secondary/10 blur-[100px]" />
-        
+
         <div className="relative mx-auto max-w-7xl px-4 md:px-6">
           <div className="mx-auto max-w-3xl text-center">
             <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
@@ -144,100 +252,107 @@ export default function ProfilPage() {
               Profil <span className="text-gradient">HIMA D3 SI</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground">
-              Mengenal lebih dekat organisasi yang mewadahi aspirasi dan kreativitas mahasiswa
+              Mengenal kabinet, arah gerak, dan struktur kerja HIMA D3 Sistem Informasi
             </p>
           </div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section className="py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="space-y-6">
-              <Badge className="border-primary/30 bg-primary/10 text-primary">
-                <Rocket className="mr-1.5 h-3 w-3" />
-                Sejarah
-              </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-balance">
-                Perjalanan HIMA D3 SI
-              </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Himpunan Mahasiswa D3 Sistem Informasi didirikan pada tahun 2010 sebagai wadah untuk menampung aspirasi, mengembangkan kreativitas, dan meningkatkan kompetensi mahasiswa program studi D3 Sistem Informasi.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                Selama lebih dari satu dekade, HIMA D3 SI telah menjadi rumah bagi ratusan mahasiswa yang ingin mengembangkan diri di luar kegiatan akademik. Berbagai prestasi telah diraih, baik di tingkat regional maupun nasional.
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-brand glow-primary-sm">
-                  <Zap className="h-8 w-8 text-primary-foreground" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gradient">14+ Tahun</div>
-                  <div className="text-muted-foreground">Melayani Mahasiswa</div>
-                </div>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-border/50 bg-muted">
-                <Image
-                  src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=600&fit=crop"
-                  alt="Sejarah HIMA D3 SI"
-                  width={800}
-                  height={600}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section className="relative overflow-hidden py-16 md:py-20">
+        <div className="absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full bg-yellow-400/10 blur-[120px]" />
+        <div className="absolute bottom-10 right-0 h-64 w-64 rounded-full bg-orange-500/10 blur-[130px]" />
 
-      {/* Timeline Section */}
-      <section className="border-y border-border/50 bg-card/30 py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="mb-12 text-center">
-            <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Zap className="mr-1.5 h-3 w-3" />
-              Timeline
-            </Badge>
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Perjalanan Waktu
-            </h2>
-          </div>
-          <div className="relative">
-            <div className="absolute left-1/2 hidden h-full w-0.5 -translate-x-1/2 bg-gradient-to-b from-primary via-secondary to-primary/20 md:block" />
-            <div className="space-y-8 md:space-y-12">
-              {timeline.map((item, index) => (
-                <div
-                  key={item.year}
-                  className={`flex flex-col gap-4 md:flex-row md:gap-8 ${
-                    index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-                  }`}
-                >
-                  <div className={`flex-1 ${index % 2 === 0 ? "md:text-right" : ""}`}>
-                    <Card className="inline-block border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                      <CardContent className="p-6">
-                        <div className="mb-2 text-2xl font-bold text-gradient">{item.year}</div>
-                        <h3 className="mb-2 font-semibold">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
-                      </CardContent>
-                    </Card>
+        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
+          <div className="grid items-stretch gap-5 lg:grid-cols-[0.82fr_1.18fr]">
+            <div className="relative h-full overflow-hidden rounded-2xl bg-white/[0.03] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl md:p-6">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(250,204,21,0.16),transparent_42%)]" />
+              <div className="relative flex h-full min-h-[25rem] flex-col">
+                <Badge className="w-fit border-white/10 bg-white/[0.04] text-yellow-400 shadow-[0_0_24px_rgba(250,204,21,0.16)]">
+                  <Rocket className="mr-1.5 h-3 w-3" />
+                  Tentang Kabinet
+                </Badge>
+
+                <div className="flex flex-1 items-center justify-center py-5">
+                  <div className="relative">
+                    <div className="absolute inset-4 rounded-full bg-yellow-400/20 blur-3xl" />
+                    <div className="relative flex h-56 w-56 items-center justify-center rounded-2xl bg-black/30 p-7 shadow-[0_0_70px_rgba(250,204,21,0.16)] ring-1 ring-white/[0.06] md:h-64 md:w-64">
+                      <Image
+                        src={logoKabinet}
+                        alt="Logo Kabinet Vidyakatra"
+                        width={220}
+                        height={220}
+                        className="h-44 w-44 object-contain md:h-52 md:w-52"
+                      />
+                    </div>
                   </div>
-                  <div className="hidden h-4 w-4 shrink-0 self-center rounded-full bg-gradient-brand glow-primary-sm md:block" />
-                  <div className="flex-1" />
                 </div>
-              ))}
+
+                <a
+                  href="#struktur"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-5 py-2.5 text-sm font-bold text-black shadow-[0_12px_36px_rgba(250,204,21,0.22)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(250,204,21,0.3)]"
+                >
+                  Lihat Struktur Kabinet
+                  <Users className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </a>
+              </div>
+            </div>
+
+            <div className="relative flex h-full items-center overflow-hidden rounded-2xl bg-white/[0.03] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl md:p-6">
+              <div className="absolute right-0 top-0 h-48 w-48 bg-yellow-400/10 blur-[90px]" />
+              <div className="relative w-full space-y-5">
+                <div className="max-w-3xl space-y-3">
+                  <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl">
+                    Kabinet Vidyakatra
+                  </h2>
+                  <p className="text-sm font-bold uppercase leading-relaxed tracking-[0.18em] text-yellow-400 md:text-base">
+                    Bersatu dalam Pengetahuan, Bertumbuh dalam Kebersamaan Satu Tujuan
+                  </p>
+                  <p className="max-w-2xl text-sm leading-relaxed text-[#b5b5b5] md:text-base">
+                    Vidyakatra menjadi cerminan filosofi kabinet bahwa kemajuan tidak lahir dari kompetisi semata, tetapi dari sinergi antara pengetahuan, karakter, dan solidaritas.
+                  </p>
+                  <p className="inline-flex rounded-xl bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-400 shadow-[0_0_24px_rgba(250,204,21,0.12)]">
+                    Lead the Change with Smart Systems!
+                  </p>
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <div className="group rounded-2xl bg-white/[0.035] p-4 shadow-[0_16px_50px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_56px_rgba(250,204,21,0.12)]">
+                    <p className="text-sm font-semibold text-yellow-400">Makna Etimologis</p>
+                    <h3 className="mt-1 text-xl font-bold text-white">Kesatuan dalam Ilmu</h3>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                      {etymology.map((item) => (
+                        <div key={item.term} className="rounded-xl bg-black/25 p-3">
+                          <p className="font-semibold text-white">
+                            {item.term} <span className="text-yellow-400">{item.script}</span>
+                          </p>
+                          <p className="mt-1 text-xs leading-relaxed text-[#b5b5b5]">{item.meaning}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 rounded-xl bg-yellow-400/10 px-4 py-2.5 text-sm italic leading-relaxed text-[#d8d8d8]">
+                      "Bersatu dalam Kebijaksanaan dan Pengetahuan."
+                    </p>
+                  </div>
+
+                  <div className="group rounded-2xl bg-white/[0.035] p-4 shadow-[0_16px_50px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_56px_rgba(250,204,21,0.12)]">
+                    <p className="text-sm font-semibold text-yellow-400">Makna Filosofis</p>
+                    <h3 className="mt-1 text-xl font-bold text-white text-balance">
+                      Intelektualitas dan Solidaritas
+                    </h3>
+                    <p className="mt-4 text-sm leading-relaxed text-[#b5b5b5]">
+                      Vidyakatra menggambarkan harmoni antara ilmu, karakter, dan kebersamaan. Ilmu menjadi bermakna ketika tumbuh bersama solidaritas dan memberi dampak bagi mahasiswa D3 Sistem Informasi.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Vision & Mission Section */}
-      <section id="visi-misi" className="py-20 md:py-28">
+      <section id="visi-misi" className="border-y border-border/50 bg-card/30 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="grid gap-12 lg:grid-cols-2">
-            {/* Vision */}
+          <div className="grid gap-8 lg:grid-cols-2">
             <Card className="border-primary/20 bg-primary/5 backdrop-blur transition-all duration-300 hover:border-primary/40 hover:glow-primary-sm">
               <CardContent className="p-8">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-brand">
@@ -245,12 +360,11 @@ export default function ProfilPage() {
                 </div>
                 <h2 className="mb-4 text-2xl font-bold">Visi</h2>
                 <p className="text-lg leading-relaxed text-muted-foreground">
-                  Menjadi himpunan mahasiswa yang unggul, inovatif, dan profesional dalam mengembangkan potensi mahasiswa D3 Sistem Informasi untuk menghadapi tantangan era digital global.
+                  Mewujudkan Himpunan Mahasiswa D3 Sistem Informasi UPN "Veteran" Jakarta yang aktif dan kolaboratif sebagai wadah pengembangan, pemberdayaan, serta penyambung informasi bagi seluruh keluarga mahasiswa dalam kegiatan akademik maupun non-akademik yang inklusif, berkembang, dan berkelanjutan demi mencapai tujuan bersama.
                 </p>
               </CardContent>
             </Card>
 
-            {/* Mission */}
             <Card className="border-secondary/20 bg-secondary/5 backdrop-blur transition-all duration-300 hover:border-secondary/40 hover:glow-secondary">
               <CardContent className="p-8">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
@@ -259,7 +373,7 @@ export default function ProfilPage() {
                 <h2 className="mb-4 text-2xl font-bold">Misi</h2>
                 <ul className="space-y-3">
                   {missions.map((mission, index) => (
-                    <li key={index} className="flex items-start gap-3">
+                    <li key={mission} className="flex items-start gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-semibold text-primary">
                         {index + 1}
                       </span>
@@ -273,159 +387,143 @@ export default function ProfilPage() {
         </div>
       </section>
 
-      {/* Core Values Section */}
-      <section className="border-y border-border/50 bg-card/30 py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="mb-12 text-center">
-            <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Shield className="mr-1.5 h-3 w-3" />
-              Nilai-Nilai Inti
-            </Badge>
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Prinsip yang Kami Pegang
-            </h2>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {coreValues.map((value) => (
-              <Card key={value.name} className="group text-center border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:-translate-y-1 hover:glow-primary-sm">
-                <CardContent className="p-6">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 group-hover:bg-gradient-brand group-hover:border-transparent">
-                    <value.icon className="h-7 w-7 text-primary transition-colors group-hover:text-primary-foreground" />
-                  </div>
-                  <h3 className="mb-2 font-semibold">{value.name}</h3>
-                  <p className="text-sm text-muted-foreground">{value.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Leadership Section */}
-      <section id="struktur" className="py-20 md:py-28">
+      <section id="struktur" className="border-y border-border/50 bg-card/30 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-12 text-center">
             <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
               <Users className="mr-1.5 h-3 w-3" />
-              Struktur Organisasi
+              Struktur Kabinet
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Pengurus Inti
-            </h2>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Pengurus Inti</h2>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              Tim yang memimpin dan mengelola kegiatan HIMA D3 SI periode 2024-2025
+              Ketua, wakil ketua, koordinator, sekretaris, dan bendahara yang mengawal arah gerak serta tata kelola kabinet.
             </p>
           </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {leadership.map((leader) => (
-              <Card key={leader.name} className="group overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                <div className="aspect-square overflow-hidden">
-                  <Image
-                    src={leader.image}
-                    alt={leader.name}
-                    width={400}
-                    height={400}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                </div>
-                <CardContent className="p-6 text-center">
-                  <h3 className="font-semibold">{leader.name}</h3>
-                  <p className="text-sm text-gradient font-medium">{leader.position}</p>
-                  <p className="mt-3 text-xs italic text-muted-foreground">&ldquo;{leader.quote}&rdquo;</p>
+
+          <div className="mx-auto max-w-5xl space-y-12">
+            {cabinetLeads.map((section, sectionIndex) => (
+              section.people.map((person) => (
+                <LeaderProfile
+                  key={person.name}
+                  person={person}
+                  reversed={sectionIndex % 2 === 1}
+                />
+              ))
+            ))}
+          </div>
+
+          <div className="mt-12 space-y-6">
+            <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+              {coreTeams.slice(0, 2).map((unit) => (
+              <Card key={unit.name} className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
+                <CardContent className="p-6">
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
+                      <Image
+                        src={unit.logo}
+                        alt={`Logo ${unit.name}`}
+                        width={56}
+                        height={56}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30">
+                      {unit.type}
+                    </Badge>
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold">{unit.name}</h3>
+                  <p className="text-sm text-muted-foreground">{unit.description}</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {unit.programs.map((program) => (
+                      <Badge key={program} variant="secondary" className="text-xs">
+                        {program}
+                      </Badge>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-            ))}
+              ))}
+            </div>
+
+            <div className="mx-auto grid max-w-md gap-6">
+              {coreTeams.slice(2).map((unit) => (
+                <Card key={unit.name} className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
+                  <CardContent className="p-6">
+                    <div className="mb-5 flex items-start justify-between gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
+                        <Image
+                          src={unit.logo}
+                          alt={`Logo ${unit.name}`}
+                          width={56}
+                          height={56}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                      <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30">
+                        {unit.type}
+                      </Badge>
+                    </div>
+                    <h3 className="mb-2 text-lg font-semibold">{unit.name}</h3>
+                    <p className="text-sm text-muted-foreground">{unit.description}</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {unit.programs.map((program) => (
+                        <Badge key={program} variant="secondary" className="text-xs">
+                          {program}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Divisions Section */}
-      <section id="divisi" className="border-y border-border/50 bg-card/30 py-20 md:py-28">
+      <section id="divisi" className="py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-12 text-center">
             <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Code className="mr-1.5 h-3 w-3" />
-              Bidang Kerja
+              <Users className="mr-1.5 h-3 w-3" />
+              Unit Kerja Kabinet
             </Badge>
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Divisi Organisasi
+              Departemen & Biro
             </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+              Empat departemen dan dua biro yang menjalankan program kerja sesuai kebutuhan organisasi.
+            </p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            {divisions.map((division) => (
-              <Card key={division.name} className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {workUnits.map((unit) => (
+              <Card key={unit.name} className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-all duration-300 group-hover:bg-gradient-brand group-hover:border-transparent">
-                      <division.icon className="h-7 w-7 text-primary transition-colors group-hover:text-primary-foreground" />
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
+                      <Image
+                        src={unit.logo}
+                        alt={`Logo ${unit.name}`}
+                        width={56}
+                        height={56}
+                        className="h-full w-full object-contain"
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">{division.name}</h3>
-                      <p className="text-sm text-muted-foreground">{division.description}</p>
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {division.programs.map((program) => (
-                          <Badge key={program} className="text-xs bg-secondary/20 text-secondary hover:bg-secondary/30">
-                            {program}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                    <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30">
+                      {unit.type}
+                    </Badge>
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold">{unit.name}</h3>
+                  <p className="text-sm text-muted-foreground">{unit.description}</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {unit.programs.map((program) => (
+                      <Badge key={program} variant="secondary" className="text-xs">
+                        {program}
+                      </Badge>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Achievements Section */}
-      <section className="py-20 md:py-28">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="space-y-6">
-              <Badge className="border-primary/30 bg-primary/10 text-primary">
-                <Award className="mr-1.5 h-3 w-3" />
-                Prestasi
-              </Badge>
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-balance">
-                Capaian yang Membanggakan
-              </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Berbagai prestasi telah diraih oleh anggota HIMA D3 SI dalam berbagai kompetisi di tingkat regional hingga nasional.
-              </p>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center p-4 rounded-xl border border-border/50 bg-card/50 transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                  <div className="text-4xl font-bold text-gradient">50+</div>
-                  <div className="text-sm text-muted-foreground">Prestasi Diraih</div>
-                </div>
-                <div className="text-center p-4 rounded-xl border border-border/50 bg-card/50 transition-all duration-300 hover:border-secondary/30 hover:glow-secondary">
-                  <div className="text-4xl font-bold text-gradient">25+</div>
-                  <div className="text-sm text-muted-foreground">Kompetisi Diikuti</div>
-                </div>
-                <div className="text-center p-4 rounded-xl border border-border/50 bg-card/50 transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                  <div className="text-4xl font-bold text-gradient">10+</div>
-                  <div className="text-sm text-muted-foreground">Juara Nasional</div>
-                </div>
-                <div className="text-center p-4 rounded-xl border border-border/50 bg-card/50 transition-all duration-300 hover:border-secondary/30 hover:glow-secondary">
-                  <div className="text-4xl font-bold text-gradient">100+</div>
-                  <div className="text-sm text-muted-foreground">Sertifikat</div>
-                </div>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-border/50 bg-muted">
-                <Image
-                  src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=600&fit=crop"
-                  alt="Prestasi HIMA D3 SI"
-                  width={800}
-                  height={600}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-6 -left-6 rounded-xl border border-primary/30 bg-card p-6 shadow-xl glow-primary-sm">
-                <Award className="h-10 w-10 text-primary" />
-              </div>
-            </div>
           </div>
         </div>
       </section>

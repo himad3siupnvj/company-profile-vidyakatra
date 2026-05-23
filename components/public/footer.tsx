@@ -1,12 +1,14 @@
 import Link from "next/link"
-import { Zap, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Github } from "lucide-react"
+import Image from "next/image"
+import logoHima from "@/assets/hima.png"
+import logoKabinet from "@/assets/logoKabinet.png"
+import { Clock, Instagram, Mail, MapPin, Music2, Youtube, Linkedin } from "lucide-react"
 
 const quickLinks = [
   { href: "/", label: "Beranda" },
   { href: "/profil", label: "Profil" },
-  { href: "/berita", label: "Berita" },
-  { href: "/galeri", label: "Galeri" },
-  { href: "/kontak", label: "Kontak" },
+  { href: "/berita", label: "Berita Acara" },
+  { href: "/kontak", label: "Collaborate" },
 ]
 
 const organizationLinks = [
@@ -20,27 +22,44 @@ const socialLinks = [
   { href: "https://instagram.com", icon: Instagram, label: "Instagram" },
   { href: "https://youtube.com", icon: Youtube, label: "YouTube" },
   { href: "https://linkedin.com", icon: Linkedin, label: "LinkedIn" },
-  { href: "https://github.com", icon: Github, label: "GitHub" },
+  { href: "https://tiktok.com", icon: Music2, label: "TikTok" },
 ]
 
 export function Footer() {
   return (
     <footer className="border-t border-border/50 bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:py-16">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 md:px-6 lg:pb-12 lg:pt-10">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[1.7fr_0.9fr_0.9fr_1.25fr] lg:gap-5">
           {/* Brand */}
           <div className="space-y-4">
-            <Link href="/" className="group flex items-center gap-3">
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-brand transition-all duration-300 group-hover:glow-primary-sm">
-                <Zap className="h-6 w-6 text-primary-foreground" />
+            <Link href="/" className="group flex items-start gap-3">
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-background transition-transform duration-300 group-hover:scale-105">
+                  <Image
+                    src={logoHima}
+                    alt="Logo HIMA D3 SI UPNVJ"
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-background transition-transform duration-300 group-hover:scale-105">
+                  <Image
+                    src={logoKabinet}
+                    alt="Logo Kabinet Vidyakatra"
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold tracking-wide">HIMA D3 SI</span>
-                <span className="text-xs text-muted-foreground">Sistem Informasi</span>
+              <div className="flex min-w-0 max-w-[18rem] flex-col pt-0.5">
+                <span className="text-sm font-bold leading-snug tracking-wide sm:text-base">HIMA D3 Sistem Informasi UPNVJ</span>
+                <span className="text-xs text-primary">Kabinet Vidyakatra</span>
               </div>
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Himpunan Mahasiswa D3 Sistem Informasi, wadah pengembangan potensi dan kreativitas mahasiswa dalam bidang teknologi informasi.
+            <p className="max-w-[19rem] text-sm leading-relaxed text-[#b8b8b8]">
+              Himpunan Mahasiswa D3 Sistem Informasi UPNVJ, wadah pengembangan potensi dan kreativitas mahasiswa dalam bidang teknologi informasi.
             </p>
             <div className="flex gap-2">
               {socialLinks.map((social) => (
@@ -49,7 +68,7 @@ export function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-muted/50 text-muted-foreground transition-all duration-300 hover:border-primary/50 hover:bg-primary/10 hover:text-primary hover:glow-primary-sm"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-muted/50 text-[#b8b8b8] transition-all duration-200 hover:scale-105 hover:border-primary/60 hover:bg-primary/10 hover:text-primary hover:shadow-[0_0_18px_rgba(234,179,8,0.22)]"
                   aria-label={social.label}
                 >
                   <social.icon className="h-4 w-4" />
@@ -66,7 +85,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground transition-colors duration-300 hover:text-primary"
+                    className="text-sm text-[#b8b8b8] transition-colors duration-300 hover:text-primary"
                   >
                     {link.label}
                   </Link>
@@ -83,7 +102,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground transition-colors duration-300 hover:text-primary"
+                    className="text-sm text-[#b8b8b8] transition-colors duration-300 hover:text-primary"
                   >
                     {link.label}
                   </Link>
@@ -96,39 +115,29 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">Kontak</h3>
             <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-sm text-muted-foreground">
+              <li className="flex items-start gap-3 text-sm text-[#b8b8b8]">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Gedung Fakultas Vokasi, Kampus ITS Sukolilo, Surabaya 60111</span>
+                <span>UPN Veteran Jakarta, Pondok Labu, Jakarta Selatan</span>
               </li>
-              <li className="flex items-center gap-3 text-sm text-muted-foreground">
+              <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">
                 <Mail className="h-4 w-4 shrink-0 text-primary" />
-                <a href="mailto:himad3si@its.ac.id" className="hover:text-primary transition-colors duration-300">
-                  himad3si@its.ac.id
+                <a href="mailto:himpunand3si@gmail.com" className="transition-colors duration-300 hover:text-primary">
+                  himpunand3si@gmail.com
                 </a>
               </li>
-              <li className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4 shrink-0 text-primary" />
-                <a href="tel:+6231123456" className="hover:text-primary transition-colors duration-300">
-                  +62 31 123 456
-                </a>
+              <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">
+                <Clock className="h-4 w-4 shrink-0 text-primary" />
+                <span>Senin - Jumat, 08.00 - 16.00 WIB</span>
               </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 md:flex-row">
-          <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} HIMA D3 Sistem Informasi. All rights reserved.
+        <div className="mt-10 flex flex-col gap-2 border-t border-border/50 pt-6 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm text-[#b8b8b8]">
+            &copy; {new Date().getFullYear()} HIMA D3 Sistem Informasi UPNVJ. Kabinet Vidyakatra.
           </p>
-          <div className="flex gap-6">
-            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300">
-              Terms of Service
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

@@ -1,121 +1,222 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, X, Zap } from "lucide-react"
+import { ChevronDown, Instagram, Linkedin, Menu, Music2, X, Youtube } from "lucide-react"
 import { cn } from "@/lib/utils"
+import logoHima from "@/assets/hima.png"
+import logoKabinet from "@/assets/logoKabinet.png"
 
-const navLinks = [
+const navItems = [
   { href: "/", label: "Beranda" },
   { href: "/profil", label: "Profil" },
-  { href: "/berita", label: "Berita" },
-  { href: "/galeri", label: "Galeri" },
-  { href: "/kontak", label: "Kontak" },
+  { href: "/berita", label: "Berita Acara" },
+]
+
+const collaborateLinks = [
+  { href: "https://instagram.com/himad3si_its", label: "Instagram", icon: Instagram },
+  { href: "https://youtube.com", label: "YouTube", icon: Youtube },
+  { href: "https://linkedin.com", label: "LinkedIn", icon: Linkedin },
+  { href: "https://tiktok.com", label: "TikTok", icon: Music2 },
 ]
 
 export function Navbar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [isCollaborateOpen, setIsCollaborateOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/45 backdrop-blur-xl supports-[backdrop-filter]:bg-background/25">
+      <div className="mx-auto grid h-14 max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 md:px-6">
         {/* Logo */}
-        <Link href="/" className="group flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-brand transition-all duration-300 group-hover:glow-primary-sm">
-            <Zap className="h-5 w-5 text-primary-foreground" />
+        <Link href="/" className="group flex min-w-0 items-center gap-2">
+          <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background transition-transform duration-300 group-hover:scale-105">
+            <Image
+              src={logoHima}
+              alt="Logo Himpunan Mahasiswa D3 Sistem Informasi UPNVJ"
+              width={36}
+              height={36}
+              className="h-full w-full object-contain"
+            />
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold leading-tight tracking-wide">HIMA D3 SI</span>
-            <span className="text-xs text-muted-foreground">Sistem Informasi</span>
+          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background transition-transform duration-300 group-hover:scale-105">
+            <Image
+              src={logoKabinet}
+              alt="Logo Kabinet Vidyakatra"
+              width={36}
+              height={36}
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <div className="hidden min-w-0 flex-col lg:flex lg:max-w-[250px] xl:max-w-[420px]">
+            <span className="whitespace-nowrap text-sm font-bold leading-tight tracking-wide">
+              <span className="xl:hidden">HIMA D3 Sistem Informasi UPNVJ</span>
+              <span className="hidden xl:inline">Himpunan Mahasiswa D3 Sistem Informasi UPNVJ</span>
+            </span>
+            <span className="whitespace-nowrap text-xs font-medium text-primary">Kabinet Vidyakatra</span>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "relative px-4 py-2 text-sm font-medium transition-all duration-300",
-                pathname === link.href
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
+        <nav className="hidden min-w-0 items-center justify-end gap-0.5 rounded-full border border-white/10 bg-white/[0.03] px-1.5 py-1 shadow-[0_12px_36px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex lg:gap-1 lg:px-2">
+          {navItems.map((item) => {
+            const isActive =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname === item.href
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsCollaborateOpen(false)}
+                className={cn(
+                  "group relative whitespace-nowrap px-2.5 py-1.5 text-sm font-medium transition-colors duration-200 ease-out lg:px-3 xl:px-4",
+                  isActive
+                    ? "text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.55)]"
+                    : "text-[#b8b8b8] hover:text-white"
+                )}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-1/2 h-px w-7 -translate-x-1/2 rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.7)]" />
+                )}
+              </Link>
+            )
+          })}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsCollaborateOpen((open) => !open)}
+              className="group relative inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-sm font-medium text-[#b8b8b8] transition-colors duration-200 ease-out hover:text-white lg:px-3 xl:px-4"
+              aria-expanded={isCollaborateOpen}
             >
-              {link.label}
-              {pathname === link.href && (
-                <span className="absolute bottom-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-primary glow-primary-sm" />
-              )}
-            </Link>
-          ))}
+              Collaborate
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-200",
+                  isCollaborateOpen && "rotate-180"
+                )}
+              />
+            </button>
+            {isCollaborateOpen && (
+              <div className="absolute right-0 top-full mt-3 w-48 overflow-hidden rounded-xl border border-white/10 bg-background/95 p-2 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+                {collaborateLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[#b8b8b8] transition-colors duration-200 hover:bg-white/[0.04] hover:text-yellow-400"
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
-        {/* Desktop CTA */}
-        <div className="hidden items-center gap-3 md:flex">
-          <Link href="/admin">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:glow-primary-sm transition-all duration-300"
-            >
-              Admin
-            </Button>
-          </Link>
-        </div>
-
         {/* Mobile Menu */}
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" className="hover:bg-muted">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] border-l border-border/50 bg-background p-0">
-            <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between border-b border-border/50 p-4">
-                <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-brand">
-                    <Zap className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <span className="font-bold tracking-wide">HIMA D3 SI</span>
-                </Link>
-                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="hover:bg-muted">
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-              <nav className="flex flex-1 flex-col gap-1 p-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "rounded-lg px-4 py-3 text-sm font-medium transition-all duration-300",
-                      pathname === link.href
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    {link.label}
+        <div className="shrink-0 md:hidden">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon" className="hover:bg-muted">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] border-l border-white/10 bg-background p-0">
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between border-b border-white/10 p-4">
+                  <Link href="/" className="flex min-w-0 items-center gap-3" onClick={() => setIsOpen(false)}>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-card">
+                        <Image
+                          src={logoHima}
+                          alt="Logo Himpunan Mahasiswa D3 Sistem Informasi UPNVJ"
+                          width={36}
+                          height={36}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-card">
+                        <Image
+                          src={logoKabinet}
+                          alt="Logo Kabinet Vidyakatra"
+                          width={36}
+                          height={36}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block truncate text-sm font-bold tracking-wide">
+                        HIMA D3 SI UPNVJ
+                      </span>
+                      <span className="block text-xs text-[#b8b8b8]">Kabinet Vidyakatra</span>
+                    </div>
                   </Link>
-                ))}
-              </nav>
-              <div className="border-t border-border/50 p-4">
-                <Link href="/admin" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full bg-gradient-brand text-primary-foreground hover:opacity-90">
-                    Admin Dashboard
+                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="hover:bg-muted">
+                    <X className="h-5 w-5" />
                   </Button>
-                </Link>
+                </div>
+                <nav className="flex flex-1 flex-col gap-1 p-4">
+                  {navItems.map((item) => {
+                    const isActive =
+                      item.href === "/"
+                        ? pathname === "/"
+                        : pathname === item.href
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className={cn(
+                          "group relative px-1 py-3 text-sm font-medium transition-colors duration-200 ease-out",
+                          isActive
+                            ? "text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.55)]"
+                            : "text-[#b8b8b8] hover:text-white"
+                        )}
+                      >
+                        {item.label}
+                        {isActive && (
+                          <span className="absolute bottom-1 left-1 h-px w-7 rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.7)]" />
+                        )}
+                      </Link>
+                    )
+                  })}
+                  <div className="mt-4 border-t border-white/10 pt-4">
+                    <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-yellow-400">
+                      Collaborate
+                    </p>
+                    <div className="mt-2 grid gap-1">
+                      {collaborateLinks.map((link) => (
+                        <a
+                          key={link.label}
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 rounded-lg px-1 py-3 text-sm font-medium text-[#b8b8b8] transition-colors duration-200 hover:text-white"
+                        >
+                          <link.icon className="h-4 w-4 text-yellow-400" />
+                          {link.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </nav>
               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   )

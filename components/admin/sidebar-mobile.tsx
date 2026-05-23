@@ -1,7 +1,10 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
+import logoHima from "@/assets/hima.png"
+import logoKabinet from "@/assets/logoKabinet.png"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -9,10 +12,9 @@ import {
   Users,
   Target,
   Newspaper,
-  Image,
+  Image as ImageIcon,
   Settings,
   UserCog,
-  GraduationCap,
 } from "lucide-react"
 
 const navigation = [
@@ -20,8 +22,8 @@ const navigation = [
   { name: "Home Page", href: "/admin/home", icon: Home },
   { name: "Organization", href: "/admin/organization", icon: Users },
   { name: "Vision & Mission", href: "/admin/vision-mission", icon: Target },
-  { name: "News & Events", href: "/admin/news", icon: Newspaper },
-  { name: "Media Gallery", href: "/admin/gallery", icon: Image },
+  { name: "Berita Acara", href: "/admin/news", icon: Newspaper },
+  { name: "Galeri Media", href: "/admin/gallery", icon: ImageIcon },
   { name: "Settings", href: "/admin/settings", icon: Settings },
   { name: "User Management", href: "/admin/users", icon: UserCog },
 ]
@@ -34,12 +36,17 @@ export function AdminSidebarMobile() {
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-sidebar-border px-4">
         <Link href="/admin" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <GraduationCap className="h-5 w-5 text-primary-foreground" />
+          <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
+              <Image src={logoHima} alt="Logo HIMA D3 SI UPNVJ" width={36} height={36} className="h-full w-full object-contain" />
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-background">
+              <Image src={logoKabinet} alt="Logo Kabinet Vidyakatra" width={36} height={36} className="h-full w-full object-contain" />
+            </div>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-sidebar-foreground">HIMA D3 SI</span>
-            <span className="text-xs text-sidebar-muted">Admin Panel</span>
+            <span className="text-sm font-bold text-sidebar-foreground">HIMA D3 SI UPNVJ</span>
+            <span className="text-xs text-sidebar-muted">Kabinet Vidyakatra CMS</span>
           </div>
         </Link>
       </div>

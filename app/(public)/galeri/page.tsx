@@ -146,7 +146,7 @@ export default function GaleriPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-28">
+      <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden py-16 md:py-20">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px]" />
         <div className="absolute left-1/4 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]" />
         <div className="absolute right-1/4 bottom-0 h-64 w-64 rounded-full bg-secondary/10 blur-[100px]" />
@@ -307,7 +307,7 @@ export default function GaleriPage() {
       </section>
 
       {/* Video Section */}
-      <section className="py-20 md:py-28">
+      <section className="py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-12 text-center">
             <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">

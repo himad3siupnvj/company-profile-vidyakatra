@@ -8,20 +8,20 @@ import { Badge } from "@/components/ui/badge"
 const upcomingEvents = [
   {
     id: 1,
-    title: "Seminar IT 2024",
-    date: "Dec 15, 2024",
+    title: "Rapat Kabinet Vidyakatra",
+    date: "Jun 15, 2026",
     status: "upcoming",
   },
   {
     id: 2,
-    title: "Workshop Web Development",
-    date: "Dec 20, 2024",
+    title: "Company Profile Release",
+    date: "Jun 20, 2026",
     status: "upcoming",
   },
   {
     id: 3,
-    title: "Annual Meeting",
-    date: "Dec 28, 2024",
+    title: "Evaluasi Tengah Kabinet",
+    date: "Jun 28, 2026",
     status: "planning",
   },
 ]
@@ -33,7 +33,7 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back! Here&apos;s an overview of HIMA D3 Sistem Informasi.
+          Welcome back! Here&apos;s an overview of HIMA D3 Sistem Informasi UPNVJ - Kabinet Vidyakatra.
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
           iconColor="bg-primary/10 text-primary"
         />
         <StatsCard
-          title="Departments"
+          title="Unit Kerja"
           value={8}
           change="All active"
           changeType="neutral"
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
           iconColor="bg-green-100 text-green-700"
         />
         <StatsCard
-          title="Articles Published"
+          title="Berita Acara"
           value={42}
           change="+5 this month"
           changeType="positive"
@@ -84,10 +84,10 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           <QuickActions />
 
-          {/* Upcoming Events */}
+          {/* Upcoming Agenda */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">Upcoming Events</CardTitle>
+              <CardTitle className="text-lg font-semibold">Agenda Terdekat</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {upcomingEvents.map((event) => (
