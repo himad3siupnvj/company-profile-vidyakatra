@@ -238,41 +238,6 @@ export default function BeritaPage() {
           )}
         </div>
       </section>
-
-      {/* Subscribe Section */}
-      <section className="relative overflow-hidden py-16 md:py-20">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.2)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[150px]" />
-        
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
-          <Card className="overflow-hidden border-primary/20 bg-card/80 backdrop-blur">
-            <CardContent className="p-8 md:p-12">
-              <div className="mx-auto max-w-2xl text-center">
-                <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-                  <Cpu className="mr-1.5 h-3 w-3" />
-                  Newsletter
-                </Badge>
-                <h2 className="text-2xl font-bold md:text-3xl">
-                  Jangan Lewatkan Informasi Terbaru
-                </h2>
-                <p className="mt-4 text-muted-foreground">
-                  Berlangganan newsletter kami untuk mendapatkan update berita acara dan kegiatan langsung di email Anda
-                </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                  <Input
-                    type="email"
-                    placeholder="Masukkan email Anda"
-                    className="sm:w-80 bg-muted/50 border-border/50 focus:border-primary/50"
-                  />
-                  <Button className="bg-gradient-brand text-primary-foreground hover:opacity-90 transition-all duration-300 hover:glow-primary-sm">
-                    Berlangganan
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
     </>
   )
 }

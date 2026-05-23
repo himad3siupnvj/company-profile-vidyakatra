@@ -16,7 +16,7 @@ const socialMedia = [
     handle: "@himad3si_its",
     value: "2.5K+",
     caption: "akun terjangkau",
-    url: "https://instagram.com/himad3si_its",
+    url: "https://www.instagram.com/himad3si_upnvj?igsh=cDEzaTl3Y3dnbm0=",
     className: "border-pink-500/30 bg-pink-500/10 text-pink-300",
   },
   {
@@ -25,7 +25,7 @@ const socialMedia = [
     handle: "HIMA D3SI UPNVJ",
     value: "50+",
     caption: "konten kegiatan",
-    url: "https://youtube.com",
+    url: "https://youtube.com/@himad3siupnvj?si=8PEq4uJAALyE4cHJ",
     className: "border-red-500/30 bg-red-500/10 text-red-300",
   },
   {
@@ -34,7 +34,7 @@ const socialMedia = [
     handle: "HIMA D3SI UPNVJ",
     value: "20+",
     caption: "jejaring profesional",
-    url: "https://linkedin.com",
+    url: "https://www.linkedin.com/company/hima-d3si-upnvj-himpunan-mahasiswa-d3-sistem-informasi-upnvj/",
     className: "border-blue-500/30 bg-blue-500/10 text-blue-300",
   },
   {
@@ -43,7 +43,7 @@ const socialMedia = [
     handle: "@himad3si",
     value: "600K+",
     caption: "views each year",
-    url: "https://tiktok.com",
+    url: "https://www.tiktok.com/@himad3si_upnvj?_r=1&_t=ZS-96bDCzDu1o1",
     className: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200",
   },
 ]

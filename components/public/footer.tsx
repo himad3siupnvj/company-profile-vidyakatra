@@ -3,6 +3,7 @@ import Image from "next/image"
 import logoHima from "@/assets/hima.png"
 import logoKabinet from "@/assets/logoKabinet.png"
 import { Clock, Instagram, Mail, MapPin, Music2, Youtube, Linkedin } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const quickLinks = [
   { href: "/", label: "Beranda" },
@@ -19,11 +20,40 @@ const organizationLinks = [
 ]
 
 const socialLinks = [
-  { href: "https://instagram.com", icon: Instagram, label: "Instagram" },
-  { href: "https://youtube.com", icon: Youtube, label: "YouTube" },
-  { href: "https://linkedin.com", icon: Linkedin, label: "LinkedIn" },
-  { href: "https://tiktok.com", icon: Music2, label: "TikTok" },
+  { href: "https://www.instagram.com/himad3si_upnvj?igsh=cDEzaTl3Y3dnbm0=", icon: Instagram, label: "Instagram" },
+  { href: "https://youtube.com/@himad3siupnvj?si=8PEq4uJAALyE4cHJ", icon: Youtube, label: "YouTube" },
+  { href: "https://www.linkedin.com/company/hima-d3si-upnvj-himpunan-mahasiswa-d3-sistem-informasi-upnvj/", icon: Linkedin, label: "LinkedIn" },
+  { href: "https://www.tiktok.com/@himad3si_upnvj?_r=1&_t=ZS-96bDCzDu1o1", icon: Music2, label: "TikTok" },
 ]
+
+function LogoBadge({
+  src,
+  alt,
+  className,
+  imageClassName,
+}: {
+  src: typeof logoHima
+  alt: string
+  className?: string
+  imageClassName?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_8px_22px_rgba(0,0,0,0.24)] ring-1 ring-white/30 transition-transform duration-300 group-hover:scale-105",
+        className
+      )}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        width={44}
+        height={44}
+        className={cn("h-[82%] w-[82%] object-contain", imageClassName)}
+      />
+    </div>
+  )
+}
 
 export function Footer() {
   return (
@@ -34,24 +64,13 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="group flex items-start gap-3">
               <div className="flex shrink-0 items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-background transition-transform duration-300 group-hover:scale-105">
-                  <Image
-                    src={logoHima}
-                    alt="Logo HIMA D3 SI UPNVJ"
-                    width={40}
-                    height={40}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-background transition-transform duration-300 group-hover:scale-105">
-                  <Image
-                    src={logoKabinet}
-                    alt="Logo Kabinet Vidyakatra"
-                    width={40}
-                    height={40}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
+                <LogoBadge src={logoHima} alt="Logo HIMA D3 SI UPNVJ" className="h-10 w-10 bg-yellow-300" />
+                <LogoBadge
+                  src={logoKabinet}
+                  alt="Logo Kabinet Vidyakatra"
+                  className="h-10 w-10"
+                  imageClassName="h-[90%] w-[90%] -translate-x-[2px] -translate-y-[1px]"
+                />
               </div>
               <div className="flex min-w-0 max-w-[18rem] flex-col pt-0.5">
                 <span className="text-sm font-bold leading-snug tracking-wide sm:text-base">HIMA D3 Sistem Informasi UPNVJ</span>
@@ -117,7 +136,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-[#b8b8b8]">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>UPN Veteran Jakarta, Pondok Labu, Jakarta Selatan</span>
+                <span>Jl. R.S. Fatmawati No.1, Pondok Labu, Kec. Cilandak, Kota Jakarta Selatan, DKI Jakarta 12450</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">
                 <Mail className="h-4 w-4 shrink-0 text-primary" />
@@ -127,7 +146,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">
                 <Clock className="h-4 w-4 shrink-0 text-primary" />
-                <span>Senin - Jumat, 08.00 - 16.00 WIB</span>
+                <span>Senin - Jumat, 08.00 - 19.00 WIB</span>
               </li>
             </ul>
           </div>
