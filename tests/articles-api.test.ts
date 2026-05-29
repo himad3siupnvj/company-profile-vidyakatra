@@ -1,0 +1,120 @@
+import { NextRequest, NextResponse } from "next/server"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+
+const mocks = vi.hoisted(() => ({
+  getDb: vi.fn(),
+  requireApiPermission: vi.fn(),
+}))
+
+vi.mock("@/db", () => ({
+  getDb: mocks.getDb,
+}))
+
+vi.mock("@/lib/api-guard", () => ({
+  requireApiPermission: mocks.requireApiPermission,
+}))
+
+import { DELETE, PATCH, POST, PUT } from "@/app/api/admin/articles/route"
+
+function jsonRequest(method: string, body: unknown, url = "http://localhost/api/admin/articles") {
+  return new NextRequest(url, {
+    method,
+    body: JSON.stringify(body),
+    headers: { "content-type": "application/json" },
+  })
+}
+
+describe("articles API", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.requireApiPermission.mockResolvedValue({
+      user: { id: "user-1" },
+      response: null,
+    })
+  })
+
+  it("rejects article creation without permission", async () => {
+    mocks.requireApiPermission.mockResolvedValue({
+      user: null,
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    })
+
+    const response = await POST(jsonRequest("POST", { title: "Draft" }))
+
+    expect(response.status).toBe(403)
+    expect(mocks.getDb).not.toHaveBeenCalled()
+  })
+
+  it("validates create payload before touching the database", async () => {
+    const response = await POST(jsonRequest("POST", { title: "   " }))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Title is required" })
+    expect(mocks.getDb).not.toHaveBeenCalled()
+  })
+
+  it("validates update payload before touching the database", async () => {
+    const response = await PUT(jsonRequest("PUT", { id: "article-1", title: "   " }))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Valid id and title are required" })
+    expect(mocks.getDb).not.toHaveBeenCalled()
+  })
+
+  it("soft deletes articles through update, not hard delete", async () => {
+    const where = vi.fn().mockResolvedValue(undefined)
+    const set = vi.fn(() => ({ where }))
+    const update = vi.fn(() => ({ set }))
+    mocks.getDb.mockReturnValue({ update })
+
+    const response = await DELETE(new NextRequest("http://localhost/api/admin/articles?id=article-1", { method: "DELETE" }))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(update).toHaveBeenCalledTimes(1)
+    expect(set.mock.calls[0][0]).toMatchObject({ deletedAt: expect.any(Date), updatedAt: expect.any(Date) })
+  })
+
+  it("updates workflow status without inserting a new article", async () => {
+    const now = new Date("2026-05-29T10:00:00.000Z")
+    const article = {
+      id: "article-1",
+      title: "Draft Berita",
+      slug: "draft-berita",
+      excerpt: "Ringkasan",
+      content: { type: "doc", content: [{ id: "p1", type: "paragraph", text: "Isi berita" }] },
+      categoryId: null,
+      status: "submitted",
+      authorId: null,
+      authorName: "Tim Media",
+      reviewerId: null,
+      thumbnailUrl: null,
+      thumbnailAlt: null,
+      readTime: "1 min",
+      isFeatured: false,
+      views: 0,
+      publishedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    }
+    const updated = { ...article, status: "published", reviewerId: "user-1", publishedAt: now }
+    const limit = vi.fn().mockResolvedValue([article])
+    const select = vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn(() => ({ limit })) })) }))
+    const returning = vi.fn().mockResolvedValue([updated])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    const update = vi.fn(() => ({ set }))
+    const insert = vi.fn()
+    mocks.getDb.mockReturnValue({ select, update, insert })
+
+    const response = await PATCH(jsonRequest("PATCH", { id: "article-1", action: "approve" }))
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.article.status).toBe("published")
+    expect(update).toHaveBeenCalledTimes(1)
+    expect(set.mock.calls[0][0]).toMatchObject({ status: "published", reviewerId: "user-1" })
+    expect(insert).not.toHaveBeenCalled()
+  })
+})
