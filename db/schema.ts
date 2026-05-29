@@ -1,135 +1,318 @@
 import {
   boolean,
+  date,
   integer,
   jsonb,
   pgEnum,
   pgTable,
-  serial,
   text,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
-} from "drizzle-orm/pg-core"
+} from "drizzle-orm/pg-core";
 
-export const articleStatus = pgEnum("article_status", ["draft", "published", "archived"])
-export const eventStatus = pgEnum("event_status", ["upcoming", "ongoing", "completed", "cancelled"])
-export const mediaType = pgEnum("media_type", ["image", "video"])
-export const userRole = pgEnum("user_role", ["super_admin", "media_admin", "secretary_admin"])
-export const userStatus = pgEnum("user_status", ["active", "inactive"])
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+export const userStatus = pgEnum("user_status", [
+  "unclaimed",
+  "active",
+  "inactive",
+]);
+
+export const userRole = pgEnum("user_role", [
+  "administrator",
+  "ketua",
+  "wakil_ketua",
+  "koordinator",
+  "wakil_koordinator",
+  "sekretaris",
+  "bendahara",
+  "kepala_departemen",
+  "wakil_kepala_departemen",
+  "kepala_biro",
+  "wakil_kepala_biro",
+  "kepala_divisi",
+  "staff",
+]);
+
+export const periodStatus = pgEnum("period_status", [
+  "upcoming",
+  "active",
+  "archived",
+]);
+
+export const orgUnitType = pgEnum("org_unit_type", ["department", "bureau"]);
+
+export const articleStatus = pgEnum("article_status", [
+  "draft",
+  "submitted",
+  "approved",
+  "rejected",
+  "published",
+  "archived",
+]);
+
+// ─── Periods ──────────────────────────────────────────────────────────────────
+
+export const periods = pgTable("periods", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 80 }).notNull(), // e.g. "2024/2025"
+  status: periodStatus("status").notNull().default("upcoming"),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ─── Members ──────────────────────────────────────────────────────────────────
+// Source of truth organisasi. Tidak semua member harus punya akun CMS.
+
+export const members = pgTable("members", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  // jabatan/posisi organisasi (bukan role sistem)
+  position: varchar("position", { length: 160 }).notNull(),
+  organizationalUnitId: uuid("organizational_unit_id"),  // FK ditambah setelah tabel didefinisikan
+  divisionId: uuid("division_id"),                       // FK ditambah setelah tabel didefinisikan
+  periodId: uuid("period_id").references(() => periods.id, {
+    onDelete: "set null",
+  }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 40 }),
+  // null = tampilkan inisial nama sebagai fallback di UI
+  avatarUrl: text("avatar_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  joinedAt: timestamp("joined_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: uuid("deleted_by"),
+});
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+// Akun login CMS. Selalu terhubung ke member via memberId.
 
 export const users = pgTable(
   "users",
   {
-    id: serial("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     name: varchar("name", { length: 160 }).notNull(),
     email: varchar("email", { length: 255 }).notNull(),
-    passwordHash: text("password_hash").notNull(),
-    role: userRole("role").notNull().default("media_admin"),
-    status: userStatus("status").notNull().default("active"),
-    avatarUrl: text("avatar_url"),
+    // null = belum diklaim (unclaimed)
+    passwordHash: text("password_hash"),
+    // one-time claim code; visible admin di dashboard, diinvalidasi setelah klaim
+    claimCode: text("claim_code"),
+    role: userRole("role").notNull().default("staff"),
+    status: userStatus("status").notNull().default("unclaimed"),
+    // FK ke members — user selalu terhubung ke data member organisasi
+    memberId: uuid("member_id").references(() => members.id, {
+      onDelete: "set null",
+    }),
+    periodId: uuid("period_id").references(() => periods.id, {
+      onDelete: "set null",
+    }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
-  (table) => [uniqueIndex("users_email_idx").on(table.email)]
-)
+  (table) => [uniqueIndex("users_email_idx").on(table.email)],
+);
 
-export const siteSettings = pgTable("site_settings", {
-  id: serial("id").primaryKey(),
-  key: varchar("key", { length: 120 }).notNull().unique(),
-  value: jsonb("value").notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
+// ─── Organizational Units ─────────────────────────────────────────────────────
 
-export const departments = pgTable("departments", {
-  id: serial("id").primaryKey(),
+export const organizationalUnits = pgTable("organizational_units", {
+  id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 160 }).notNull(),
+  type: orgUnitType("type").notNull(), // "department" | "bureau"
+  periodId: uuid("period_id").references(() => periods.id, {
+    onDelete: "set null",
+  }),
   description: text("description"),
   color: varchar("color", { length: 80 }),
   sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: uuid("deleted_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+});
 
-export const members = pgTable("members", {
-  id: serial("id").primaryKey(),
+// ─── Divisions ────────────────────────────────────────────────────────────────
+
+export const divisions = pgTable("divisions", {
+  id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 160 }).notNull(),
-  position: varchar("position", { length: 160 }).notNull(),
-  departmentId: integer("department_id").references(() => departments.id, { onDelete: "set null" }),
-  email: varchar("email", { length: 255 }),
-  phone: varchar("phone", { length: 40 }),
-  avatarUrl: text("avatar_url"),
-  quote: text("quote"),
-  isActive: boolean("is_active").notNull().default(true),
+  organizationalUnitId: uuid("organizational_unit_id").references(
+    () => organizationalUnits.id,
+    { onDelete: "set null" },
+  ),
+  periodId: uuid("period_id").references(() => periods.id, {
+    onDelete: "set null",
+  }),
+  description: text("description"),
   sortOrder: integer("sort_order").notNull().default(0),
-  joinedAt: timestamp("joined_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: uuid("deleted_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+});
+
+// ─── Article Categories ───────────────────────────────────────────────────────
+
+export const articleCategories = pgTable("article_categories", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 120 }).notNull().unique(),
+  slug: varchar("slug", { length: 140 }).notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: uuid("deleted_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+});
+
+// ─── Articles ─────────────────────────────────────────────────────────────────
 
 export const articles = pgTable(
   "articles",
   {
-    id: serial("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     title: varchar("title", { length: 220 }).notNull(),
     slug: varchar("slug", { length: 260 }).notNull(),
     excerpt: text("excerpt"),
-    content: text("content").notNull(),
-    category: varchar("category", { length: 80 }).notNull(),
+    content: jsonb("content").notNull(), // Tiptap JSONB format
+    categoryId: uuid("category_id").references(() => articleCategories.id, {
+      onDelete: "set null",
+    }),
     status: articleStatus("status").notNull().default("draft"),
-    authorId: integer("author_id").references(() => users.id, { onDelete: "set null" }),
+    authorId: uuid("author_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    authorName: varchar("author_name", { length: 160 }),
+    reviewerId: uuid("reviewer_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    organizationalUnitId: uuid("organizational_unit_id").references(
+      () => organizationalUnits.id,
+      { onDelete: "set null" },
+    ),
+    divisionId: uuid("division_id").references(() => divisions.id, {
+      onDelete: "set null",
+    }),
+    periodId: uuid("period_id").references(() => periods.id, {
+      onDelete: "set null",
+    }),
     thumbnailUrl: text("thumbnail_url"),
+    thumbnailAlt: text("thumbnail_alt"),
+    seoTitle: varchar("seo_title", { length: 220 }),
+    seoDescription: text("seo_description"),
+    canonicalUrl: text("canonical_url"),
+    ogImageUrl: text("og_image_url"),
     readTime: varchar("read_time", { length: 40 }),
     views: integer("views").notNull().default(0),
     isFeatured: boolean("is_featured").notNull().default(false),
+    rejectedNote: text("rejected_note"),
     publishedAt: timestamp("published_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    deletedBy: uuid("deleted_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
   },
-  (table) => [uniqueIndex("articles_slug_idx").on(table.slug)]
-)
+  (table) => [uniqueIndex("articles_slug_idx").on(table.slug)],
+);
 
-export const events = pgTable("events", {
-  id: serial("id").primaryKey(),
-  title: varchar("title", { length: 220 }).notNull(),
-  description: text("description"),
-  eventDate: timestamp("event_date", { withTimezone: true }).notNull(),
-  location: text("location"),
-  category: varchar("category", { length: 80 }).notNull(),
-  status: eventStatus("status").notNull().default("upcoming"),
-  registrations: integer("registrations").notNull().default(0),
-  maxParticipants: integer("max_participants"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
+// ─── Assets ───────────────────────────────────────────────────────────────────
+// Semua file upload terpusat di sini. image/* only, max 1 MB (global).
 
-export const albums = pgTable("albums", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 180 }).notNull(),
-  description: text("description"),
-  coverImageUrl: text("cover_image_url"),
-  sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
-
-export const media = pgTable("media", {
-  id: serial("id").primaryKey(),
-  albumId: integer("album_id").references(() => albums.id, { onDelete: "set null" }),
-  name: varchar("name", { length: 220 }).notNull(),
+export const assets = pgTable("assets", {
+  id: uuid("id").defaultRandom().primaryKey(),
   url: text("url").notNull(),
-  type: mediaType("type").notNull().default("image"),
-  sizeBytes: integer("size_bytes"),
-  altText: text("alt_text"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-})
+  fileName: varchar("file_name", { length: 260 }).notNull(),
+  mimeType: varchar("mime_type", { length: 80 }).notNull(), // image/* only
+  sizeBytes: integer("size_bytes").notNull(),               // max 1 MB = 1_048_576 bytes
+  uploadedBy: uuid("uploaded_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: uuid("deleted_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+});
 
-export const contactMessages = pgTable("contact_messages", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 160 }).notNull(),
-  email: varchar("email", { length: 255 }).notNull(),
-  subject: varchar("subject", { length: 220 }).notNull(),
-  message: text("message").notNull(),
-  isRead: boolean("is_read").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-})
+// ─── Site Settings ────────────────────────────────────────────────────────────
+
+export const siteSettings = pgTable("site_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  key: varchar("key", { length: 120 }).notNull().unique(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+});
+
+
+// ─── Audit Logs ───────────────────────────────────────────────────────────────
+// V1: backend logging only. Belum perlu halaman UI audit log.
+//
+// Events:
+//   user.create | user.claim | user.disable
+//   article.create | article.submit | article.approve | article.reject | article.archive
+//   settings.update
+//   export.data  → metadata: { exportedEntity, format, fileName }
+
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  actorId: uuid("actor_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  action: varchar("action", { length: 80 }).notNull(),
+  entityType: varchar("entity_type", { length: 80 }),
+  entityId: uuid("entity_id"),
+  // untuk export.data: { exportedEntity, format, fileName }
+  // untuk article events: { previousStatus, newStatus }
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});

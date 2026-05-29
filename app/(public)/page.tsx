@@ -153,6 +153,9 @@ export default function HomePage() {
               <p className="mt-2 text-xl font-semibold text-white/80 drop-shadow-[0_3px_14px_rgba(0,0,0,0.65)] sm:text-2xl md:text-4xl">
                 UPN "Veteran" Jakarta
               </p>
+              <p className="mt-2 text-xl font-semibold text-white/80 drop-shadow-[0_3px_14px_rgba(0,0,0,0.65)] sm:text-2xl md:text-4xl">
+                2026
+              </p>
             </div>
           </div>
         </div>

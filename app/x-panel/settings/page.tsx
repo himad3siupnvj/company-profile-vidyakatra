@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch"
 import { Save, Globe, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Music2 } from "lucide-react"
 
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("general")
+  const [isSaving, setIsSaving] = useState(false)
   const [contactInfo, setContactInfo] = useState({
     email: "himpunand3si@gmail.com",
     phone: "+62 812 3456 7890",
@@ -48,6 +50,54 @@ export default function SettingsPage() {
     analyticsEnabled: true,
   })
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get("tab")
+    if (tab && ["general", "contact", "social", "footer"].includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [])
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const response = await fetch("/api/admin/settings")
+        if (!response.ok) return
+
+        const data = await response.json()
+        setContactInfo(data.contactInfo)
+        setSocialMedia(data.socialMedia)
+        setFooterSettings(data.footerSettings)
+        setQuickLinks(data.quickLinks)
+        setSiteSettings(data.siteSettings)
+      } catch {
+        // Keep local fallback data when the backend is unavailable.
+      }
+    }
+
+    loadSettings()
+  }, [])
+
+  const saveSettings = async () => {
+    setIsSaving(true)
+
+    try {
+      await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactInfo,
+          socialMedia,
+          footerSettings,
+          quickLinks,
+          siteSettings,
+        }),
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const updateQuickLink = (id: number, field: string, value: string | boolean) => {
     setQuickLinks(quickLinks.map(link =>
       link.id === id ? { ...link, [field]: value } : link
@@ -64,14 +114,14 @@ export default function SettingsPage() {
             Kelola informasi publik, social media overview, dan footer sesuai tampilan terbaru.
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={saveSettings} disabled={isSaving}>
           <Save className="h-4 w-4" />
-          Simpan Perubahan
+          {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
         </Button>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto">
           <TabsTrigger value="general">Umum</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>

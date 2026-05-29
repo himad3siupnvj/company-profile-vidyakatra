@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,58 +38,103 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, Search, MoreHorizontal, Edit, Trash2, Shield, UserCog, Users, Key } from "lucide-react"
+import { getPermissions, getRoleGroup, roleLabels, type UserRole, userRoles } from "@/lib/permissions"
 
 interface User {
-  id: number
+  id: string
   name: string
   email: string
-  role: "super_admin" | "content_admin" | "secretary_admin"
-  status: "active" | "inactive"
+  role: UserRole
+  status: "unclaimed" | "active" | "inactive"
+  claimCode: string | null
   lastLogin: string
   createdAt: string
   avatar: string
 }
 
+interface MemberOption {
+  id: string
+  name: string
+  email: string
+  department: string
+  position: string
+}
+
 const initialUsers: User[] = [
-  { id: 1, name: "Super Admin", email: "admin@himad3si.ac.id", role: "super_admin", status: "active", lastLogin: "2024-12-14 10:30", createdAt: "2024-01-01", avatar: "" },
-  { id: 2, name: "Ahmad Rizki", email: "ahmad@himad3si.ac.id", role: "content_admin", status: "active", lastLogin: "2024-12-14 09:15", createdAt: "2024-02-15", avatar: "" },
-  { id: 3, name: "Siti Nurhaliza", email: "siti@himad3si.ac.id", role: "secretary_admin", status: "active", lastLogin: "2024-12-13 14:45", createdAt: "2024-02-15", avatar: "" },
-  { id: 4, name: "Budi Santoso", email: "budi@himad3si.ac.id", role: "content_admin", status: "inactive", lastLogin: "2024-11-20 11:00", createdAt: "2024-03-10", avatar: "" },
-  { id: 5, name: "Dian Permata", email: "dian@himad3si.ac.id", role: "secretary_admin", status: "active", lastLogin: "2024-12-12 16:30", createdAt: "2024-04-01", avatar: "" },
+  { id: "user-1", name: "Super Admin", email: "admin@himad3si.ac.id", role: "administrator", status: "active", claimCode: null, lastLogin: "2024-12-14 10:30", createdAt: "2024-01-01", avatar: "" },
+  { id: "user-2", name: "Ahmad Rizki", email: "ahmad@himad3si.ac.id", role: "ketua", status: "active", claimCode: null, lastLogin: "2024-12-14 09:15", createdAt: "2024-02-15", avatar: "" },
+  { id: "user-3", name: "Siti Nurhaliza", email: "siti@himad3si.ac.id", role: "sekretaris", status: "unclaimed", claimCode: "A1B2C3D4", lastLogin: "-", createdAt: "2024-02-15", avatar: "" },
+  { id: "user-4", name: "Budi Santoso", email: "budi@himad3si.ac.id", role: "kepala_departemen", status: "inactive", claimCode: null, lastLogin: "2024-11-20 11:00", createdAt: "2024-03-10", avatar: "" },
+  { id: "user-5", name: "Dian Permata", email: "dian@himad3si.ac.id", role: "bendahara", status: "active", claimCode: null, lastLogin: "2024-12-12 16:30", createdAt: "2024-04-01", avatar: "" },
 ]
 
-const rolePermissions = {
+const roleGroupMeta = {
   super_admin: {
     label: "Super Admin",
-    description: "Full access to all features and settings",
+    description: "Akses penuh untuk seluruh fitur CMS.",
     color: "bg-primary text-primary-foreground",
-    permissions: ["Dashboard", "Home Page", "Organization", "Vision & Mission", "News & Events", "Settings", "User Management"],
   },
-  content_admin: {
-    label: "Content Admin",
-    description: "Manage public content, social overview, news, and events",
+  executive: {
+    label: "Executive",
+    description: "Akses pimpinan organisasi untuk konten dan data utama.",
     color: "bg-primary/10 text-primary",
-    permissions: ["Dashboard", "Home Page", "News & Events", "Settings"],
   },
-  secretary_admin: {
-    label: "Secretary Admin",
-    description: "Manage organization and content",
-    color: "bg-green-100 text-green-700",
-    permissions: ["Dashboard", "Home Page", "Organization", "Vision & Mission"],
+  reviewer: {
+    label: "Reviewer",
+    description: "Akses review, approval, publish artikel, dan upload media.",
+    color: "bg-blue-100 text-blue-700",
+  },
+  contributor: {
+    label: "Contributor",
+    description: "Akses membuat, mengedit milik sendiri, submit artikel, dan upload media pribadi.",
+    color: "bg-secondary text-secondary-foreground",
   },
 }
 
+const roleOptions = userRoles.map((role) => ({
+  value: role,
+  label: roleLabels[role],
+  group: getRoleGroup(role),
+  permissions: getPermissions(role),
+}))
+
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>(initialUsers)
+  const [members, setMembers] = useState<MemberOption[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filterRole, setFilterRole] = useState<string>("all")
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [newUser, setNewUser] = useState({
+    memberId: "",
     name: "",
     email: "",
-    password: "",
-    role: "" as User["role"] | "",
+    role: "" as UserRole | "",
   })
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [usersResponse, organizationResponse] = await Promise.all([
+          fetch("/api/admin/users"),
+          fetch("/api/admin/organization"),
+        ])
+
+        if (usersResponse.ok) {
+          const data = await usersResponse.json()
+          setUsers(data.users)
+        }
+
+        if (organizationResponse.ok) {
+          const data = await organizationResponse.json()
+          setMembers(data.members)
+        }
+      } catch {
+        // Keep local fallback data when the backend is unavailable.
+      }
+    }
+
+    loadData()
+  }, [])
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -98,35 +143,84 @@ export default function UserManagement() {
     return matchesSearch && matchesRole
   })
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!newUser.role) return
-    const id = Math.max(...users.map(u => u.id), 0) + 1
-    setUsers([...users, {
-      id,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role as User["role"],
-      status: "active",
-      lastLogin: "-",
-      createdAt: new Date().toISOString().split("T")[0],
-      avatar: "",
-    }])
-    setNewUser({ name: "", email: "", password: "", role: "" })
-    setIsAddUserOpen(false)
+
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      })
+
+      if (!response.ok) return
+
+      const data = await response.json()
+      setUsers([data.user, ...users])
+      setNewUser({ memberId: "", name: "", email: "", role: "" })
+      setIsAddUserOpen(false)
+    } catch {
+      // The form stays open so the user can retry.
+    }
   }
 
-  const handleDeleteUser = (id: number) => {
+  const handleDeleteUser = async (id: string) => {
+    const previousUsers = users
     setUsers(users.filter(u => u.id !== id))
+
+    try {
+      const response = await fetch(`/api/admin/users?id=${id}`, { method: "DELETE" })
+      if (!response.ok) {
+        setUsers(previousUsers)
+      }
+    } catch {
+      setUsers(previousUsers)
+    }
   }
 
-  const toggleUserStatus = (id: number) => {
+  const toggleUserStatus = async (id: string) => {
+    const targetUser = users.find((user) => user.id === id)
+    if (!targetUser) return
+
+    const previousUsers = users
+    const nextStatus = targetUser.status === "active" ? "inactive" : "active"
+
     setUsers(users.map(u =>
-      u.id === id ? { ...u, status: u.status === "active" ? "inactive" : "active" } : u
+      u.id === id ? { ...u, status: nextStatus } : u
     ))
+
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: nextStatus }),
+      })
+
+      if (!response.ok) {
+        setUsers(previousUsers)
+        return
+      }
+
+      const data = await response.json()
+      setUsers((currentUsers) => currentUsers.map((user) => (user.id === id ? data.user : user)))
+    } catch {
+      setUsers(previousUsers)
+    }
   }
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+  }
+
+  const handleSelectMember = (memberId: string) => {
+    const selectedMember = members.find((member) => member.id === memberId)
+
+    setNewUser({
+      ...newUser,
+      memberId,
+      name: selectedMember?.name ?? newUser.name,
+      email: selectedMember?.email ?? newUser.email,
+    })
   }
 
   return (
@@ -148,12 +242,30 @@ export default function UserManagement() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New Admin User</DialogTitle>
+              <DialogTitle>Add New CMS User</DialogTitle>
               <DialogDescription>
-                Create a new admin account with specific role permissions.
+                Buat akun unclaimed. User akan mengklaim akun memakai claim code.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="member">Linked Member</Label>
+                <Select value={newUser.memberId} onValueChange={handleSelectMember}>
+                  <SelectTrigger id="member">
+                    <SelectValue placeholder="Pilih member organisasi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name} - {member.position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  User CMS wajib terhubung ke data member organisasi.
+                </p>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -161,6 +273,7 @@ export default function UserManagement() {
                   value={newUser.name}
                   onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
                   placeholder="Enter full name"
+                  readOnly={Boolean(newUser.memberId)}
                 />
               </div>
               <div className="space-y-2">
@@ -171,16 +284,7 @@ export default function UserManagement() {
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                   placeholder="email@himad3si.ac.id"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  placeholder="Enter password"
+                  readOnly={Boolean(newUser.memberId)}
                 />
               </div>
               <div className="space-y-2">
@@ -193,14 +297,16 @@ export default function UserManagement() {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                    <SelectItem value="content_admin">Content Admin</SelectItem>
-                    <SelectItem value="secretary_admin">Secretary Admin</SelectItem>
+                    {roleOptions.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {newUser.role && (
                   <p className="text-xs text-muted-foreground">
-                    {rolePermissions[newUser.role as keyof typeof rolePermissions]?.description}
+                    Masuk group {roleGroupMeta[getRoleGroup(newUser.role as UserRole)].label}
                   </p>
                 )}
               </div>
@@ -209,7 +315,7 @@ export default function UserManagement() {
               <Button variant="outline" onClick={() => setIsAddUserOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddUser}>Create User</Button>
+              <Button onClick={handleAddUser}>Create Claim Code</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -234,8 +340,8 @@ export default function UserManagement() {
               <Shield className="h-5 w-5 text-secondary-foreground" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Super Admins</p>
-              <p className="text-xl font-bold">{users.filter(u => u.role === "super_admin").length}</p>
+              <p className="text-sm text-muted-foreground">Administrator</p>
+              <p className="text-xl font-bold">{users.filter(u => u.role === "administrator").length}</p>
             </div>
           </CardContent>
         </Card>
@@ -245,8 +351,8 @@ export default function UserManagement() {
               <UserCog className="h-5 w-5 text-blue-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Content Admins</p>
-              <p className="text-xl font-bold">{users.filter(u => u.role === "content_admin").length}</p>
+              <p className="text-sm text-muted-foreground">Pengurus HIMA</p>
+              <p className="text-xl font-bold">{users.filter(u => u.role !== "administrator").length}</p>
             </div>
           </CardContent>
         </Card>
@@ -264,17 +370,17 @@ export default function UserManagement() {
       </div>
 
       {/* Role Permissions Overview */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {Object.entries(rolePermissions).map(([key, role]) => (
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {Object.entries(roleGroupMeta).map(([key, group]) => (
           <Card key={key}>
             <CardHeader className="pb-2">
-              <Badge className={role.color}>{role.label}</Badge>
-              <CardDescription className="mt-2">{role.description}</CardDescription>
+              <Badge className={group.color}>{group.label}</Badge>
+              <CardDescription className="mt-2">{group.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="mb-2 text-xs font-medium text-muted-foreground">Permissions:</p>
               <div className="flex flex-wrap gap-1">
-                {role.permissions.map((perm) => (
+                {getPermissions(userRoles.find((role) => getRoleGroup(role) === key) ?? "staff").map((perm) => (
                   <Badge key={perm} variant="secondary" className="text-xs">
                     {perm}
                   </Badge>
@@ -306,9 +412,11 @@ export default function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
-                  <SelectItem value="content_admin">Content Admin</SelectItem>
-                  <SelectItem value="secretary_admin">Secretary Admin</SelectItem>
+                  {roleOptions.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -322,6 +430,7 @@ export default function UserManagement() {
                   <TableHead>User</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Claim Code</TableHead>
                   <TableHead>Last Login</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="w-12"></TableHead>
@@ -345,14 +454,17 @@ export default function UserManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={rolePermissions[user.role].color}>
-                        {rolePermissions[user.role].label}
+                      <Badge className={roleGroupMeta[getRoleGroup(user.role)].color}>
+                        {roleLabels[user.role]}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={user.status === "active" ? "default" : "secondary"}>
                         {user.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {user.claimCode ?? "-"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{user.lastLogin}</TableCell>
                     <TableCell className="text-muted-foreground">{user.createdAt}</TableCell>
@@ -375,7 +487,7 @@ export default function UserManagement() {
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => handleDeleteUser(user.id)}
-                            disabled={user.role === "super_admin" && users.filter(u => u.role === "super_admin").length === 1}
+                            disabled={user.role === "administrator" && users.filter(u => u.role === "administrator").length === 1}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete

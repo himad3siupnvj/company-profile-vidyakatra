@@ -1,4 +1,5 @@
 import Image, { type StaticImageData } from "next/image"
+import Link from "next/link"
 import ekrafLogo from "@/assets/organ/ekraf.png"
 import humsiwaLogo from "@/assets/organ/humsiwa.png"
 import ketuaLead from "@/assets/lead/Sakhaa_BPH_Final.jpg"
@@ -24,6 +25,7 @@ import {
   Users,
   Zap,
 } from "lucide-react"
+import { workUnits } from "@/lib/public-content"
 
 const cabinetLeads = [
   {
@@ -117,51 +119,6 @@ function LeaderProfile({ person, reversed = false }: LeaderProfileProps) {
     </div>
   )
 }
-
-const workUnits = [
-  {
-    type: "Departemen",
-    name: "Pendidikan",
-    description: "Mengelola program pengembangan akademik, study club, dan pendampingan belajar mahasiswa.",
-    logo: pendidikanLogo,
-    programs: ["Study Club", "Tutor Sebaya", "Seminar Akademik"],
-  },
-  {
-    type: "Departemen",
-    name: "Media dan Komunikasi",
-    description: "Mengembangkan ruang belajar praktis untuk programming, product building, dan eksplorasi teknologi.",
-    logo: medkomLogo,
-    programs: ["Workshop Coding", "Hackathon", "Tech Talk"],
-  },
-  {
-    type: "Departemen",
-    name: "Eknomi Kreatif",
-    description: "Mewadahi karya visual, kampanye kreatif, dokumentasi, dan ekspresi mahasiswa.",
-    logo: ekrafLogo,
-    programs: ["Design Sprint", "Creative Campaign", "Content Lab"],
-  },
-  {
-    type: "Departemen",
-    name: "Pengembangan Sumber Daya Manusia",
-    description: "Menjaga komunikasi internal dan membangun relasi strategis dengan pihak eksternal.",
-    logo: psdmLogo,
-    programs: ["Partnership", "Public Relations", "Media Sosial"],
-  },
-  {
-    type: "Biro",
-    name: "Sosial Politik",
-    description: "Mengarsipkan dokumen, surat, notulensi, dan kebutuhan administrasi organisasi.",
-    logo: sospolLogo,
-    programs: ["Arsip Surat", "Notulensi", "Database Dokumen"],
-  },
-  {
-    type: "Biro",
-    name: "Hubungan Mahasiswa",
-    description: "Menjaga ritme kerja kabinet, koordinasi anggota, dan budaya organisasi yang sehat.",
-    logo: humsiwaLogo,
-    programs: ["Rapat Internal", "Kaderisasi", "Evaluasi Kabinet"],
-  },
-]
 
 const etymology = [
   {
@@ -496,33 +453,35 @@ export default function ProfilPage() {
           </div>
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {workUnits.map((unit) => (
-              <Card key={unit.name} className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                <CardContent className="p-6">
-                  <div className="mb-5 flex items-start justify-between gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
-                      <Image
-                        src={unit.logo}
-                        alt={`Logo ${unit.name}`}
-                        width={56}
-                        height={56}
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
-                    <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30">
-                      {unit.type}
-                    </Badge>
-                  </div>
-                  <h3 className="mb-2 text-lg font-semibold">{unit.name}</h3>
-                  <p className="text-sm text-muted-foreground">{unit.description}</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {unit.programs.map((program) => (
-                      <Badge key={program} variant="secondary" className="text-xs">
-                        {program}
+              <Link key={unit.name} href={`/profil/${unit.slug}`} className="group">
+                <Card className="h-full border-border/50 bg-card/80 backdrop-blur transition-all duration-300 group-hover:border-primary/30 group-hover:glow-primary-sm">
+                  <CardContent className="p-6">
+                    <div className="mb-5 flex items-start justify-between gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
+                        <Image
+                          src={unit.logo}
+                          alt={`Logo ${unit.name}`}
+                          width={56}
+                          height={56}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                      <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30">
+                        {unit.type}
                       </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                    <h3 className="mb-2 text-lg font-semibold transition-colors group-hover:text-primary">{unit.name}</h3>
+                    <p className="text-sm text-muted-foreground">{unit.description}</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {unit.programs.map((program) => (
+                        <Badge key={program} variant="secondary" className="text-xs">
+                          {program}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>

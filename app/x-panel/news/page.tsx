@@ -1,21 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useEffect, useState } from "react"
+import { Archive, Edit, Eye, FileText, ImagePlus, Info, Monitor, MoreHorizontal, PenLine, Plus, Search, Send, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -26,194 +15,210 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
 import {
-  Plus,
-  Search,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  ImagePlus,
-  Calendar,
-  Clock,
-  MapPin,
-  Eye,
-  FileText,
-  Send,
-  Archive,
-} from "lucide-react"
+  createEmptyArticleDocument,
+  NotionArticleEditor,
+  type ArticleDocument,
+} from "@/components/admin/notion-article-editor"
 
 interface Article {
-  id: number
+  id: string
   title: string
   excerpt: string
   category: string
-  status: "draft" | "published" | "archived"
+  categoryLabel?: string
+  status: "draft" | "submitted" | "approved" | "rejected" | "published" | "archived"
   author: string
   publishedAt: string | null
   createdAt: string
   thumbnail: string
+  thumbnailAlt: string
+  readTime: string
+  featured: boolean
   views: number
 }
 
-interface Event {
-  id: number
-  title: string
-  description: string
-  date: string
-  time: string
-  location: string
-  category: string
-  status: "upcoming" | "ongoing" | "completed" | "cancelled"
-  registrations: number
-  maxParticipants: number
-}
-
 const initialArticles: Article[] = [
-  { id: 1, title: "Seminar IT 2024: Menghadapi Era Digital", excerpt: "Seminar teknologi informasi dengan pembicara dari berbagai industri teknologi...", category: "Event", status: "published", author: "Ahmad Rizki", publishedAt: "2024-12-10", createdAt: "2024-12-08", thumbnail: "/news/seminar.jpg", views: 245 },
-  { id: 2, title: "Workshop Web Development dengan React", excerpt: "Pelajari dasar-dasar React dan bangun aplikasi web modern...", category: "Workshop", status: "published", author: "Maya Indah", publishedAt: "2024-12-05", createdAt: "2024-12-03", thumbnail: "/news/workshop.jpg", views: 189 },
-  { id: 3, title: "Pengumuman Pendaftaran Anggota Baru", excerpt: "HIMA D3 SI membuka pendaftaran anggota baru periode 2024/2025...", category: "Announcement", status: "published", author: "Siti Nurhaliza", publishedAt: "2024-12-01", createdAt: "2024-11-28", thumbnail: "/news/recruitment.jpg", views: 567 },
-  { id: 4, title: "Tips Sukses Menghadapi Semester Baru", excerpt: "Berikut adalah tips dan trik untuk memulai semester baru dengan baik...", category: "Article", status: "draft", author: "Budi Santoso", publishedAt: null, createdAt: "2024-12-12", thumbnail: "/news/tips.jpg", views: 0 },
-  { id: 5, title: "Recap: Gathering Tahunan 2024", excerpt: "Momen-momen seru dari gathering tahunan HIMA D3 SI...", category: "Event", status: "archived", author: "Dian Permata", publishedAt: "2024-11-20", createdAt: "2024-11-18", thumbnail: "/news/gathering.jpg", views: 312 },
+  { id: "article-1", title: "Company Profile Vidyakatra", excerpt: "Mengenal arah gerak dan budaya kerja Kabinet Vidyakatra...", category: "berita", categoryLabel: "Berita Acara", status: "published", author: "Tim Media", publishedAt: "2026-05-10", createdAt: "2026-05-08", thumbnail: "/news/default.jpg", thumbnailAlt: "Company Profile Vidyakatra", readTime: "4 min", featured: true, views: 245 },
+  { id: "article-2", title: "Workshop UI/UX Design Bersama Praktisi Industri", excerpt: "Dokumentasi kegiatan peningkatan kemampuan desain interface mahasiswa...", category: "kegiatan", categoryLabel: "Kegiatan", status: "draft", author: "Media & Informasi", publishedAt: null, createdAt: "2026-05-12", thumbnail: "/news/default.jpg", thumbnailAlt: "Workshop UI UX", readTime: "5 min", featured: false, views: 0 },
 ]
 
-const initialEvents: Event[] = [
-  { id: 1, title: "Seminar IT 2024", description: "Seminar teknologi informasi dengan tema transformasi digital", date: "2024-12-15", time: "09:00", location: "Auditorium Utama", category: "Seminar", status: "upcoming", registrations: 145, maxParticipants: 200 },
-  { id: 2, title: "Workshop Web Development", description: "Workshop praktis membangun website dengan React dan Next.js", date: "2024-12-20", time: "13:00", location: "Lab Komputer A", category: "Workshop", status: "upcoming", registrations: 28, maxParticipants: 30 },
-  { id: 3, title: "Annual Meeting 2024", description: "Rapat tahunan anggota HIMA D3 SI", date: "2024-12-28", time: "10:00", location: "Ruang Rapat Jurusan", category: "Meeting", status: "upcoming", registrations: 50, maxParticipants: 60 },
-  { id: 4, title: "Tech Talk: AI & Machine Learning", description: "Diskusi tentang perkembangan AI dan ML", date: "2024-12-10", time: "14:00", location: "Online (Zoom)", category: "Tech Talk", status: "ongoing", registrations: 89, maxParticipants: 100 },
-  { id: 5, title: "Gathering Tahunan", description: "Acara kebersamaan anggota HIMA D3 SI", date: "2024-11-15", time: "08:00", location: "Taman Kampus", category: "Social", status: "completed", registrations: 120, maxParticipants: 150 },
+const articleCategories = [
+  { value: "berita", label: "Berita Acara" },
+  { value: "kegiatan", label: "Kegiatan" },
+  { value: "pengumuman", label: "Pengumuman" },
+  { value: "prestasi", label: "Prestasi" },
 ]
 
-const categories = ["Event", "Workshop", "Announcement", "Article", "Tech Talk"]
-
-export default function NewsEventsManagement() {
+export default function ArticleManagementPage() {
   const [articles, setArticles] = useState<Article[]>(initialArticles)
-  const [events, setEvents] = useState<Event[]>(initialEvents)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isCreateArticleOpen, setIsCreateArticleOpen] = useState(false)
-  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false)
   const [newArticle, setNewArticle] = useState({
     title: "",
     excerpt: "",
-    content: "",
     category: "",
+    author: "Tim Media",
+    thumbnailUrl: "",
+    thumbnailAlt: "",
+    featured: false,
   })
-  const [newEvent, setNewEvent] = useState({
-    title: "",
-    description: "",
-    date: "",
-    time: "",
-    location: "",
-    category: "",
-    maxParticipants: "",
-  })
+  const [articleContent, setArticleContent] = useState<ArticleDocument>(createEmptyArticleDocument())
 
-  const filteredArticles = articles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+
+    if (params.get("action") === "create") {
+      setIsCreateArticleOpen(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    async function loadArticles() {
+      try {
+        const response = await fetch("/api/admin/articles")
+        if (!response.ok) return
+
+        const data = await response.json()
+        setArticles(data.articles)
+      } catch {
+        // Keep local fallback data when the backend is unavailable.
+      }
+    }
+
+    loadArticles()
+  }, [])
+
+  const filteredArticles = articles.filter((article) => {
+    const matchesSearch =
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = filterStatus === "all" || article.status === filterStatus
+
     return matchesSearch && matchesStatus
   })
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = filterStatus === "all" || event.status === filterStatus
-    return matchesSearch && matchesStatus
-  })
+  const getArticleReadTime = (content: ArticleDocument) => {
+    const words = content.content
+      .map((block) => (block.type === "image" ? `${block.alt} ${block.caption}` : block.text))
+      .join(" ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length
+    const minutes = Math.max(1, Math.ceil(words / 180))
 
-  const handleCreateArticle = (asDraft: boolean) => {
-    const id = Math.max(...articles.map(a => a.id), 0) + 1
-    setArticles([{
-      id,
-      title: newArticle.title,
-      excerpt: newArticle.excerpt,
-      category: newArticle.category,
-      status: asDraft ? "draft" : "published",
-      author: "Super Admin",
-      publishedAt: asDraft ? null : new Date().toISOString().split("T")[0],
-      createdAt: new Date().toISOString().split("T")[0],
-      thumbnail: "/news/default.jpg",
-      views: 0,
-    }, ...articles])
-    setNewArticle({ title: "", excerpt: "", content: "", category: "" })
-    setIsCreateArticleOpen(false)
+    return `${minutes} min`
   }
 
-  const handleCreateEvent = () => {
-    const id = Math.max(...events.map(e => e.id), 0) + 1
-    setEvents([{
-      id,
-      title: newEvent.title,
-      description: newEvent.description,
-      date: newEvent.date,
-      time: newEvent.time,
-      location: newEvent.location,
-      category: newEvent.category,
-      status: "upcoming",
-      registrations: 0,
-      maxParticipants: parseInt(newEvent.maxParticipants) || 100,
-    }, ...events])
-    setNewEvent({ title: "", description: "", date: "", time: "", location: "", category: "", maxParticipants: "" })
-    setIsCreateEventOpen(false)
-  }
+  const handleCreateArticle = async () => {
+    const readTime = getArticleReadTime(articleContent)
 
-  const handleDeleteArticle = (id: number) => {
-    setArticles(articles.filter(a => a.id !== id))
-  }
+    try {
+      const response = await fetch("/api/admin/articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newArticle,
+          readTime,
+          content: articleContent,
+        }),
+      })
 
-  const handleDeleteEvent = (id: number) => {
-    setEvents(events.filter(e => e.id !== id))
-  }
+      if (!response.ok) return
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      published: "bg-green-100 text-green-700",
-      draft: "bg-yellow-100 text-yellow-700",
-      archived: "bg-gray-100 text-gray-700",
-      upcoming: "bg-blue-100 text-blue-700",
-      ongoing: "bg-green-100 text-green-700",
-      completed: "bg-gray-100 text-gray-700",
-      cancelled: "bg-red-100 text-red-700",
+      const data = await response.json()
+      setArticles([data.article, ...articles])
+      setNewArticle({ title: "", excerpt: "", category: "", author: "Tim Media", thumbnailUrl: "", thumbnailAlt: "", featured: false })
+      setArticleContent(createEmptyArticleDocument())
+      setIsCreateArticleOpen(false)
+    } catch {
+      // The form stays open so the user can retry.
     }
-    return colors[status] || "bg-gray-100 text-gray-700"
+  }
+
+  const handleDeleteArticle = async (id: string) => {
+    const previousArticles = articles
+    setArticles(articles.filter((article) => article.id !== id))
+
+    try {
+      const response = await fetch(`/api/admin/articles?id=${id}`, { method: "DELETE" })
+      if (!response.ok) {
+        setArticles(previousArticles)
+      }
+    } catch {
+      setArticles(previousArticles)
+    }
+  }
+
+  const getStatusColor = (status: Article["status"]) => {
+    const colors: Record<Article["status"], string> = {
+      published: "bg-green-100 text-green-700",
+      approved: "bg-emerald-100 text-emerald-700",
+      submitted: "bg-blue-100 text-blue-700",
+      draft: "bg-yellow-100 text-yellow-700",
+      rejected: "bg-red-100 text-red-700",
+      archived: "bg-gray-100 text-gray-700",
+    }
+
+    return colors[status]
   }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">News & Events</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Article Management</h1>
           <p className="text-muted-foreground">
-            Create, manage, and publish news articles and events.
+            Tulis, simpan draft, dan ajukan berita acara melalui workflow approval.
           </p>
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="rounded-lg bg-blue-100 p-2">
-              <FileText className="h-5 w-5 text-blue-700" />
+            <div className="rounded-lg bg-green-100 p-2">
+              <FileText className="h-5 w-5 text-green-700" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Published</p>
-              <p className="text-xl font-bold">{articles.filter(a => a.status === "published").length}</p>
+              <p className="text-xl font-bold">{articles.filter((article) => article.status === "published").length}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="rounded-lg bg-blue-100 p-2">
+              <Send className="h-5 w-5 text-blue-700" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Submitted</p>
+              <p className="text-xl font-bold">{articles.filter((article) => article.status === "submitted").length}</p>
             </div>
           </CardContent>
         </Card>
@@ -224,18 +229,7 @@ export default function NewsEventsManagement() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Drafts</p>
-              <p className="text-xl font-bold">{articles.filter(a => a.status === "draft").length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="rounded-lg bg-green-100 p-2">
-              <Calendar className="h-5 w-5 text-green-700" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Upcoming Events</p>
-              <p className="text-xl font-bold">{events.filter(e => e.status === "upcoming").length}</p>
+              <p className="text-xl font-bold">{articles.filter((article) => article.status === "draft").length}</p>
             </div>
           </CardContent>
         </Card>
@@ -246,375 +240,270 @@ export default function NewsEventsManagement() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Views</p>
-              <p className="text-xl font-bold">{articles.reduce((acc, a) => acc + a.views, 0).toLocaleString()}</p>
+              <p className="text-xl font-bold">{articles.reduce((acc, article) => acc + article.views, 0).toLocaleString()}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="articles" className="space-y-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <TabsList>
-            <TabsTrigger value="articles">Articles</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-          </TabsList>
+      <Card>
+        <CardHeader className="flex flex-col gap-4 pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <CardTitle>All Articles</CardTitle>
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder="Search articles..."
                 className="w-full pl-9 sm:w-64"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(event) => setSearchQuery(event.target.value)}
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-36">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
                 <SelectItem value="archived">Archived</SelectItem>
-                <SelectItem value="upcoming">Upcoming</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        {/* Articles Tab */}
-        <TabsContent value="articles" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle>All Articles</CardTitle>
-              <Dialog open={isCreateArticleOpen} onOpenChange={setIsCreateArticleOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Create Article
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Create New Article</DialogTitle>
-                    <DialogDescription>
-                      Write and publish a news article.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="article-title">Title</Label>
-                      <Input
-                        id="article-title"
-                        value={newArticle.title}
-                        onChange={(e) => setNewArticle({ ...newArticle, title: e.target.value })}
-                        placeholder="Enter article title"
-                      />
+            <Dialog open={isCreateArticleOpen} onOpenChange={setIsCreateArticleOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Article
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Create New Article</DialogTitle>
+                  <DialogDescription>
+                    Buat artikel sebagai draft. Publish akan berjalan otomatis setelah approval.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="rounded-lg border bg-muted/20 p-4">
+                    <div className="mb-4 flex items-start gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <Info className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Info Dasar</h3>
+                        <p className="text-sm text-muted-foreground">Data utama yang tampil di card berita.</p>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="article-category">Category</Label>
-                      <Select
-                        value={newArticle.category}
-                        onValueChange={(value) => setNewArticle({ ...newArticle, category: value })}
-                      >
-                        <SelectTrigger id="article-category">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="article-excerpt">Excerpt</Label>
-                      <Textarea
-                        id="article-excerpt"
-                        value={newArticle.excerpt}
-                        onChange={(e) => setNewArticle({ ...newArticle, excerpt: e.target.value })}
-                        placeholder="Brief description of the article"
-                        rows={2}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Thumbnail</Label>
-                      <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50">
-                        <div className="text-center">
-                          <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground" />
-                          <p className="mt-1 text-sm text-muted-foreground">Click to upload</p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="article-title">Judul</Label>
+                        <Input
+                          id="article-title"
+                          value={newArticle.title}
+                          onChange={(event) => setNewArticle({ ...newArticle, title: event.target.value })}
+                          placeholder="Contoh: Workshop UI/UX Design Bersama Praktisi Industri"
+                        />
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="article-category">Kategori</Label>
+                          <Select
+                            value={newArticle.category}
+                            onValueChange={(value) => setNewArticle({ ...newArticle, category: value })}
+                          >
+                            <SelectTrigger id="article-category">
+                              <SelectValue placeholder="Pilih kategori" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {articleCategories.map((category) => (
+                                <SelectItem key={category.value} value={category.value}>
+                                  {category.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Estimasi Waktu Baca</Label>
+                          <Input value={getArticleReadTime(articleContent)} readOnly className="bg-muted/50" />
                         </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="article-content">Content</Label>
-                      <Textarea
-                        id="article-content"
-                        value={newArticle.content}
-                        onChange={(e) => setNewArticle({ ...newArticle, content: e.target.value })}
-                        placeholder="Write your article content here..."
-                        rows={8}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Supports basic formatting. You can use markdown for headers, lists, and links.
-                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="article-excerpt">Ringkasan</Label>
+                        <Textarea
+                          id="article-excerpt"
+                          value={newArticle.excerpt}
+                          onChange={(event) => setNewArticle({ ...newArticle, excerpt: event.target.value })}
+                          placeholder="Ringkasan pendek untuk card berita..."
+                          rows={2}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <DialogFooter className="gap-2">
-                    <Button variant="outline" onClick={() => handleCreateArticle(true)}>
-                      <Archive className="mr-2 h-4 w-4" />
-                      Save as Draft
-                    </Button>
-                    <Button onClick={() => handleCreateArticle(false)}>
-                      <Send className="mr-2 h-4 w-4" />
-                      Publish
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Article</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Author</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Views</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="w-12"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredArticles.map((article) => (
-                      <TableRow key={article.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-12 w-16 rounded bg-muted" />
-                            <div>
-                              <p className="font-medium">{article.title}</p>
-                              <p className="line-clamp-1 text-xs text-muted-foreground">{article.excerpt}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{article.category}</Badge>
-                        </TableCell>
-                        <TableCell>{article.author}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(article.status)}>{article.status}</Badge>
-                        </TableCell>
-                        <TableCell>{article.views.toLocaleString()}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {article.publishedAt || article.createdAt}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDeleteArticle(article.id)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* Events Tab */}
-        <TabsContent value="events" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle>All Events</CardTitle>
-              <Dialog open={isCreateEventOpen} onOpenChange={setIsCreateEventOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Create Event
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Create New Event</DialogTitle>
-                    <DialogDescription>
-                      Schedule a new event for your organization.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="event-title">Event Title</Label>
-                      <Input
-                        id="event-title"
-                        value={newEvent.title}
-                        onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                        placeholder="Enter event title"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="event-description">Description</Label>
-                      <Textarea
-                        id="event-description"
-                        value={newEvent.description}
-                        onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                        placeholder="Event description"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="event-date">Date</Label>
-                        <Input
-                          id="event-date"
-                          type="date"
-                          value={newEvent.date}
-                          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                        />
+                  <div className="rounded-lg border bg-muted/20 p-4">
+                    <div className="mb-4 flex items-start gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <Monitor className="h-4 w-4" />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="event-time">Time</Label>
-                        <Input
-                          id="event-time"
-                          type="time"
-                          value={newEvent.time}
-                          onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
-                        />
+                      <div>
+                        <h3 className="font-semibold">Tampilan di Website</h3>
+                        <p className="text-sm text-muted-foreground">Atur cover dan status unggulan di halaman publik.</p>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="event-location">Location</Label>
-                      <Input
-                        id="event-location"
-                        value={newEvent.location}
-                        onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
-                        placeholder="Event location"
-                      />
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="event-category">Category</Label>
-                        <Select
-                          value={newEvent.category}
-                          onValueChange={(value) => setNewEvent({ ...newEvent, category: value })}
-                        >
-                          <SelectTrigger id="event-category">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Seminar">Seminar</SelectItem>
-                            <SelectItem value="Workshop">Workshop</SelectItem>
-                            <SelectItem value="Meeting">Meeting</SelectItem>
-                            <SelectItem value="Tech Talk">Tech Talk</SelectItem>
-                            <SelectItem value="Social">Social</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <div className="space-y-4">
+                      <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                        <div className="flex aspect-[16/10] items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border bg-muted/50">
+                          {newArticle.thumbnailUrl ? (
+                            <img src={newArticle.thumbnailUrl} alt={newArticle.thumbnailAlt || newArticle.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="text-center">
+                              <ImagePlus className="mx-auto h-7 w-7 text-muted-foreground" />
+                              <p className="mt-1 text-xs text-muted-foreground">Preview card</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Input
+                            value={newArticle.thumbnailUrl}
+                            onChange={(event) => setNewArticle({ ...newArticle, thumbnailUrl: event.target.value })}
+                            placeholder="Paste URL gambar cover..."
+                          />
+                          <Input
+                            value={newArticle.thumbnailAlt}
+                            onChange={(event) => setNewArticle({ ...newArticle, thumbnailAlt: event.target.value })}
+                            placeholder="Deskripsi gambar untuk aksesibilitas"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="event-max">Max Participants</Label>
-                        <Input
-                          id="event-max"
-                          type="number"
-                          value={newEvent.maxParticipants}
-                          onChange={(e) => setNewEvent({ ...newEvent, maxParticipants: e.target.value })}
-                          placeholder="100"
+                      <div className="flex items-center justify-between rounded-lg border bg-background/50 p-3">
+                        <div>
+                          <Label>Jadikan Featured</Label>
+                          <p className="text-xs text-muted-foreground">Artikel bisa ditarik ke area unggulan/latest news.</p>
+                        </div>
+                        <Switch
+                          checked={newArticle.featured}
+                          onCheckedChange={(checked) => setNewArticle({ ...newArticle, featured: checked })}
                         />
                       </div>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsCreateEventOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreateEvent}>Create Event</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredEvents.map((event) => (
-                  <Card key={event.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <Badge className={getStatusColor(event.status)}>{event.status}</Badge>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => handleDeleteEvent(event.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+
+                  <div className="rounded-lg border bg-muted/20 p-4">
+                    <div className="mb-4 flex items-start gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <PenLine className="h-4 w-4" />
                       </div>
-                      <CardTitle className="text-lg">{event.title}</CardTitle>
-                      <CardDescription className="line-clamp-2">{event.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(event.date).toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+                      <div>
+                        <h3 className="font-semibold">Publikasi</h3>
+                        <p className="text-sm text-muted-foreground">Nama penulis yang terlihat di halaman berita.</p>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{event.time} WIB</span>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="article-author">Author</Label>
+                      <Input
+                        id="article-author"
+                        value={newArticle.author}
+                        onChange={(event) => setNewArticle({ ...newArticle, author: event.target.value })}
+                        placeholder="Tim Media"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="font-semibold">Isi Artikel</h3>
+                      <p className="text-sm text-muted-foreground">Tulis artikel di kanvas kosong. Ketik / untuk menambah block.</p>
+                    </div>
+                    <NotionArticleEditor value={articleContent} onChange={setArticleContent} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleCreateArticle}>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Save Draft
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Article</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Views</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredArticles.map((article) => (
+                  <TableRow key={article.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-16 overflow-hidden rounded bg-muted">
+                          {article.thumbnail && <img src={article.thumbnail} alt={article.thumbnailAlt} className="h-full w-full object-cover" />}
+                        </div>
+                        <div>
+                          <p className="font-medium">{article.title}</p>
+                          <p className="line-clamp-1 text-xs text-muted-foreground">{article.excerpt}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>{event.location}</span>
-                      </div>
-                      <div className="flex items-center justify-between pt-2">
-                        <Badge variant="secondary">{event.category}</Badge>
-                        <span className="text-sm">
-                          <span className="font-semibold">{event.registrations}</span>
-                          <span className="text-muted-foreground">/{event.maxParticipants}</span>
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{article.categoryLabel ?? article.category}</Badge>
+                    </TableCell>
+                    <TableCell>{article.author}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(article.status)}>{article.status}</Badge>
+                    </TableCell>
+                    <TableCell>{article.views.toLocaleString()}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {article.publishedAt || article.createdAt}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => handleDeleteArticle(article.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

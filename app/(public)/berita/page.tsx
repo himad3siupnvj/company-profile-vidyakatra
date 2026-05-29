@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Calendar, User, ArrowRight, Clock, Zap, Cpu } from "lucide-react"
+import { newsData } from "@/lib/public-content"
 
 const categories = [
   { id: "all", label: "Semua" },
@@ -15,105 +17,6 @@ const categories = [
   { id: "kegiatan", label: "Kegiatan" },
   { id: "pengumuman", label: "Pengumuman" },
   { id: "prestasi", label: "Prestasi" },
-]
-
-const newsData = [
-  {
-    id: 1,
-    title: "Workshop UI/UX Design Bersama Praktisi Industri",
-    excerpt: "Tingkatkan kemampuan desain interface dengan bimbingan langsung dari profesional industri teknologi. Workshop ini akan membahas prinsip-prinsip dasar hingga advanced dalam merancang pengalaman pengguna.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "15 Mei 2026",
-    readTime: "5 min",
-    author: "Tim Media",
-    category: "kegiatan",
-    image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&h=600&fit=crop",
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Seminar Nasional Teknologi Informasi 2026",
-    excerpt: "Menghadirkan pembicara dari berbagai perusahaan teknologi terkemuka seperti Google, Microsoft, dan startup unicorn Indonesia untuk berbagi insight tentang masa depan teknologi.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "10 Mei 2026",
-    readTime: "4 min",
-    author: "Tim Humas",
-    category: "kegiatan",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
-    featured: true,
-  },
-  {
-    id: 3,
-    title: "Kompetisi Hackathon Internal HIMA",
-    excerpt: "Ajang adu kreativitas dan kemampuan coding antar mahasiswa D3 SI. Peserta akan berlomba dalam tim untuk menciptakan solusi inovatif dalam waktu 24 jam.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "5 Mei 2026",
-    readTime: "3 min",
-    author: "Divisi Teknologi",
-    category: "kegiatan",
-    image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=600&fit=crop",
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Mahasiswa D3 SI Raih Juara 1 Lomba Web Development",
-    excerpt: "Kebanggaan besar bagi HIMA D3 SI! Tim kita berhasil meraih juara pertama dalam kompetisi pengembangan web tingkat nasional yang diikuti oleh lebih dari 100 tim dari seluruh Indonesia.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "1 Mei 2026",
-    readTime: "4 min",
-    author: "Tim Media",
-    category: "prestasi",
-    image: "https://images.unsplash.com/photo-1496469888073-80de7e952517?w=800&h=600&fit=crop",
-    featured: false,
-  },
-  {
-    id: 5,
-    title: "Pengumuman: Pendaftaran Anggota Baru HIMA 2026",
-    excerpt: "Dibuka pendaftaran anggota baru HIMA D3 SI periode 2026/2027. Kesempatan emas untuk mengembangkan diri dan berkontribusi dalam organisasi.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "28 April 2026",
-    readTime: "2 min",
-    author: "Sekretaris",
-    category: "pengumuman",
-    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&h=600&fit=crop",
-    featured: false,
-  },
-  {
-    id: 6,
-    title: "Kunjungan Industri ke Perusahaan Teknologi Surabaya",
-    excerpt: "HIMA D3 SI mengadakan kunjungan industri ke beberapa perusahaan teknologi ternama di Surabaya untuk memberikan exposure kepada mahasiswa tentang dunia kerja.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "20 April 2026",
-    readTime: "4 min",
-    author: "Divisi Humas",
-    category: "kegiatan",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
-    featured: false,
-  },
-  {
-    id: 7,
-    title: "Kolaborasi dengan HIMA Teknik Informatika",
-    excerpt: "Kerjasama strategis antara HIMA D3 SI dan HIMA Teknik Informatika untuk mengadakan event bersama demi pengembangan mahasiswa.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "15 April 2026",
-    readTime: "3 min",
-    author: "Ketua HIMA",
-    category: "berita",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop",
-    featured: false,
-  },
-  {
-    id: 8,
-    title: "Tim HIMA Lolos Seleksi GEMASTIK 2026",
-    excerpt: "Kabar gembira! Tim dari HIMA D3 SI berhasil lolos seleksi tahap pertama GEMASTIK 2026 dalam kategori pengembangan perangkat lunak.",
-    content: "Lorem ipsum dolor sit amet...",
-    date: "10 April 2026",
-    readTime: "3 min",
-    author: "Tim Media",
-    category: "prestasi",
-    image: "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=800&h=600&fit=crop",
-    featured: false,
-  },
 ]
 
 export default function BeritaPage() {
@@ -184,41 +87,43 @@ export default function BeritaPage() {
           {/* News Grid */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredNews.map((news) => (
-              <Card key={news.id} className="group overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:-translate-y-1 hover:glow-primary-sm">
-                <div className="aspect-[16/10] overflow-hidden">
-                  <Image
-                    src={news.image}
-                    alt={news.title}
-                    width={400}
-                    height={250}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <div className="mb-2 flex items-center gap-2">
-                    <Badge className="text-xs capitalize bg-secondary/20 text-secondary hover:bg-secondary/30">
-                      {news.category}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{news.date}</span>
+              <Link key={news.id} href={`/berita/${news.slug}`} className="group">
+                <Card className="h-full overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:glow-primary-sm">
+                  <div className="aspect-[16/10] overflow-hidden">
+                    <Image
+                      src={news.image}
+                      alt={news.title}
+                      width={400}
+                      height={250}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
                   </div>
-                  <h3 className="mb-2 font-semibold leading-tight line-clamp-2 transition-colors group-hover:text-primary">
-                    {news.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {news.excerpt}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      {news.author}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {news.readTime}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+                  <CardContent className="p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge className="bg-secondary/20 text-xs capitalize text-secondary hover:bg-secondary/30">
+                        {news.category}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{news.date}</span>
+                    </div>
+                    <h3 className="mb-2 line-clamp-2 font-semibold leading-tight transition-colors group-hover:text-primary">
+                      {news.title}
+                    </h3>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                      {news.excerpt}
+                    </p>
+                    <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {news.author}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {news.readTime}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
 
