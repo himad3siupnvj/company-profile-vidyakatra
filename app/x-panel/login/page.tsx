@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LockKeyhole, LogIn } from "lucide-react"
+import { Loader2, LockKeyhole, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,12 +13,14 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loginPhase, setLoginPhase] = useState<"idle" | "submitting" | "redirecting">("idle")
+
+  const isSubmitting = loginPhase !== "idle"
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
-    setIsSubmitting(true)
+    setLoginPhase("submitting")
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -29,15 +31,16 @@ export default function AdminLoginPage() {
 
       if (!response.ok) {
         setError("Email atau password tidak sesuai.")
+        setLoginPhase("idle")
         return
       }
 
+      setLoginPhase("redirecting")
       router.push("/x-panel")
       router.refresh()
     } catch {
       setError("Login gagal. Coba lagi sebentar.")
-    } finally {
-      setIsSubmitting(false)
+      setLoginPhase("idle")
     }
   }
 
@@ -66,6 +69,7 @@ export default function AdminLoginPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="admin@himad3si.ac.id"
+                disabled={isSubmitting}
                 required
               />
             </div>
@@ -78,17 +82,32 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Minimal 8 karakter"
+                disabled={isSubmitting}
                 required
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button className="w-full gap-2" type="submit" disabled={isSubmitting}>
-              <LogIn className="h-4 w-4" />
-              {isSubmitting ? "Memproses..." : "Masuk"}
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
+              {loginPhase === "redirecting" ? "Membuka dashboard..." : loginPhase === "submitting" ? "Memproses..." : "Masuk"}
             </Button>
           </form>
         </CardContent>
       </Card>
+      {loginPhase === "redirecting" && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/85 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm overflow-hidden rounded-lg border bg-card p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Loader2 className="h-7 w-7 animate-spin" />
+            </div>
+            <p className="text-base font-semibold text-foreground">Membuka dashboard</p>
+            <p className="mt-2 text-sm text-muted-foreground">Menyiapkan sesi admin...</p>
+            <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-full w-1/2 animate-[login-progress_1.1s_ease-in-out_infinite] rounded-full bg-primary" />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
