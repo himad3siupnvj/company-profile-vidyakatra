@@ -135,6 +135,17 @@
 }
 
 @layer utilities {
+  @keyframes login-progress {
+    0% {
+      transform: translateX(-120%);
+    }
+    50% {
+      transform: translateX(65%);
+    }
+    100% {
+      transform: translateX(220%);
+    }
+  }
   .scroll-reveal-item {
     opacity: 0;
     transform: translate3d(0, 24px, 0) scale(0.985);

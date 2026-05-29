@@ -4,6 +4,8 @@ import { notFound } from "next/navigation"
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ArticleDocumentRenderer } from "@/components/public/article-document-renderer"
+import type { ArticleDocument } from "@/lib/article-content"
 import { newsData } from "@/lib/public-content"
 
 type NewsDetailPageProps = {
@@ -22,6 +24,15 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     notFound()
   }
 
+  const document: ArticleDocument = {
+    type: "doc",
+    content: news.content.map((paragraph, index) => ({
+      id: `${news.slug}-${index}`,
+      type: "paragraph",
+      text: paragraph,
+    })),
+  }
+
   return (
     <article>
       <section className="relative overflow-hidden border-b border-border/50 py-12 md:py-16">
@@ -29,16 +40,24 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
         <div className="absolute left-1/4 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]" />
 
         <div className="relative mx-auto max-w-5xl px-4 md:px-6">
-          <Button asChild variant="ghost" className="mb-8 gap-2 pl-0 text-muted-foreground hover:text-primary">
-            <Link href="/berita">
-              <ArrowLeft className="h-4 w-4" />
-              Kembali ke Berita
-            </Link>
-          </Button>
+          <div className="mb-10 flex flex-wrap items-center gap-3">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="-ml-2 h-9 gap-2 px-2 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            >
+              <Link href="/berita">
+                <ArrowLeft className="h-4 w-4" />
+                Kembali ke Berita
+              </Link>
+            </Button>
+            <span className="hidden h-4 w-px bg-border/70 sm:block" />
+            <Badge className="bg-primary/10 px-3 py-1 text-sm text-primary capitalize">
+              {news.category}
+            </Badge>
+          </div>
 
-          <Badge className="mb-4 bg-primary/10 text-primary capitalize">
-            {news.category}
-          </Badge>
           <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-balance md:text-5xl">
             {news.title}
           </h1>
@@ -76,10 +95,8 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
             />
           </div>
 
-          <div className="mx-auto mt-10 max-w-3xl space-y-6 text-base leading-8 text-muted-foreground">
-            {news.content.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
+          <div className="mx-auto mt-10 max-w-3xl text-base leading-8 text-muted-foreground">
+            <ArticleDocumentRenderer document={document} />
           </div>
         </div>
       </section>
