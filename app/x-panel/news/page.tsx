@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Archive, Edit, Eye, FileText, ImagePlus, Info, Monitor, MoreHorizontal, PenLine, Plus, Search, Send, Trash2 } from "lucide-react"
+import { Archive, CheckCircle2, Edit, Eye, FileText, ImagePlus, Info, Loader2, Monitor, MoreHorizontal, PenLine, Plus, RotateCcw, Search, Send, Trash2, Upload, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -44,6 +44,11 @@ import {
   NotionArticleEditor,
   type ArticleDocument,
 } from "@/components/admin/notion-article-editor"
+import { getArticleReadTime } from "@/lib/article-content"
+import {
+  getArticleWorkflowActions,
+  type ArticleWorkflowAction,
+} from "@/lib/article-workflow"
 
 interface Article {
   id: string
@@ -60,6 +65,7 @@ interface Article {
   readTime: string
   featured: boolean
   views: number
+  content?: ArticleDocument
 }
 
 const initialArticles: Article[] = [
@@ -74,11 +80,28 @@ const articleCategories = [
   { value: "prestasi", label: "Prestasi" },
 ]
 
+const workflowActionLabels: Record<ArticleWorkflowAction, string> = {
+  submit: "Submit for Review",
+  approve: "Approve & Publish",
+  reject: "Reject",
+  archive: "Archive",
+  restore: "Restore Draft",
+}
+
+const workflowActionIcons = {
+  submit: Send,
+  approve: CheckCircle2,
+  reject: XCircle,
+  archive: Archive,
+  restore: RotateCcw,
+} satisfies Record<ArticleWorkflowAction, typeof Send>
+
 export default function ArticleManagementPage() {
   const [articles, setArticles] = useState<Article[]>(initialArticles)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isCreateArticleOpen, setIsCreateArticleOpen] = useState(false)
+  const [editingArticleId, setEditingArticleId] = useState<string | null>(null)
   const [newArticle, setNewArticle] = useState({
     title: "",
     excerpt: "",
@@ -89,6 +112,12 @@ export default function ArticleManagementPage() {
     featured: false,
   })
   const [articleContent, setArticleContent] = useState<ArticleDocument>(createEmptyArticleDocument())
+  const [updatingArticleId, setUpdatingArticleId] = useState<string | null>(null)
+  const [isUploadingCover, setIsUploadingCover] = useState(false)
+  const [isUploadingSource, setIsUploadingSource] = useState(false)
+  const [isGeneratingSource, setIsGeneratingSource] = useState(false)
+  const [sourceAssetName, setSourceAssetName] = useState("")
+  const [isSavingArticle, setIsSavingArticle] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -123,26 +152,50 @@ export default function ArticleManagementPage() {
     return matchesSearch && matchesStatus
   })
 
-  const getArticleReadTime = (content: ArticleDocument) => {
-    const words = content.content
-      .map((block) => (block.type === "image" ? `${block.alt} ${block.caption}` : block.text))
-      .join(" ")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean).length
-    const minutes = Math.max(1, Math.ceil(words / 180))
-
-    return `${minutes} min`
+  const resetArticleForm = () => {
+    setEditingArticleId(null)
+    setSourceAssetName("")
+    setNewArticle({ title: "", excerpt: "", category: "", author: "Tim Media", thumbnailUrl: "", thumbnailAlt: "", featured: false })
+    setArticleContent(createEmptyArticleDocument())
   }
 
-  const handleCreateArticle = async () => {
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsCreateArticleOpen(open)
+
+    if (!open) {
+      resetArticleForm()
+    }
+  }
+
+  const handleEditArticle = (article: Article) => {
+    setEditingArticleId(article.id)
+    setNewArticle({
+      title: article.title,
+      excerpt: article.excerpt,
+      category: article.category,
+      author: article.author,
+      thumbnailUrl: article.thumbnail === "/news/default.jpg" ? "" : article.thumbnail,
+      thumbnailAlt: article.thumbnailAlt,
+      featured: article.featured,
+    })
+    setArticleContent(article.content ?? createEmptyArticleDocument())
+    setIsCreateArticleOpen(true)
+  }
+
+  const handleSaveArticle = async () => {
+    if (isSavingArticle) return
+
     const readTime = getArticleReadTime(articleContent)
+    const isEditing = Boolean(editingArticleId)
+
+    setIsSavingArticle(true)
 
     try {
       const response = await fetch("/api/admin/articles", {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: editingArticleId,
           ...newArticle,
           readTime,
           content: articleContent,
@@ -152,12 +205,112 @@ export default function ArticleManagementPage() {
       if (!response.ok) return
 
       const data = await response.json()
-      setArticles([data.article, ...articles])
-      setNewArticle({ title: "", excerpt: "", category: "", author: "Tim Media", thumbnailUrl: "", thumbnailAlt: "", featured: false })
-      setArticleContent(createEmptyArticleDocument())
+      setArticles((currentArticles) =>
+        isEditing
+          ? currentArticles.map((article) => (article.id === editingArticleId ? data.article : article))
+          : [data.article, ...currentArticles],
+      )
       setIsCreateArticleOpen(false)
+      resetArticleForm()
     } catch {
       // The form stays open so the user can retry.
+    } finally {
+      setIsSavingArticle(false)
+    }
+  }
+
+  const handleUploadCover = async (file: File | null) => {
+    if (!file) return
+
+    setErrorMessage("")
+    setIsUploadingCover(true)
+
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("purpose", "article-image")
+
+    try {
+      const response = await fetch("/api/admin/assets", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setErrorMessage(data?.error ?? "Upload cover gagal.")
+        return
+      }
+
+      setNewArticle((current) => ({
+        ...current,
+        thumbnailUrl: data.asset.url,
+        thumbnailAlt: current.thumbnailAlt || data.asset.fileName,
+      }))
+    } catch {
+      setErrorMessage("Upload cover gagal. Coba lagi sebentar.")
+    } finally {
+      setIsUploadingCover(false)
+    }
+  }
+
+  const handleUploadSource = async (file: File | null) => {
+    if (!file) return
+
+    setErrorMessage("")
+    setIsUploadingSource(true)
+
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("purpose", "article-source")
+
+    try {
+      const response = await fetch("/api/admin/assets", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setErrorMessage(data?.error ?? "Upload source gagal.")
+        return
+      }
+
+      setSourceAssetName(data.asset.fileName)
+    } catch {
+      setErrorMessage("Upload source gagal. Coba lagi sebentar.")
+    } finally {
+      setIsUploadingSource(false)
+    }
+  }
+
+  const handleGenerateFromPdf = async (file: File | null) => {
+    if (!file) return
+
+    setErrorMessage("")
+    setIsGeneratingSource(true)
+
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const response = await fetch("/api/admin/articles/generate", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setErrorMessage(data?.error ?? "Generate draft dari PDF gagal.")
+        return
+      }
+
+      setArticles((currentArticles) => [data.article, ...currentArticles])
+      setIsCreateArticleOpen(false)
+      resetArticleForm()
+    } catch {
+      setErrorMessage("Generate draft dari PDF gagal. Coba lagi sebentar.")
+    } finally {
+      setIsGeneratingSource(false)
     }
   }
 
@@ -174,6 +327,50 @@ export default function ArticleManagementPage() {
       setArticles(previousArticles)
     }
   }
+
+  const handleWorkflowAction = async (article: Article, action: ArticleWorkflowAction) => {
+    const rejectedNote =
+      action === "reject"
+        ? window.prompt("Catatan revisi untuk penulis")
+        : null
+
+    if (action === "reject" && !rejectedNote?.trim()) {
+      return
+    }
+
+    setUpdatingArticleId(article.id)
+
+    try {
+      const response = await fetch("/api/admin/articles/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: article.id,
+          action,
+          rejectedNote,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        setErrorMessage(data?.error ?? "Workflow article gagal diproses.")
+        return
+      }
+
+      const data = await response.json()
+      setArticles((currentArticles) =>
+        currentArticles.map((currentArticle) =>
+          currentArticle.id === article.id ? data.article : currentArticle,
+        ),
+      )
+    } catch {
+      setErrorMessage("Workflow article gagal diproses. Coba lagi sebentar.")
+    } finally {
+      setUpdatingArticleId(null)
+    }
+  }
+
+  const [errorMessage, setErrorMessage] = useState("")
 
   const getStatusColor = (status: Article["status"]) => {
     const colors: Record<Article["status"], string> = {
@@ -273,7 +470,7 @@ export default function ArticleManagementPage() {
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
-            <Dialog open={isCreateArticleOpen} onOpenChange={setIsCreateArticleOpen}>
+            <Dialog open={isCreateArticleOpen} onOpenChange={handleDialogOpenChange}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
@@ -282,9 +479,11 @@ export default function ArticleManagementPage() {
               </DialogTrigger>
               <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
                 <DialogHeader>
-                  <DialogTitle>Create New Article</DialogTitle>
+                  <DialogTitle>{editingArticleId ? "Edit Article" : "Create New Article"}</DialogTitle>
                   <DialogDescription>
-                    Buat artikel sebagai draft. Publish akan berjalan otomatis setelah approval.
+                    {editingArticleId
+                      ? "Edit draft atau artikel revisi sebelum diajukan lagi."
+                      : "Buat artikel sebagai draft. Publish akan berjalan otomatis setelah approval."}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -348,6 +547,40 @@ export default function ArticleManagementPage() {
                   <div className="rounded-lg border bg-muted/20 p-4">
                     <div className="mb-4 flex items-start gap-3">
                       <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <Upload className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Source Berita Acara</h3>
+                        <p className="text-sm text-muted-foreground">Simpan PDF/DOC/DOCX sumber. Generator konten akan disambungkan setelah parser siap.</p>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" className="relative w-full gap-2" disabled={isUploadingSource}>
+                      {isUploadingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {sourceAssetName || "Upload PDF/Word Source"}
+                      <input
+                        type="file"
+                        accept="application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                        disabled={isUploadingSource}
+                        onChange={(event) => handleUploadSource(event.target.files?.[0] ?? null)}
+                      />
+                    </Button>
+                    <Button type="button" className="relative mt-2 w-full gap-2" disabled={isGeneratingSource}>
+                      {isGeneratingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                      {isGeneratingSource ? "Generating..." : "Generate Draft from PDF"}
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                        disabled={isGeneratingSource}
+                        onChange={(event) => handleGenerateFromPdf(event.target.files?.[0] ?? null)}
+                      />
+                    </Button>
+                  </div>
+
+                  <div className="rounded-lg border bg-muted/20 p-4">
+                    <div className="mb-4 flex items-start gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2 text-primary">
                         <Monitor className="h-4 w-4" />
                       </div>
                       <div>
@@ -373,6 +606,17 @@ export default function ArticleManagementPage() {
                             onChange={(event) => setNewArticle({ ...newArticle, thumbnailUrl: event.target.value })}
                             placeholder="Paste URL gambar cover..."
                           />
+                          <Button type="button" variant="outline" size="sm" className="relative w-full gap-2" disabled={isUploadingCover}>
+                            {isUploadingCover ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            Upload Cover
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                              disabled={isUploadingCover}
+                              onChange={(event) => handleUploadCover(event.target.files?.[0] ?? null)}
+                            />
+                          </Button>
                           <Input
                             value={newArticle.thumbnailAlt}
                             onChange={(event) => setNewArticle({ ...newArticle, thumbnailAlt: event.target.value })}
@@ -419,13 +663,19 @@ export default function ArticleManagementPage() {
                       <h3 className="font-semibold">Isi Artikel</h3>
                       <p className="text-sm text-muted-foreground">Tulis artikel di kanvas kosong. Ketik / untuk menambah block.</p>
                     </div>
-                    <NotionArticleEditor value={articleContent} onChange={setArticleContent} />
+                    <NotionArticleEditor
+                      value={articleContent}
+                      onChange={setArticleContent}
+                      previewTitle={newArticle.title}
+                      previewCategory={articleCategories.find((category) => category.value === newArticle.category)?.label ?? "Berita Acara"}
+                      previewMeta={`${newArticle.author || "Tim Media"} / ${getArticleReadTime(articleContent)}`}
+                    />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleCreateArticle}>
+                  <Button onClick={handleSaveArticle} disabled={isSavingArticle}>
                     <Archive className="mr-2 h-4 w-4" />
-                    Save Draft
+                    {isSavingArticle ? "Saving..." : editingArticleId ? "Update Draft" : "Save Draft"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -433,6 +683,11 @@ export default function ArticleManagementPage() {
           </div>
         </CardHeader>
         <CardContent>
+          {errorMessage && (
+            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          )}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -448,7 +703,7 @@ export default function ArticleManagementPage() {
               </TableHeader>
               <TableBody>
                 {filteredArticles.map((article) => (
-                  <TableRow key={article.id}>
+                  <TableRow key={article.id} className={updatingArticleId === article.id ? "opacity-60" : undefined}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-16 overflow-hidden rounded bg-muted">
@@ -479,11 +734,28 @@ export default function ArticleManagementPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {getArticleWorkflowActions(article.status).map((action) => {
+                            const Icon = workflowActionIcons[action]
+
+                            return (
+                              <DropdownMenuItem
+                                key={action}
+                                onClick={() => handleWorkflowAction(article, action)}
+                                disabled={updatingArticleId === article.id}
+                              >
+                                <Icon className="mr-2 h-4 w-4" />
+                                {workflowActionLabels[action]}
+                              </DropdownMenuItem>
+                            )
+                          })}
                           <DropdownMenuItem>
                             <Eye className="mr-2 h-4 w-4" />
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEditArticle(article)}
+                            disabled={article.status !== "draft" && article.status !== "rejected"}
+                          >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
