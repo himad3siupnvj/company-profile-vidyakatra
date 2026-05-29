@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Save, Globe, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Music2 } from "lucide-react"
+import { Archive, Download, Save, Globe, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Music2 } from "lucide-react"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
+  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [message, setMessage] = useState("")
   const [contactInfo, setContactInfo] = useState({
     email: "himpunand3si@gmail.com",
     phone: "+62 812 3456 7890",
@@ -60,6 +62,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     async function loadSettings() {
+      setIsLoading(true)
       try {
         const response = await fetch("/api/admin/settings")
         if (!response.ok) return
@@ -72,6 +75,8 @@ export default function SettingsPage() {
         setSiteSettings(data.siteSettings)
       } catch {
         // Keep local fallback data when the backend is unavailable.
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -80,9 +85,10 @@ export default function SettingsPage() {
 
   const saveSettings = async () => {
     setIsSaving(true)
+    setMessage("")
 
     try {
-      await fetch("/api/admin/settings", {
+      const response = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,9 +99,16 @@ export default function SettingsPage() {
           siteSettings,
         }),
       })
+      setMessage(response.ok ? "Pengaturan berhasil disimpan." : "Pengaturan gagal disimpan.")
+    } catch {
+      setMessage("Pengaturan gagal disimpan.")
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const downloadExport = (href: string) => {
+    window.open(href, "_blank", "noopener,noreferrer")
   }
 
   const updateQuickLink = (id: number, field: string, value: string | boolean) => {
@@ -119,6 +132,17 @@ export default function SettingsPage() {
           {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
         </Button>
       </div>
+
+      {isLoading && (
+        <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          Memuat pengaturan...
+        </div>
+      )}
+      {message && (
+        <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          {message}
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -181,6 +205,34 @@ export default function SettingsPage() {
                   checked={siteSettings.analyticsEnabled}
                   onCheckedChange={(checked) => setSiteSettings({ ...siteSettings, analyticsEnabled: checked })}
                 />
+              </div>
+              <div className="rounded-lg border p-4">
+                <div className="mb-4">
+                  <Label>Export Data CMS</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Download data penting untuk arsip internal.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => downloadExport("/api/admin/export?entity=members&format=csv")}
+                  >
+                    <Download className="h-4 w-4" />
+                    Members CSV
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => downloadExport("/api/admin/export?format=zip&entities=periods,members,users,organizational-units,divisions,articles,assets")}
+                  >
+                    <Archive className="h-4 w-4" />
+                    Full ZIP
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

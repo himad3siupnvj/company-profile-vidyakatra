@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { members, users } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
+import { writeAuditLog } from "@/lib/audit"
 import { userRoles, type UserRole } from "@/lib/permissions"
 
 export const runtime = "nodejs"
@@ -90,6 +91,14 @@ export async function POST(request: NextRequest) {
       })
       .returning()
 
+    await writeAuditLog({
+      actorId: guard.user?.id,
+      action: "user.create",
+      entityType: "user",
+      entityId: created.id,
+      metadata: { role: created.role, status: created.status, memberId },
+    })
+
     return NextResponse.json({ user: serializeUser(created) })
   } catch {
     return NextResponse.json({ error: "Email is already used" }, { status: 409 })
@@ -129,6 +138,14 @@ export async function PATCH(request: NextRequest) {
     .where(eq(users.id, id))
     .returning()
 
+  await writeAuditLog({
+    actorId: guard.user?.id,
+    action: status === "inactive" ? "user.disable" : "user.enable",
+    entityType: "user",
+    entityId: id,
+    metadata: { previousStatus: existing.status, newStatus: status },
+  })
+
   return NextResponse.json({ user: serializeUser(updated) })
 }
 
@@ -154,6 +171,13 @@ export async function DELETE(request: NextRequest) {
   }
 
   await db.update(users).set({ status: "inactive", updatedAt: new Date() }).where(eq(users.id, id))
+  await writeAuditLog({
+    actorId: guard.user?.id,
+    action: "user.disable",
+    entityType: "user",
+    entityId: id,
+    metadata: { previousStatus: existing.status, newStatus: "inactive" },
+  })
 
   return NextResponse.json({ ok: true })
 }

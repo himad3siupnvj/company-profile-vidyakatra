@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { divisions, members, organizationalUnits } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
+import { writeAuditLog } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
@@ -22,6 +23,7 @@ function serializeDivision(row: typeof divisions.$inferSelect & { unitName?: str
   return {
     id: row.id,
     name: row.name,
+    organizationalUnitId: row.organizationalUnitId,
     organizationalUnit: row.unitName ?? "Unassigned",
     description: row.description ?? "",
     sortOrder: row.sortOrder,
@@ -52,6 +54,36 @@ function serializeMember(row: {
     status: "active" as const,
     joinDate: (row.joinedAt ?? row.createdAt).toISOString().slice(0, 10),
   }
+}
+
+async function resolveOrgUnitId(value: unknown) {
+  const raw = String(value ?? "").trim()
+
+  if (!raw) return null
+
+  const db = getDb()
+  const [byId] = await db.select().from(organizationalUnits).where(eq(organizationalUnits.id, raw)).limit(1)
+
+  if (byId) return byId.id
+
+  const [byName] = await db.select().from(organizationalUnits).where(eq(organizationalUnits.name, raw)).limit(1)
+
+  return byName?.id ?? null
+}
+
+async function resolveDivisionId(value: unknown) {
+  const raw = String(value ?? "").trim()
+
+  if (!raw) return null
+
+  const db = getDb()
+  const [byId] = await db.select().from(divisions).where(eq(divisions.id, raw)).limit(1)
+
+  if (byId) return byId.id
+
+  const [byName] = await db.select().from(divisions).where(eq(divisions.name, raw)).limit(1)
+
+  return byName?.id ?? null
 }
 
 export async function GET() {
@@ -126,6 +158,71 @@ export async function POST(request: NextRequest) {
 
   const payload = await request.json()
   const type = String(payload.type ?? "member")
+  const now = new Date()
+  const db = getDb()
+
+  if (type === "organizational-unit" || type === "department") {
+    const name = String(payload.name ?? "").trim()
+    const unitType = payload.unitType === "bureau" || payload.orgUnitType === "bureau" ? "bureau" : "department"
+
+    if (!name) {
+      return NextResponse.json({ error: "Organizational unit name is required" }, { status: 400 })
+    }
+
+    const [created] = await db
+      .insert(organizationalUnits)
+      .values({
+        name,
+        type: unitType,
+        description: String(payload.description ?? ""),
+        color: String(payload.color ?? "bg-primary"),
+        sortOrder: Number(payload.sortOrder ?? 0),
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+
+    await writeAuditLog({
+      actorId: guard.user?.id,
+      action: "org_unit.create",
+      entityType: "organizational_unit",
+      entityId: created.id,
+      metadata: { type: unitType },
+    })
+
+    return NextResponse.json({ organizationalUnit: serializeOrgUnit(created), department: serializeOrgUnit(created) })
+  }
+
+  if (type === "division") {
+    const name = String(payload.name ?? "").trim()
+
+    if (!name) {
+      return NextResponse.json({ error: "Division name is required" }, { status: 400 })
+    }
+
+    const organizationalUnitId = await resolveOrgUnitId(payload.organizationalUnitId ?? payload.organizationalUnit)
+    const [created] = await db
+      .insert(divisions)
+      .values({
+        name,
+        organizationalUnitId,
+        description: String(payload.description ?? ""),
+        sortOrder: Number(payload.sortOrder ?? 0),
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+
+    await writeAuditLog({
+      actorId: guard.user?.id,
+      action: "division.create",
+      entityType: "division",
+      entityId: created.id,
+      metadata: { organizationalUnitId },
+    })
+
+    return NextResponse.json({ division: serializeDivision({ ...created, unitName: null }) })
+  }
 
   if (type !== "member") {
     return NextResponse.json({ error: "Unsupported organization payload" }, { status: 400 })
@@ -138,22 +235,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Name and position are required" }, { status: 400 })
   }
 
-  const db = getDb()
-  const [unit] = payload.department
-    ? await db
-        .select()
-        .from(organizationalUnits)
-        .where(eq(organizationalUnits.name, String(payload.department)))
-        .limit(1)
+  const organizationalUnitId = await resolveOrgUnitId(payload.organizationalUnitId ?? payload.department)
+  const divisionId = await resolveDivisionId(payload.divisionId ?? payload.division)
+  const [unit] = organizationalUnitId
+    ? await db.select().from(organizationalUnits).where(eq(organizationalUnits.id, organizationalUnitId)).limit(1)
     : []
-  const now = new Date()
+  const [division] = divisionId
+    ? await db.select().from(divisions).where(eq(divisions.id, divisionId)).limit(1)
+    : []
 
   const [created] = await db
     .insert(members)
     .values({
       name,
       position,
-      organizationalUnitId: unit?.id,
+      organizationalUnitId,
+      divisionId,
       email: String(payload.email ?? ""),
       phone: String(payload.phone ?? ""),
       joinedAt: now,
@@ -162,11 +259,132 @@ export async function POST(request: NextRequest) {
     })
     .returning()
 
+  await writeAuditLog({
+    actorId: guard.user?.id,
+    action: "member.create",
+    entityType: "member",
+    entityId: created.id,
+    metadata: { organizationalUnitId, divisionId },
+  })
+
   return NextResponse.json({
     member: serializeMember({
       ...created,
       unitName: unit?.name ?? null,
-      divisionName: null,
+      divisionName: division?.name ?? null,
+    }),
+  })
+}
+
+export async function PUT(request: NextRequest) {
+  const guard = await requireApiPermission("member.manage")
+  if (guard.response) return guard.response
+
+  const payload = await request.json()
+  const type = String(payload.type ?? "member")
+  const id = String(payload.id ?? "").trim()
+  const now = new Date()
+  const db = getDb()
+
+  if (!id) {
+    return NextResponse.json({ error: "Valid id is required" }, { status: 400 })
+  }
+
+  if (type === "organizational-unit" || type === "department") {
+    const name = String(payload.name ?? "").trim()
+    const unitType = payload.unitType === "bureau" || payload.orgUnitType === "bureau" ? "bureau" : "department"
+
+    if (!name) {
+      return NextResponse.json({ error: "Organizational unit name is required" }, { status: 400 })
+    }
+
+    const [updated] = await db
+      .update(organizationalUnits)
+      .set({
+        name,
+        type: unitType,
+        description: String(payload.description ?? ""),
+        color: String(payload.color ?? "bg-primary"),
+        sortOrder: Number(payload.sortOrder ?? 0),
+        updatedAt: now,
+      })
+      .where(eq(organizationalUnits.id, id))
+      .returning()
+
+    if (!updated) return NextResponse.json({ error: "Organizational unit not found" }, { status: 404 })
+
+    await writeAuditLog({ actorId: guard.user?.id, action: "org_unit.update", entityType: "organizational_unit", entityId: id })
+
+    return NextResponse.json({ organizationalUnit: serializeOrgUnit(updated), department: serializeOrgUnit(updated) })
+  }
+
+  if (type === "division") {
+    const name = String(payload.name ?? "").trim()
+
+    if (!name) {
+      return NextResponse.json({ error: "Division name is required" }, { status: 400 })
+    }
+
+    const organizationalUnitId = await resolveOrgUnitId(payload.organizationalUnitId ?? payload.organizationalUnit)
+    const [updated] = await db
+      .update(divisions)
+      .set({
+        name,
+        organizationalUnitId,
+        description: String(payload.description ?? ""),
+        sortOrder: Number(payload.sortOrder ?? 0),
+        updatedAt: now,
+      })
+      .where(eq(divisions.id, id))
+      .returning()
+
+    if (!updated) return NextResponse.json({ error: "Division not found" }, { status: 404 })
+
+    await writeAuditLog({ actorId: guard.user?.id, action: "division.update", entityType: "division", entityId: id })
+
+    return NextResponse.json({ division: serializeDivision({ ...updated, unitName: null }) })
+  }
+
+  const name = String(payload.name ?? "").trim()
+  const position = String(payload.position ?? "").trim()
+
+  if (!name || !position) {
+    return NextResponse.json({ error: "Name and position are required" }, { status: 400 })
+  }
+
+  const organizationalUnitId = await resolveOrgUnitId(payload.organizationalUnitId ?? payload.department)
+  const divisionId = await resolveDivisionId(payload.divisionId ?? payload.division)
+  const [unit] = organizationalUnitId
+    ? await db.select().from(organizationalUnits).where(eq(organizationalUnits.id, organizationalUnitId)).limit(1)
+    : []
+  const [division] = divisionId
+    ? await db.select().from(divisions).where(eq(divisions.id, divisionId)).limit(1)
+    : []
+
+  const [updated] = await db
+    .update(members)
+    .set({
+      name,
+      position,
+      organizationalUnitId,
+      divisionId,
+      email: String(payload.email ?? ""),
+      phone: String(payload.phone ?? ""),
+      avatarUrl: payload.avatarUrl || payload.avatar || null,
+      updatedAt: now,
+    })
+    .where(eq(members.id, id))
+    .returning()
+
+  if (!updated) return NextResponse.json({ error: "Member not found" }, { status: 404 })
+
+  await writeAuditLog({ actorId: guard.user?.id, action: "member.update", entityType: "member", entityId: id })
+
+  return NextResponse.json({
+    member: serializeMember({
+      ...updated,
+      unitName: unit?.name ?? null,
+      divisionName: division?.name ?? null,
     }),
   })
 }
@@ -176,13 +394,40 @@ export async function DELETE(request: NextRequest) {
   if (guard.response) return guard.response
 
   const id = request.nextUrl.searchParams.get("id")
+  const type = request.nextUrl.searchParams.get("type") ?? "member"
 
   if (!id) {
     return NextResponse.json({ error: "Valid id is required" }, { status: 400 })
   }
 
   const db = getDb()
-  await db.update(members).set({ deletedAt: new Date(), updatedAt: new Date() }).where(eq(members.id, id))
+  const now = new Date()
+
+  if (type === "organizational-unit" || type === "department") {
+    await db
+      .update(organizationalUnits)
+      .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
+      .where(eq(organizationalUnits.id, id))
+    await writeAuditLog({ actorId: guard.user?.id, action: "org_unit.delete", entityType: "organizational_unit", entityId: id })
+
+    return NextResponse.json({ ok: true })
+  }
+
+  if (type === "division") {
+    await db
+      .update(divisions)
+      .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
+      .where(eq(divisions.id, id))
+    await writeAuditLog({ actorId: guard.user?.id, action: "division.delete", entityType: "division", entityId: id })
+
+    return NextResponse.json({ ok: true })
+  }
+
+  await db
+    .update(members)
+    .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
+    .where(eq(members.id, id))
+  await writeAuditLog({ actorId: guard.user?.id, action: "member.delete", entityType: "member", entityId: id })
 
   return NextResponse.json({ ok: true })
 }

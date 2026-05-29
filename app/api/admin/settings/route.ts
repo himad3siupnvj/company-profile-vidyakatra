@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { siteSettings } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
+import { writeAuditLog } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
@@ -77,6 +78,15 @@ export async function POST(request: NextRequest) {
           })
       )
   )
+
+  await writeAuditLog({
+    actorId: guard.user?.id,
+    action: "settings.update",
+    entityType: "site_settings",
+    metadata: {
+      keys: Object.keys(payload).filter((key) => key in defaultSettings),
+    },
+  })
 
   return NextResponse.json({ ok: true })
 }
