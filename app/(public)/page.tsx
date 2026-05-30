@@ -4,6 +4,7 @@ import kabinetImage from "@/assets/kabinet.jpg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getPublicNews } from "@/lib/public-articles";
 import {
   Zap,
   Users,
@@ -54,39 +55,6 @@ const divisions = [
   },
 ];
 
-const latestNews = [
-  {
-    id: 1,
-    title: "Workshop UI/UX Design Bersama Praktisi Industri",
-    excerpt:
-      "Tingkatkan kemampuan desain interface dengan bimbingan langsung dari profesional...",
-    date: "15 Mei 2026",
-    category: "Workshop",
-    image:
-      "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&h=600&fit=crop",
-  },
-  {
-    id: 2,
-    title: "Seminar Nasional Teknologi Informasi 2026",
-    excerpt:
-      "Menghadirkan pembicara dari berbagai perusahaan teknologi terkemuka...",
-    date: "10 Mei 2026",
-    category: "Seminar",
-    image:
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
-  },
-  {
-    id: 3,
-    title: "Kompetisi Hackathon Internal HIMA",
-    excerpt:
-      "Ajang adu kreativitas dan kemampuan coding antar mahasiswa D3 SI...",
-    date: "5 Mei 2026",
-    category: "Kompetisi",
-    image:
-      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=600&fit=crop",
-  },
-];
-
 const socialMedia = [
   {
     icon: Instagram,
@@ -126,7 +94,20 @@ const socialMedia = [
   },
 ];
 
-export default function HomePage() {
+function getCategoryLabel(category: string) {
+  const labels: Record<string, string> = {
+    berita: "Berita",
+    kegiatan: "Kegiatan",
+    pengumuman: "Pengumuman",
+    prestasi: "Prestasi",
+  };
+
+  return labels[category] ?? "Berita";
+}
+
+export default async function HomePage() {
+  const latestNews = (await getPublicNews()).slice(0, 3);
+
   return (
     <>
       {/* Cabinet Banner */}
@@ -297,36 +278,35 @@ export default function HomePage() {
           </div>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {latestNews.map((news) => (
-              <Card
-                key={news.id}
-                className="group overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm"
-              >
-                <div className="aspect-[16/10] overflow-hidden">
-                  <Image
-                    src={news.image}
-                    alt={news.title}
-                    width={800}
-                    height={500}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                </div>
-                <CardContent className="p-6">
-                  <div className="mb-3 flex items-center gap-3">
-                    <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30 text-xs">
-                      {news.category}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {news.date}
-                    </span>
+              <Link key={news.id} href={`/berita/${news.slug}`} className="min-w-0">
+                <Card className="group h-full overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
+                  <div className="aspect-[16/10] overflow-hidden bg-muted">
+                    <Image
+                      src={news.image}
+                      alt={news.title}
+                      width={800}
+                      height={500}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
                   </div>
-                  <h3 className="mb-2 font-semibold leading-tight line-clamp-2 transition-colors group-hover:text-primary">
-                    {news.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {news.excerpt}
-                  </p>
-                </CardContent>
-              </Card>
+                  <CardContent className="p-6">
+                    <div className="mb-3 flex flex-wrap items-center gap-3">
+                      <Badge className="bg-secondary/20 text-secondary hover:bg-secondary/30 text-xs">
+                        {getCategoryLabel(news.category)}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {news.date}
+                      </span>
+                    </div>
+                    <h3 className="mb-2 line-clamp-2 font-semibold leading-tight transition-colors group-hover:text-primary">
+                      {news.title}
+                    </h3>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                      {news.excerpt}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>
