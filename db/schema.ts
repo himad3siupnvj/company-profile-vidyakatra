@@ -83,7 +83,6 @@ export const members = pgTable("members", {
     onDelete: "set null",
   }),
   email: varchar("email", { length: 255 }),
-  phone: varchar("phone", { length: 40 }),
   // null = tampilkan inisial nama sebagai fallback di UI
   avatarUrl: text("avatar_url"),
   sortOrder: integer("sort_order").notNull().default(0),
@@ -121,6 +120,7 @@ export const users = pgTable(
       onDelete: "set null",
     }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
