@@ -103,6 +103,13 @@ E2E note: set `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` before running `corepac
 - [ ] Store external video URLs, such as YouTube embeds, instead of uploading videos to Supabase Storage.
 - [ ] Review Vercel/Supabase limits after user testing and tune caching, image sizes, and query volume.
 
+## Backlog: Content Completion Agenda
+
+- [ ] List hardcoded and missing public images that need real uploads.
+- [ ] Upload and replace hardcoded article, profile, and public page images after the related CMS support is ready.
+- [ ] Complete image assets that are currently placeholders or missing.
+- [ ] Store completed images in structured Supabase Storage paths based on year, section, and category.
+
 ## Backlog: Theme Support
 
 - [ ] Add light theme support as a final polish pass after core CMS flows are stable.
