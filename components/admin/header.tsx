@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Bell, ExternalLink, Search, Menu, LogOut, User, Settings } from "lucide-react"
@@ -27,9 +27,54 @@ interface AdminHeaderProps {
   sidebarCollapsed?: boolean
 }
 
+interface CurrentUser {
+  id: string
+  name: string
+  email: string
+  role: string
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch("/api/auth/me", { cache: "no-store" })
+
+        if (!response.ok) return
+
+        const data = await response.json()
+
+        if (active) {
+          setCurrentUser(data.user ?? null)
+        }
+      } catch {
+        if (active) {
+          setCurrentUser(null)
+        }
+      }
+    }
+
+    loadCurrentUser()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" })
@@ -124,14 +169,14 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-avatar.jpg" alt="Admin" />
+                <AvatarImage src="/placeholder-avatar.jpg" alt={currentUser?.name ?? "Admin"} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  SA
+                  {getInitials(currentUser?.name ?? "Admin")}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden flex-col items-start md:flex">
-                <span className="text-sm font-medium">Super Admin</span>
-                <span className="text-xs text-muted-foreground">admin@himad3siupnvj.id</span>
+                <span className="text-sm font-medium">{currentUser?.name ?? "Admin"}</span>
+                <span className="text-xs text-muted-foreground">{currentUser?.email ?? "Memuat akun..."}</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
