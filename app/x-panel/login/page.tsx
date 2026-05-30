@@ -17,6 +17,24 @@ export default function AdminLoginPage() {
 
   const isSubmitting = loginPhase !== "idle"
 
+  async function getLoginError(response: Response) {
+    try {
+      const data = await response.json()
+
+      if (data.error === "Email and password are required") {
+        return "Email dan password wajib diisi."
+      }
+
+      if (data.error === "Login service error") {
+        return "Layanan login sedang bermasalah. Cek konfigurasi production atau coba lagi sebentar."
+      }
+    } catch {
+      // Keep the default message below.
+    }
+
+    return "Email atau password tidak sesuai."
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
@@ -30,7 +48,7 @@ export default function AdminLoginPage() {
       })
 
       if (!response.ok) {
-        setError("Email atau password tidak sesuai.")
+        setError(await getLoginError(response))
         setLoginPhase("idle")
         return
       }

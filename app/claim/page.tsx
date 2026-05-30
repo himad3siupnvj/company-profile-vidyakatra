@@ -17,6 +17,40 @@ export default function ClaimAccountPage() {
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  async function getClaimError(response: Response) {
+    try {
+      const data = await response.json()
+
+      if (data.error === "Email, claim code, and password are required") {
+        return "Email, claim code, dan password wajib diisi."
+      }
+
+      if (data.error === "Password must be at least 8 characters") {
+        return "Password minimal 8 karakter."
+      }
+
+      if (data.error === "Account not found") {
+        return "Akun tidak ditemukan. Pastikan email sudah terdaftar di CMS."
+      }
+
+      if (data.error === "Account is already claimed") {
+        return "Akun ini sudah pernah diklaim. Silakan masuk lewat halaman login."
+      }
+
+      if (data.error === "Account is inactive") {
+        return "Akun sedang nonaktif. Hubungi administrator untuk mengaktifkan kembali."
+      }
+
+      if (data.error === "Claim service error") {
+        return "Layanan claim sedang bermasalah. Coba lagi sebentar."
+      }
+    } catch {
+      // Keep the default message below.
+    }
+
+    return "Claim code tidak valid. Cek kembali kode dari administrator."
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
@@ -30,7 +64,7 @@ export default function ClaimAccountPage() {
       })
 
       if (!response.ok) {
-        setError("Claim code tidak valid atau akun sudah diklaim.")
+        setError(await getClaimError(response))
         return
       }
 
@@ -67,6 +101,7 @@ export default function ClaimAccountPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="nama@himad3si.ac.id"
+                disabled={isSubmitting}
                 required
               />
             </div>
@@ -77,6 +112,7 @@ export default function ClaimAccountPage() {
                 value={claimCode}
                 onChange={(event) => setClaimCode(event.target.value.toUpperCase())}
                 placeholder="A1B2C3D4"
+                disabled={isSubmitting}
                 required
               />
             </div>
@@ -89,6 +125,7 @@ export default function ClaimAccountPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Minimal 8 karakter"
+                disabled={isSubmitting}
                 required
               />
             </div>
