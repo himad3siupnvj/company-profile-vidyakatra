@@ -65,7 +65,7 @@ E2E note: set `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` before running `corepac
 
 ## Backlog: Role-Aware Admin UX
 
-- [ ] Load current user profile in admin layout/header instead of hardcoded Super Admin data.
+- [x] Load current user profile in admin layout/header instead of hardcoded Super Admin data.
 - [ ] Filter sidebar navigation and quick actions based on role permissions.
 - [ ] Adapt dashboard cards, review queues, and shortcuts to each role group.
 - [ ] Hide or disable UI actions that the current role cannot perform.
