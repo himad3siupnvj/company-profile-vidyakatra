@@ -40,19 +40,19 @@ export function QuickActions() {
       </CardHeader>
       <CardContent className="grid gap-3">
         {actions.map((action) => (
-          <Link key={action.title} href={action.href}>
+          <Link key={action.title} href={action.href} className="min-w-0">
             <Button
               variant="outline"
-              className="h-auto w-full justify-start gap-4 border-white/10 bg-white/[0.02] p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.05] hover:shadow-[0_12px_30px_rgba(250,204,21,0.08)]"
+              className="h-auto w-full min-w-0 justify-start gap-3 whitespace-normal border-white/10 bg-white/[0.02] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.05] hover:shadow-[0_12px_30px_rgba(250,204,21,0.08)] sm:gap-4 sm:p-4"
             >
-              <div className={`rounded-lg p-2 ${action.color}`}>
+              <div className={`shrink-0 rounded-lg p-2 ${action.color}`}>
                 <action.icon className="h-4 w-4" />
               </div>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <p className="font-medium">{action.title}</p>
                 <p className="text-xs text-muted-foreground">{action.description}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </Button>
           </Link>
         ))}

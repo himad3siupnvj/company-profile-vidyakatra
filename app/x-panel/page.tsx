@@ -214,12 +214,12 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-3">
+        <div className="min-w-0 xl:col-span-2">
           <RecentActivity />
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <QuickActions />
 
           <Card>
@@ -228,8 +228,8 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent className="space-y-3">
               {reviewQueue.map((item) => (
-                <div key={item.title} className="flex items-start gap-3 rounded-lg border border-white/10 p-3">
-                  <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                <div key={item.title} className="flex min-w-0 items-start gap-3 rounded-lg border border-white/10 p-3">
+                  <div className="shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
                     <FileText className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">

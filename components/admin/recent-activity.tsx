@@ -66,21 +66,21 @@ export function RecentActivity() {
       </CardHeader>
       <CardContent className="space-y-4">
         {activities.map((activity) => (
-          <div key={activity.id} className="flex items-start gap-4">
-            <Avatar className="h-9 w-9">
+          <div key={activity.id} className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <Avatar className="h-9 w-9 shrink-0">
               <AvatarImage src={`/avatars/${activity.id}.jpg`} />
               <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
                 {activity.avatar}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 space-y-1">
+            <div className="min-w-0 flex-1 space-y-1">
               <p className="text-sm">
                 <span className="font-medium">{activity.user}</span>{" "}
                 <span className="text-muted-foreground">{activity.action}</span>{" "}
                 <span className="font-medium">{activity.target}</span>
               </p>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className={typeColors[activity.type]}>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <Badge variant="secondary" className={`shrink-0 ${typeColors[activity.type]}`}>
                   {activity.type}
                 </Badge>
                 <span className="text-xs text-muted-foreground">{activity.time}</span>
