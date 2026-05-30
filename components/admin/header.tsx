@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bell, ExternalLink, Search, Menu, LogOut, User, Settings } from "lucide-react"
+import { Bell, ExternalLink, Search, Menu, LogOut, User, Settings, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -108,19 +108,42 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
         </div>
       </div>
 
-      {/* Mobile Search Toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="md:hidden"
-        onClick={() => setSearchOpen(!searchOpen)}
-      >
-        <Search className="h-5 w-5" />
-        <span className="sr-only">Search</span>
-      </Button>
+      {/* Search - Mobile */}
+      <div className="min-w-0 flex-1 md:hidden">
+        {searchOpen ? (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Cari konten..."
+              className="h-9 w-full rounded-full border-white/10 bg-white/[0.04] pl-9 pr-9"
+              autoFocus
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="absolute right-1 top-1/2 -translate-y-1/2"
+              onClick={() => setSearchOpen(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Tutup pencarian</span>
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 w-full justify-start gap-2 rounded-full border-white/10 bg-white/[0.03] px-3 text-muted-foreground"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="truncate text-xs">Cari konten...</span>
+          </Button>
+        )}
+      </div>
 
       {/* Right Section */}
-      <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+      <div className={searchOpen ? "hidden min-w-0 items-center gap-1 sm:gap-2 md:flex" : "flex min-w-0 items-center gap-1 sm:gap-2"}>
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -199,20 +222,6 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {/* Mobile Search Overlay */}
-      {searchOpen && (
-        <div className="absolute inset-x-0 top-16 bg-card p-3 shadow-lg md:hidden">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Cari konten..."
-              className="w-full pl-9"
-              autoFocus
-            />
-          </div>
-        </div>
-      )}
     </header>
   )
 }
