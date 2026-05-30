@@ -13,6 +13,7 @@ import {
 import { StatsCard } from "@/components/admin/stats-card"
 import { RecentActivity } from "@/components/admin/recent-activity"
 import { QuickActions } from "@/components/admin/quick-actions"
+import { LiveDateTime } from "@/components/admin/live-date-time"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -106,7 +107,7 @@ export default function AdminDashboard() {
               Admin CMS
             </Badge>
             <Badge variant="outline" className="border-white/10">
-              Rabu, 27 Mei 2026
+              <LiveDateTime />
             </Badge>
           </div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Dashboard</h1>
