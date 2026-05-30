@@ -114,9 +114,7 @@ export default function ArticleManagementPage() {
   const [articleContent, setArticleContent] = useState<ArticleDocument>(createEmptyArticleDocument())
   const [updatingArticleId, setUpdatingArticleId] = useState<string | null>(null)
   const [isUploadingCover, setIsUploadingCover] = useState(false)
-  const [isUploadingSource, setIsUploadingSource] = useState(false)
   const [isGeneratingSource, setIsGeneratingSource] = useState(false)
-  const [sourceAssetName, setSourceAssetName] = useState("")
   const [isSavingArticle, setIsSavingArticle] = useState(false)
 
   useEffect(() => {
@@ -154,7 +152,6 @@ export default function ArticleManagementPage() {
 
   const resetArticleForm = () => {
     setEditingArticleId(null)
-    setSourceAssetName("")
     setNewArticle({ title: "", excerpt: "", category: "", author: "Tim Media", thumbnailUrl: "", thumbnailAlt: "", featured: false })
     setArticleContent(createEmptyArticleDocument())
   }
@@ -250,36 +247,6 @@ export default function ArticleManagementPage() {
       setErrorMessage("Upload cover gagal. Coba lagi sebentar.")
     } finally {
       setIsUploadingCover(false)
-    }
-  }
-
-  const handleUploadSource = async (file: File | null) => {
-    if (!file) return
-
-    setErrorMessage("")
-    setIsUploadingSource(true)
-
-    const formData = new FormData()
-    formData.append("file", file)
-    formData.append("purpose", "article-source")
-
-    try {
-      const response = await fetch("/api/admin/assets", {
-        method: "POST",
-        body: formData,
-      })
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        setErrorMessage(data?.error ?? "Upload source gagal.")
-        return
-      }
-
-      setSourceAssetName(data.asset.fileName)
-    } catch {
-      setErrorMessage("Upload source gagal. Coba lagi sebentar.")
-    } finally {
-      setIsUploadingSource(false)
     }
   }
 
@@ -554,18 +521,7 @@ export default function ArticleManagementPage() {
                         <p className="text-sm text-muted-foreground">Upload sumber berita acara, lalu generate draft dari PDF atau DOCX.</p>
                       </div>
                     </div>
-                    <Button type="button" variant="outline" className="relative w-full gap-2" disabled={isUploadingSource}>
-                      {isUploadingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {sourceAssetName || "Upload PDF/Word Source"}
-                      <input
-                        type="file"
-                        accept="application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
-                        disabled={isUploadingSource}
-                        onChange={(event) => handleUploadSource(event.target.files?.[0] ?? null)}
-                      />
-                    </Button>
-                    <Button type="button" className="relative mt-2 w-full gap-2" disabled={isGeneratingSource}>
+                    <Button type="button" className="relative w-full gap-2" disabled={isGeneratingSource}>
                       {isGeneratingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                       {isGeneratingSource ? "Generating..." : "Generate Draft from Source"}
                       <input
