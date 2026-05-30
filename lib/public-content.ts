@@ -1,4 +1,5 @@
 import type { StaticImageData } from "next/image"
+import type { ArticleDocument } from "@/lib/article-content"
 import ekrafLogo from "@/assets/organ/ekraf.png"
 import humsiwaLogo from "@/assets/organ/humsiwa.png"
 import ketuaLead from "@/assets/lead/Sakhaa_BPH_Final.jpg"
@@ -9,11 +10,12 @@ import psdmLogo from "@/assets/organ/psdm.png"
 import sospolLogo from "@/assets/organ/sospol.png"
 
 export type PublicNews = {
-  id: number
+  id: number | string
   slug: string
   title: string
   excerpt: string
   content: string[]
+  document?: ArticleDocument
   date: string
   readTime: string
   author: string

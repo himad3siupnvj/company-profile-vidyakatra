@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArticleDocumentRenderer } from "@/components/public/article-document-renderer"
 import type { ArticleDocument } from "@/lib/article-content"
+import { getPublicNewsBySlug } from "@/lib/public-articles"
 import { newsData } from "@/lib/public-content"
 
 type NewsDetailPageProps = {
@@ -16,22 +17,25 @@ export function generateStaticParams() {
   return newsData.map((news) => ({ slug: news.slug }))
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
   const { slug } = await params
-  const news = newsData.find((item) => item.slug === slug)
+  const news = await getPublicNewsBySlug(slug)
 
   if (!news) {
     notFound()
   }
 
-  const document: ArticleDocument = {
-    type: "doc",
-    content: news.content.map((paragraph, index) => ({
-      id: `${news.slug}-${index}`,
-      type: "paragraph",
-      text: paragraph,
-    })),
-  }
+  const document: ArticleDocument =
+    news.document ?? {
+      type: "doc",
+      content: news.content.map((paragraph, index) => ({
+        id: `${news.slug}-${index}`,
+        type: "paragraph",
+        text: paragraph,
+      })),
+    }
 
   return (
     <article>
