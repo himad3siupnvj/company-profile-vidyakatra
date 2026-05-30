@@ -81,7 +81,7 @@ export default function HomePageManagement() {
             Manage the content displayed on your website&apos;s home page.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Button variant="outline" className="gap-2">
             <Eye className="h-4 w-4" />
             Preview
@@ -95,11 +95,11 @@ export default function HomePageManagement() {
 
       {/* Tabs */}
       <Tabs defaultValue="hero" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
-          <TabsTrigger value="hero">Hero Section</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:w-auto">
+          <TabsTrigger value="hero" className="h-9 whitespace-normal text-center leading-tight">Hero Section</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="cta">CTA Section</TabsTrigger>
+          <TabsTrigger value="achievements" className="h-9 whitespace-normal text-center leading-tight">Achievements</TabsTrigger>
+          <TabsTrigger value="cta" className="h-9 whitespace-normal text-center leading-tight">CTA Section</TabsTrigger>
         </TabsList>
 
         {/* Hero Section */}

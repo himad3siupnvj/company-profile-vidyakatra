@@ -83,7 +83,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/10 bg-background/55 px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-background/35 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 min-w-0 items-center justify-between gap-2 border-b border-white/10 bg-background/55 px-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/35 sm:px-4 md:px-6">
       {/* Mobile Menu */}
       <Sheet>
         <SheetTrigger asChild>
@@ -92,7 +92,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
             <span className="sr-only">Toggle menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-64 max-w-[85vw] p-0">
           <AdminSidebarMobile />
         </SheetContent>
       </Sheet>
@@ -120,7 +120,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
       </Button>
 
       {/* Right Section */}
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-1 sm:gap-2">
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -132,7 +132,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] max-w-80">
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
@@ -167,7 +167,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 px-2">
+            <Button variant="ghost" className="flex min-w-0 items-center gap-2 px-2">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder-avatar.jpg" alt={currentUser?.name ?? "Admin"} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
@@ -202,7 +202,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
 
       {/* Mobile Search Overlay */}
       {searchOpen && (
-        <div className="absolute inset-x-0 top-16 bg-card p-4 shadow-lg md:hidden">
+        <div className="absolute inset-x-0 top-16 bg-card p-3 shadow-lg md:hidden">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input

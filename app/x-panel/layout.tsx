@@ -16,16 +16,16 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       {/* Sidebar - hidden on mobile */}
       <div className="hidden md:block">
         <AdminSidebar />
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col md:ml-64">
+      <div className="flex min-w-0 flex-col md:ml-64">
         <AdminHeader />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

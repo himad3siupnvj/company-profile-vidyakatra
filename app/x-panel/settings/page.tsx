@@ -127,7 +127,7 @@ export default function SettingsPage() {
             Kelola informasi publik, social media overview, dan footer sesuai tampilan terbaru.
           </p>
         </div>
-        <Button className="gap-2" onClick={saveSettings} disabled={isSaving}>
+        <Button className="w-full gap-2 sm:w-auto" onClick={saveSettings} disabled={isSaving}>
           <Save className="h-4 w-4" />
           {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
         </Button>
@@ -146,10 +146,10 @@ export default function SettingsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:w-auto">
           <TabsTrigger value="general">Umum</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>
-          <TabsTrigger value="social">Social Media</TabsTrigger>
+          <TabsTrigger value="social" className="h-9 whitespace-normal text-center leading-tight">Social Media</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
         </TabsList>
 

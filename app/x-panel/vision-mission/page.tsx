@@ -100,7 +100,7 @@ export default function VisionMissionManagement() {
             Manage the organization&apos;s philosophy, vision, mission, and core values.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Button variant="outline" className="gap-2">
             <Eye className="h-4 w-4" />
             Preview
@@ -114,8 +114,8 @@ export default function VisionMissionManagement() {
 
       {/* Tabs */}
       <Tabs defaultValue="philosophy" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
-          <TabsTrigger value="philosophy">Philosophy</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:w-auto">
+          <TabsTrigger value="philosophy" className="h-9 whitespace-normal text-center leading-tight">Philosophy</TabsTrigger>
           <TabsTrigger value="vision">Vision</TabsTrigger>
           <TabsTrigger value="mission">Mission</TabsTrigger>
           <TabsTrigger value="values">Values</TabsTrigger>
@@ -124,7 +124,7 @@ export default function VisionMissionManagement() {
         {/* Philosophy Tab */}
         <TabsContent value="philosophy" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Organization Philosophy</CardTitle>
                 <CardDescription>
