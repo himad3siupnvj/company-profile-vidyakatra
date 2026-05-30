@@ -22,6 +22,7 @@ export const runtime = "nodejs"
 
 function serializeArticle(row: {
   id: string
+  slug: string
   title: string
   excerpt: string | null
   content: unknown
@@ -40,6 +41,7 @@ function serializeArticle(row: {
 }) {
   return {
     id: row.id,
+    slug: row.slug,
     title: row.title,
     excerpt: row.excerpt ?? "",
     content: normalizeArticleDocument(row.content, row.excerpt ?? ""),
@@ -99,6 +101,7 @@ export async function GET() {
   const rows = await db
     .select({
       id: articles.id,
+      slug: articles.slug,
       title: articles.title,
       excerpt: articles.excerpt,
       content: articles.content,

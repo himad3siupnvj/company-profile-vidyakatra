@@ -16,6 +16,7 @@ export const runtime = "nodejs"
 
 function serializeArticle(row: {
   id: string
+  slug: string
   title: string
   excerpt: string | null
   content: unknown
@@ -34,6 +35,7 @@ function serializeArticle(row: {
 }) {
   return {
     id: row.id,
+    slug: row.slug,
     title: row.title,
     excerpt: row.excerpt ?? "",
     content: normalizeArticleDocument(row.content, row.excerpt ?? ""),

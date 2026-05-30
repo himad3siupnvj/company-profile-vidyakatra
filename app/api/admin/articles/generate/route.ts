@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       article: {
         id: created.id,
+        slug: created.slug,
         title: created.title,
         excerpt: created.excerpt ?? "",
         content: draft.content,
