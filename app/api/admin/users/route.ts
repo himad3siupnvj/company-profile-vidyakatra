@@ -111,10 +111,11 @@ export async function PATCH(request: NextRequest) {
 
   const payload = await request.json()
   const id = String(payload.id ?? "")
+  const action = String(payload.action ?? "")
   const status = payload.status === "inactive" ? "inactive" : payload.status === "active" ? "active" : null
 
-  if (!id || !status) {
-    return NextResponse.json({ error: "Valid id and status are required" }, { status: 400 })
+  if (!id) {
+    return NextResponse.json({ error: "Valid id is required" }, { status: 400 })
   }
 
   const db = getDb()
@@ -122,6 +123,39 @@ export async function PATCH(request: NextRequest) {
 
   if (!existing) {
     return NextResponse.json({ error: "User not found" }, { status: 404 })
+  }
+
+  if (action === "reset_password") {
+    if (existing.role === "administrator" && !(await hasAnotherAdministrator(id))) {
+      return NextResponse.json({ error: "At least one administrator must stay active" }, { status: 400 })
+    }
+
+    const claimCode = randomBytes(4).toString("hex").toUpperCase()
+    const [updated] = await db
+      .update(users)
+      .set({
+        passwordHash: null,
+        claimCode,
+        status: "unclaimed",
+        claimedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning()
+
+    await writeAuditLog({
+      actorId: guard.user?.id,
+      action: "user.reset_password",
+      entityType: "user",
+      entityId: id,
+      metadata: { previousStatus: existing.status, newStatus: updated.status },
+    })
+
+    return NextResponse.json({ user: serializeUser(updated) })
+  }
+
+  if (!status) {
+    return NextResponse.json({ error: "Valid id and status are required" }, { status: 400 })
   }
 
   if (existing.role === "administrator" && status === "inactive" && !(await hasAnotherAdministrator(id))) {

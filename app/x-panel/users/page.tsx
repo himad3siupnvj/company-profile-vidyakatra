@@ -208,6 +208,25 @@ export default function UserManagement() {
     }
   }
 
+  const handleResetPassword = async (id: string) => {
+    const previousUsers = users
+
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "reset_password" }),
+      })
+
+      if (!response.ok) return
+
+      const data = await response.json()
+      setUsers((currentUsers) => currentUsers.map((user) => (user.id === id ? data.user : user)))
+    } catch {
+      setUsers(previousUsers)
+    }
+  }
+
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
   }
@@ -483,6 +502,13 @@ export default function UserManagement() {
                           <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
                             <Shield className="mr-2 h-4 w-4" />
                             {user.status === "active" ? "Deactivate" : "Activate"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleResetPassword(user.id)}
+                            disabled={user.role === "administrator" && users.filter(u => u.role === "administrator" && u.status === "active").length === 1}
+                          >
+                            <Key className="mr-2 h-4 w-4" />
+                            Reset Password
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
