@@ -50,5 +50,7 @@ Generator note: draft generation supports PDF and DOCX. Legacy `.doc` files shou
 
 - [x] Add unit tests for permissions, workflow transitions, slug generation, and read-time calculation.
 - [x] Add API integration smoke tests for create/update validation, workflow update, and soft delete flows.
-- [ ] Add Playwright E2E for login to published article flow.
+- [x] Add Playwright E2E for login to published article flow.
 - [x] Add middleware enforcement after bootstrap admin is complete.
+
+E2E note: set `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` before running `corepack pnpm e2e`.
