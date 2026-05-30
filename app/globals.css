@@ -135,6 +135,22 @@
 }
 
 @layer utilities {
+  .scroll-reveal-item {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0) scale(0.985);
+    filter: blur(8px);
+    transition:
+      opacity 680ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 680ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 680ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform, filter;
+  }
+  .scroll-reveal-item.is-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
   .glow-primary {
     box-shadow: 0 0 20px var(--glow-primary), 0 0 40px var(--glow-primary);
   }
@@ -155,5 +171,14 @@
   }
   .border-gradient {
     border-image: linear-gradient(135deg, var(--primary), var(--secondary)) 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal-item {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
   }
 }

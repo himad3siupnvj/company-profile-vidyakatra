@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import {
   UserPlus,
   FileEdit,
-  Calendar,
   Settings,
   ArrowRight,
 } from "lucide-react"
@@ -19,7 +18,7 @@ const actions = [
   },
   {
     title: "Buat Berita Acara",
-    description: "Tulis dan publikasikan berita acara",
+    description: "Tulis draft berita acara untuk workflow approval",
     icon: FileEdit,
     href: "/x-panel/news?action=create",
     color: "bg-primary/10 text-primary",
@@ -29,13 +28,6 @@ const actions = [
     description: "Perbarui kanal dan insight sosial media",
     icon: Settings,
     href: "/x-panel/settings?tab=social",
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    title: "Buat Agenda",
-    description: "Jadwalkan kegiatan kabinet",
-    icon: Calendar,
-    href: "/x-panel/news?tab=events&action=create",
     color: "bg-primary/10 text-primary",
   },
 ]

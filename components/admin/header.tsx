@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Bell, ExternalLink, Search, Menu, LogOut, User, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,7 +28,14 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
+  const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/x-panel/login")
+    router.refresh()
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/10 bg-background/55 px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-background/35 md:px-6">
@@ -49,7 +57,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Cari konten, pengurus, agenda..."
+            placeholder="Cari konten, pengurus, atau pengaturan..."
             className="w-full border-white/10 bg-white/[0.03] pl-9 focus:bg-card"
           />
         </div>
@@ -93,8 +101,8 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
               <p className="text-xs text-muted-foreground">5 jam lalu</p>
             </DropdownMenuItem>
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <p className="font-medium">Pengingat agenda</p>
-              <p className="text-sm text-muted-foreground">Rapat kabinet besok pukul 09.00</p>
+              <p className="font-medium">Artikel menunggu review</p>
+              <p className="text-sm text-muted-foreground">Draft berita acara siap dicek reviewer</p>
               <p className="text-xs text-muted-foreground">1 hari lalu</p>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -139,7 +147,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
               Pengaturan
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Keluar
             </DropdownMenuItem>

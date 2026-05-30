@@ -37,7 +37,7 @@ export default function HomePageManagement() {
 
   const [achievements, setAchievements] = useState<Achievement[]>([
     { id: 1, title: "500+", description: "Alumni Sukses", icon: "users", enabled: true },
-    { id: 2, title: "50+", description: "Event Terselenggara", icon: "calendar", enabled: true },
+    { id: 2, title: "25+", description: "Program Kerja", icon: "clipboard", enabled: true },
     { id: 3, title: "20+", description: "Penghargaan", icon: "trophy", enabled: true },
     { id: 4, title: "8", description: "Departemen Aktif", icon: "building", enabled: true },
   ])

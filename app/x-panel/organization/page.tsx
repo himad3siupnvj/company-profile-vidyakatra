@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,7 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Search, MoreHorizontal, Edit, Trash2, ImagePlus, Users, Network, Building2 } from "lucide-react"
 
 interface Member {
-  id: number
+  id: string
   name: string
   position: string
   department: string
@@ -53,7 +53,7 @@ interface Member {
 }
 
 interface Department {
-  id: number
+  id: string
   name: string
   description: string
   head: string
@@ -62,30 +62,30 @@ interface Department {
 }
 
 const initialMembers: Member[] = [
-  { id: 1, name: "Ahmad Rizki Pratama", position: "Ketua Umum", department: "Executive", email: "ahmad@email.com", phone: "081234567890", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: 2, name: "Siti Nurhaliza", position: "Wakil Ketua", department: "Executive", email: "siti@email.com", phone: "081234567891", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: 3, name: "Budi Santoso", position: "Sekretaris", department: "Executive", email: "budi@email.com", phone: "081234567892", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: 4, name: "Dian Permata", position: "Bendahara", department: "Executive", email: "dian@email.com", phone: "081234567893", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: 5, name: "Reza Firmansyah", position: "Koordinator", department: "Media & Informasi", email: "reza@email.com", phone: "081234567894", avatar: "", status: "active", joinDate: "2024-02-01" },
-  { id: 6, name: "Maya Indah", position: "Staff", department: "Media & Informasi", email: "maya@email.com", phone: "081234567895", avatar: "", status: "active", joinDate: "2024-02-15" },
-  { id: 7, name: "Andi Wijaya", position: "Koordinator", department: "Pendidikan", email: "andi@email.com", phone: "081234567896", avatar: "", status: "active", joinDate: "2024-02-01" },
-  { id: 8, name: "Lisa Kurnia", position: "Staff", department: "Kewirausahaan", email: "lisa@email.com", phone: "081234567897", avatar: "", status: "inactive", joinDate: "2024-03-01" },
+  { id: "member-1", name: "Ahmad Rizki Pratama", position: "Ketua Umum", department: "Executive", email: "ahmad@email.com", phone: "081234567890", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-2", name: "Siti Nurhaliza", position: "Wakil Ketua", department: "Executive", email: "siti@email.com", phone: "081234567891", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-3", name: "Budi Santoso", position: "Sekretaris", department: "Executive", email: "budi@email.com", phone: "081234567892", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-4", name: "Dian Permata", position: "Bendahara", department: "Executive", email: "dian@email.com", phone: "081234567893", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-5", name: "Reza Firmansyah", position: "Koordinator", department: "Media & Informasi", email: "reza@email.com", phone: "081234567894", avatar: "", status: "active", joinDate: "2024-02-01" },
+  { id: "member-6", name: "Maya Indah", position: "Staff", department: "Media & Informasi", email: "maya@email.com", phone: "081234567895", avatar: "", status: "active", joinDate: "2024-02-15" },
+  { id: "member-7", name: "Andi Wijaya", position: "Koordinator", department: "Pendidikan", email: "andi@email.com", phone: "081234567896", avatar: "", status: "active", joinDate: "2024-02-01" },
+  { id: "member-8", name: "Lisa Kurnia", position: "Staff", department: "Kewirausahaan", email: "lisa@email.com", phone: "081234567897", avatar: "", status: "inactive", joinDate: "2024-03-01" },
 ]
 
 const initialDepartments: Department[] = [
-  { id: 1, name: "Executive", description: "Badan Pengurus Harian", head: "Ahmad Rizki Pratama", memberCount: 4, color: "bg-primary" },
-  { id: 2, name: "Media & Informasi", description: "Divisi publikasi dan media sosial", head: "Reza Firmansyah", memberCount: 8, color: "bg-blue-500" },
-  { id: 3, name: "Pendidikan", description: "Divisi pendidikan dan pelatihan", head: "Andi Wijaya", memberCount: 12, color: "bg-green-500" },
-  { id: 4, name: "Kewirausahaan", description: "Divisi bisnis dan kewirausahaan", head: "Lisa Kurnia", memberCount: 10, color: "bg-orange-500" },
-  { id: 5, name: "Hubungan Masyarakat", description: "Divisi humas dan kerjasama", head: "Dewi Sartika", memberCount: 6, color: "bg-purple-500" },
-  { id: 6, name: "Kesejahteraan", description: "Divisi kesejahteraan mahasiswa", head: "Fajar Nugroho", memberCount: 8, color: "bg-pink-500" },
-  { id: 7, name: "Olahraga & Seni", description: "Divisi olahraga dan kesenian", head: "Galih Pratama", memberCount: 14, color: "bg-cyan-500" },
-  { id: 8, name: "Kerohanian", description: "Divisi keagamaan", head: "Hana Pertiwi", memberCount: 6, color: "bg-emerald-500" },
+  { id: "department-1", name: "Executive", description: "Badan Pengurus Harian", head: "Ahmad Rizki Pratama", memberCount: 4, color: "bg-primary" },
+  { id: "department-2", name: "Media & Informasi", description: "Divisi publikasi dan media sosial", head: "Reza Firmansyah", memberCount: 8, color: "bg-blue-500" },
+  { id: "department-3", name: "Pendidikan", description: "Divisi pendidikan dan pelatihan", head: "Andi Wijaya", memberCount: 12, color: "bg-green-500" },
+  { id: "department-4", name: "Kewirausahaan", description: "Divisi bisnis dan kewirausahaan", head: "Lisa Kurnia", memberCount: 10, color: "bg-orange-500" },
+  { id: "department-5", name: "Hubungan Masyarakat", description: "Divisi humas dan kerjasama", head: "Dewi Sartika", memberCount: 6, color: "bg-purple-500" },
+  { id: "department-6", name: "Kesejahteraan", description: "Divisi kesejahteraan mahasiswa", head: "Fajar Nugroho", memberCount: 8, color: "bg-pink-500" },
+  { id: "department-7", name: "Olahraga & Seni", description: "Divisi olahraga dan kesenian", head: "Galih Pratama", memberCount: 14, color: "bg-cyan-500" },
+  { id: "department-8", name: "Kerohanian", description: "Divisi keagamaan", head: "Hana Pertiwi", memberCount: 6, color: "bg-emerald-500" },
 ]
 
 export default function OrganizationManagement() {
   const [members, setMembers] = useState<Member[]>(initialMembers)
-  const [departments] = useState<Department[]>(initialDepartments)
+  const [departments, setDepartments] = useState<Department[]>(initialDepartments)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterDepartment, setFilterDepartment] = useState<string>("all")
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
@@ -97,6 +97,30 @@ export default function OrganizationManagement() {
     phone: "",
   })
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("action") === "add") {
+      setIsAddMemberOpen(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    async function loadOrganization() {
+      try {
+        const response = await fetch("/api/admin/organization")
+        if (!response.ok) return
+
+        const data = await response.json()
+        setMembers(data.members)
+        setDepartments(data.departments)
+      } catch {
+        // Keep local fallback data when the backend is unavailable.
+      }
+    }
+
+    loadOrganization()
+  }, [])
+
   const filteredMembers = members.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -105,21 +129,37 @@ export default function OrganizationManagement() {
     return matchesSearch && matchesDepartment
   })
 
-  const handleAddMember = () => {
-    const id = Math.max(...members.map(m => m.id), 0) + 1
-    setMembers([...members, {
-      id,
-      ...newMember,
-      avatar: "",
-      status: "active",
-      joinDate: new Date().toISOString().split("T")[0],
-    }])
-    setNewMember({ name: "", position: "", department: "", email: "", phone: "" })
-    setIsAddMemberOpen(false)
+  const handleAddMember = async () => {
+    try {
+      const response = await fetch("/api/admin/organization", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "member", ...newMember }),
+      })
+
+      if (!response.ok) return
+
+      const data = await response.json()
+      setMembers([...members, data.member])
+      setNewMember({ name: "", position: "", department: "", email: "", phone: "" })
+      setIsAddMemberOpen(false)
+    } catch {
+      // The form stays open so the user can retry.
+    }
   }
 
-  const handleDeleteMember = (id: number) => {
+  const handleDeleteMember = async (id: string) => {
+    const previousMembers = members
     setMembers(members.filter(m => m.id !== id))
+
+    try {
+      const response = await fetch(`/api/admin/organization?id=${id}`, { method: "DELETE" })
+      if (!response.ok) {
+        setMembers(previousMembers)
+      }
+    } catch {
+      setMembers(previousMembers)
+    }
   }
 
   const getInitials = (name: string) => {
@@ -133,7 +173,7 @@ export default function OrganizationManagement() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Organization Management</h1>
           <p className="text-muted-foreground">
-            Manage members, departments, and organization structure.
+            Kelola pengurus, departemen, dan struktur organisasi Kabinet Vidyakatra.
           </p>
         </div>
         <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>

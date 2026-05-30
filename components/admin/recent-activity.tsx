@@ -25,10 +25,10 @@ const activities = [
     id: 3,
     user: "Dian Permata",
     avatar: "DP",
-    action: "memperbarui agenda",
-    target: "Rapat Kabinet",
+    action: "mengajukan artikel",
+    target: "Berita Acara Rapat Kabinet",
     time: "6 jam lalu",
-    type: "event",
+    type: "article",
   },
   {
     id: 4,
@@ -52,8 +52,8 @@ const activities = [
 
 const typeColors: Record<string, string> = {
   news: "bg-primary/10 text-primary",
+  article: "bg-primary/10 text-primary",
   member: "bg-primary/10 text-primary",
-  event: "bg-primary/10 text-primary",
   social: "bg-primary/10 text-primary",
   content: "bg-primary/10 text-primary",
 }
