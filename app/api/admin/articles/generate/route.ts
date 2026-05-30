@@ -1,6 +1,7 @@
 import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { eq } from "drizzle-orm"
+import mammoth from "mammoth"
 import { PDFParse } from "pdf-parse"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
@@ -14,12 +15,61 @@ export const runtime = "nodejs"
 
 let isPdfWorkerConfigured = false
 
+type SupportedSourceType = "pdf" | "docx"
+
 function configurePdfWorker() {
   if (isPdfWorkerConfigured) return
 
   const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "legacy", "build", "pdf.worker.mjs")
   PDFParse.setWorker(pathToFileURL(workerPath).href)
   isPdfWorkerConfigured = true
+}
+
+function getSupportedSourceType(file: File): SupportedSourceType | null {
+  const name = file.name.toLowerCase()
+
+  if (file.type === "application/pdf" || name.endsWith(".pdf")) return "pdf"
+
+  if (
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    name.endsWith(".docx")
+  ) {
+    return "docx"
+  }
+
+  return null
+}
+
+async function extractTextFromSource(file: File) {
+  const sourceType = getSupportedSourceType(file)
+
+  if (!sourceType) {
+    if (file.name.toLowerCase().endsWith(".doc") || file.type === "application/msword") {
+      throw new Error("Generator belum mendukung file DOC lama. Simpan ulang sebagai DOCX atau PDF dulu.")
+    }
+
+    throw new Error("Generator hanya mendukung PDF atau DOCX.")
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+
+  if (sourceType === "docx") {
+    const result = await mammoth.extractRawText({ buffer })
+
+    return result.value
+  }
+
+  configurePdfWorker()
+
+  const parser = new PDFParse({ data: buffer })
+
+  try {
+    const parsed = await parser.getText()
+
+    return parsed.text
+  } finally {
+    await parser.destroy()
+  }
 }
 
 async function resolveCategoryId(category: string) {
@@ -49,31 +99,31 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file")
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "PDF file is required" }, { status: 400 })
+      return NextResponse.json({ error: "Source berita acara wajib diupload." }, { status: 400 })
     }
 
-    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
+    const supportedSourceType = getSupportedSourceType(file)
 
-    if (!isPdf) {
-      return NextResponse.json({ error: "Generator sementara hanya mendukung PDF." }, { status: 400 })
+    if (!supportedSourceType) {
+      const isLegacyDoc = file.type === "application/msword" || file.name.toLowerCase().endsWith(".doc")
+      const message = isLegacyDoc
+        ? "Generator belum mendukung file DOC lama. Simpan ulang sebagai DOCX atau PDF dulu."
+        : "Generator hanya mendukung PDF atau DOCX."
+
+      return NextResponse.json({ error: message }, { status: 400 })
     }
 
-    const validation = validateUploadFile(new File([file], file.name, { type: "application/pdf" }), "article-source")
+    const validation = validateUploadFile(file, "article-source")
 
     if (!validation.ok) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
-    configurePdfWorker()
-
-    const parser = new PDFParse({ data: buffer })
-    const parsed = await parser.getText()
-    await parser.destroy()
-    const draft = generateArticleDraftFromText(parsed.text)
+    const sourceText = await extractTextFromSource(file)
+    const draft = generateArticleDraftFromText(sourceText)
 
     if (!draft.title || !draft.content.content.length) {
-      return NextResponse.json({ error: "PDF tidak punya teks yang bisa diekstrak." }, { status: 400 })
+      return NextResponse.json({ error: "Source tidak punya teks yang bisa diekstrak." }, { status: 400 })
     }
 
     const storagePath: string | null = null
@@ -124,7 +174,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Generate PDF gagal."
+    const message = error instanceof Error ? error.message : "Generate draft gagal."
 
     return NextResponse.json({ error: message }, { status: 500 })
   }

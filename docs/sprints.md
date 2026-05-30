@@ -22,7 +22,7 @@
 ## Sprint 3: Article Editor & Public Rendering
 
 - [x] Make `NotionArticleEditor` reusable for create and edit flows.
-- [ ] Add PDF/Word source generator that converts berita acara documents into draft article content.
+- [x] Add PDF/Word source generator that converts berita acara documents into draft article content.
 - [x] Add public preview renderer using the same document format.
 - [x] Add edit existing article support.
 - [x] Centralize slug and read-time utilities.
@@ -36,6 +36,7 @@
 - [x] Wire image insertion into the article editor.
 
 Runtime note: upload needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` in the server environment.
+Generator note: draft generation supports PDF and DOCX. Legacy `.doc` files should be saved again as DOCX or PDF first.
 
 ## Sprint 5: CMS Data Management Hardening
 

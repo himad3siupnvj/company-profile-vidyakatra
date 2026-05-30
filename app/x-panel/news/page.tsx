@@ -283,7 +283,7 @@ export default function ArticleManagementPage() {
     }
   }
 
-  const handleGenerateFromPdf = async (file: File | null) => {
+  const handleGenerateFromSource = async (file: File | null) => {
     if (!file) return
 
     setErrorMessage("")
@@ -300,7 +300,7 @@ export default function ArticleManagementPage() {
       const data = await response.json().catch(() => null)
 
       if (!response.ok) {
-        setErrorMessage(data?.error ?? "Generate draft dari PDF gagal.")
+        setErrorMessage(data?.error ?? "Generate draft dari source gagal.")
         return
       }
 
@@ -308,7 +308,7 @@ export default function ArticleManagementPage() {
       setIsCreateArticleOpen(false)
       resetArticleForm()
     } catch {
-      setErrorMessage("Generate draft dari PDF gagal. Coba lagi sebentar.")
+      setErrorMessage("Generate draft dari source gagal. Coba lagi sebentar.")
     } finally {
       setIsGeneratingSource(false)
     }
@@ -551,7 +551,7 @@ export default function ArticleManagementPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">Source Berita Acara</h3>
-                        <p className="text-sm text-muted-foreground">Simpan PDF/DOC/DOCX sumber. Generator konten akan disambungkan setelah parser siap.</p>
+                        <p className="text-sm text-muted-foreground">Upload sumber berita acara, lalu generate draft dari PDF atau DOCX.</p>
                       </div>
                     </div>
                     <Button type="button" variant="outline" className="relative w-full gap-2" disabled={isUploadingSource}>
@@ -567,13 +567,13 @@ export default function ArticleManagementPage() {
                     </Button>
                     <Button type="button" className="relative mt-2 w-full gap-2" disabled={isGeneratingSource}>
                       {isGeneratingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                      {isGeneratingSource ? "Generating..." : "Generate Draft from PDF"}
+                      {isGeneratingSource ? "Generating..." : "Generate Draft from Source"}
                       <input
                         type="file"
-                        accept="application/pdf"
+                        accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
                         disabled={isGeneratingSource}
-                        onChange={(event) => handleGenerateFromPdf(event.target.files?.[0] ?? null)}
+                        onChange={(event) => handleGenerateFromSource(event.target.files?.[0] ?? null)}
                       />
                     </Button>
                   </div>
