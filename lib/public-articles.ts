@@ -1,4 +1,4 @@
-import { desc, eq, isNull } from "drizzle-orm"
+import { and, desc, eq, isNull } from "drizzle-orm"
 import { getDb } from "@/db"
 import { articleCategories, articles } from "@/db/schema"
 import { getArticleReadTime, normalizeArticleDocument } from "@/lib/article-content"
@@ -42,7 +42,7 @@ async function getPublishedArticleRows() {
     })
     .from(articles)
     .leftJoin(articleCategories, eq(articles.categoryId, articleCategories.id))
-    .where(eq(articles.status, "published"))
+    .where(and(eq(articles.status, "published"), isNull(articles.deletedAt)))
     .orderBy(desc(articles.publishedAt), desc(articles.createdAt))
 }
 
