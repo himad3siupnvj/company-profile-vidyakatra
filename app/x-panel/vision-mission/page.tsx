@@ -1,270 +1,260 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import { Eye, GripVertical, Heart, Lightbulb, Plus, Save, Star, Target, Trash2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Save, Plus, Trash2, GripVertical, Eye, Target, Lightbulb, Heart, Star } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  defaultProfileContent,
+  type ProfileContent,
+  type ProfileLeader,
+  type ProfileMission,
+  type ProfileValue,
+} from "@/lib/profile-content-data"
 
-interface Mission {
-  id: number
-  text: string
-  enabled: boolean
-}
+const valueIcons = {
+  star: Star,
+  lightbulb: Lightbulb,
+  heart: Heart,
+  target: Target,
+} as const
 
-interface Value {
-  id: number
-  title: string
-  description: string
-  icon: string
-  enabled: boolean
+function nextId(items: Array<{ id: number }>) {
+  return Math.max(0, ...items.map((item) => item.id)) + 1
 }
 
 export default function VisionMissionManagement() {
-  const [philosophy, setPhilosophy] = useState({
-    title: "Filosofi Organisasi",
-    description: "HIMA D3 Sistem Informasi hadir sebagai wadah pengembangan potensi mahasiswa yang berlandaskan pada nilai-nilai integritas, inovasi, dan kebersamaan untuk menciptakan generasi yang unggul di bidang teknologi informasi.",
-    enabled: true,
-  })
+  const [profileContent, setProfileContent] = useState<ProfileContent>(defaultProfileContent)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [message, setMessage] = useState("")
 
-  const [vision, setVision] = useState({
-    title: "Visi",
-    description: "Menjadi organisasi kemahasiswaan yang unggul, inovatif, dan berdaya saing dalam mengembangkan potensi mahasiswa D3 Sistem Informasi untuk menghadapi tantangan era digital.",
-    enabled: true,
-  })
+  useEffect(() => {
+    async function loadProfileContent() {
+      setIsLoading(true)
+      try {
+        const response = await fetch("/api/admin/profile-content", { cache: "no-store" })
+        if (!response.ok) return
 
-  const [missions, setMissions] = useState<Mission[]>([
-    { id: 1, text: "Mengembangkan softskill dan hardskill mahasiswa melalui program kerja yang berkualitas", enabled: true },
-    { id: 2, text: "Memfasilitasi kegiatan akademik dan non-akademik yang mendukung pengembangan diri mahasiswa", enabled: true },
-    { id: 3, text: "Menjalin kerjasama dengan berbagai pihak untuk memperluas jaringan dan kesempatan", enabled: true },
-    { id: 4, text: "Menciptakan lingkungan yang kondusif untuk belajar dan berkreasi", enabled: true },
-    { id: 5, text: "Menjadi jembatan aspirasi mahasiswa dengan pihak jurusan dan universitas", enabled: true },
-  ])
-
-  const [values, setValues] = useState<Value[]>([
-    { id: 1, title: "Integritas", description: "Menjunjung tinggi kejujuran dan tanggung jawab dalam setiap tindakan", icon: "star", enabled: true },
-    { id: 2, title: "Inovasi", description: "Terus berinovasi dan kreatif dalam menghadapi tantangan", icon: "lightbulb", enabled: true },
-    { id: 3, title: "Kebersamaan", description: "Membangun solidaritas dan kerjasama yang kuat antar anggota", icon: "heart", enabled: true },
-    { id: 4, title: "Profesionalisme", description: "Bekerja dengan standar profesional tinggi", icon: "target", enabled: true },
-  ])
-
-  const addMission = () => {
-    const newId = Math.max(...missions.map(m => m.id), 0) + 1
-    setMissions([...missions, { id: newId, text: "", enabled: true }])
-  }
-
-  const removeMission = (id: number) => {
-    setMissions(missions.filter(m => m.id !== id))
-  }
-
-  const updateMission = (id: number, field: keyof Mission, value: string | boolean) => {
-    setMissions(missions.map(m => m.id === id ? { ...m, [field]: value } : m))
-  }
-
-  const addValue = () => {
-    const newId = Math.max(...values.map(v => v.id), 0) + 1
-    setValues([...values, { id: newId, title: "", description: "", icon: "star", enabled: true }])
-  }
-
-  const removeValue = (id: number) => {
-    setValues(values.filter(v => v.id !== id))
-  }
-
-  const updateValue = (id: number, field: keyof Value, value: string | boolean) => {
-    setValues(values.map(v => v.id === id ? { ...v, [field]: value } : v))
-  }
-
-  const getIconComponent = (icon: string) => {
-    const icons: Record<string, typeof Star> = {
-      star: Star,
-      lightbulb: Lightbulb,
-      heart: Heart,
-      target: Target,
+        const data = await response.json()
+        setProfileContent(data.profileContent ?? defaultProfileContent)
+      } catch {
+        // Keep the schema-safe fallback so the editor remains usable offline.
+      } finally {
+        setIsLoading(false)
+      }
     }
-    const Icon = icons[icon] || Star
-    return <Icon className="h-5 w-5" />
+
+    loadProfileContent()
+  }, [])
+
+  async function saveProfileContent() {
+    setIsSaving(true)
+    setMessage("")
+
+    try {
+      const response = await fetch("/api/admin/profile-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileContent }),
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setMessage(data?.error ?? "Konten profil gagal disimpan.")
+        return
+      }
+
+      setProfileContent(data.profileContent)
+      setMessage("Konten profil berhasil disimpan.")
+    } catch {
+      setMessage("Konten profil gagal disimpan.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  function updateMission(id: number, patch: Partial<ProfileMission>) {
+    setProfileContent((current) => ({
+      ...current,
+      missions: current.missions.map((mission) => (mission.id === id ? { ...mission, ...patch } : mission)),
+    }))
+  }
+
+  function updateValue(id: number, patch: Partial<ProfileValue>) {
+    setProfileContent((current) => ({
+      ...current,
+      values: current.values.map((value) => (value.id === id ? { ...value, ...patch } : value)),
+    }))
+  }
+
+  function updateLeader(id: number, patch: Partial<ProfileLeader>) {
+    setProfileContent((current) => ({
+      ...current,
+      leaders: current.leaders.map((leader) => (leader.id === id ? { ...leader, ...patch } : leader)),
+    }))
+  }
+
+  function removeLeader(id: number) {
+    setProfileContent((current) => ({
+      ...current,
+      leaders: current.leaders.filter((leader) => leader.id !== id),
+    }))
+    setMessage("Leader dihapus dari draft. Klik Save Changes untuk menyimpan.")
   }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Vision & Mission</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Profile CMS</h1>
           <p className="text-muted-foreground">
-            Manage the organization&apos;s philosophy, vision, mission, and core values.
+            Kelola intro kabinet, filosofi, visi, misi, values, dan pengurus inti untuk halaman /profil.
           </p>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
-          <Button variant="outline" className="gap-2">
-            <Eye className="h-4 w-4" />
-            Preview
+          <Button asChild variant="outline" className="gap-2">
+            <a href="/profil" target="_blank" rel="noopener noreferrer">
+              <Eye className="h-4 w-4" />
+              Preview
+            </a>
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={saveProfileContent} disabled={isSaving}>
             <Save className="h-4 w-4" />
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="philosophy" className="space-y-6">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:w-auto">
-          <TabsTrigger value="philosophy" className="h-9 whitespace-normal text-center leading-tight">Philosophy</TabsTrigger>
+      {isLoading && <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">Memuat konten profil...</div>}
+      {message && <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">{message}</div>}
+
+      <Tabs defaultValue="intro" className="space-y-6">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-6">
+          <TabsTrigger value="intro">Intro</TabsTrigger>
+          <TabsTrigger value="philosophy">Philosophy</TabsTrigger>
           <TabsTrigger value="vision">Vision</TabsTrigger>
           <TabsTrigger value="mission">Mission</TabsTrigger>
           <TabsTrigger value="values">Values</TabsTrigger>
+          <TabsTrigger value="leaders">Leaders</TabsTrigger>
         </TabsList>
 
-        {/* Philosophy Tab */}
-        <TabsContent value="philosophy" className="space-y-4">
+        <TabsContent value="intro">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profil Page Intro</CardTitle>
+              <CardDescription>Konten hero dan narasi pembuka kabinet di halaman /profil.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Eyebrow</Label>
+                <Input value={profileContent.intro.eyebrow} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, eyebrow: event.target.value } })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Page Title</Label>
+                <Input value={profileContent.intro.title} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, title: event.target.value } })} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Subtitle</Label>
+                <Input value={profileContent.intro.subtitle} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, subtitle: event.target.value } })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Cabinet Name</Label>
+                <Input value={profileContent.intro.cabinetName} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, cabinetName: event.target.value } })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Tagline</Label>
+                <Input value={profileContent.intro.tagline} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, tagline: event.target.value } })} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Description</Label>
+                <Textarea rows={5} value={profileContent.intro.description} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, description: event.target.value } })} />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="philosophy">
           <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Organization Philosophy</CardTitle>
-                <CardDescription>
-                  The fundamental beliefs and principles that guide the organization.
-                </CardDescription>
+                <CardDescription>Makna filosofis yang tampil di bagian tentang kabinet.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="philosophy-enabled" className="text-sm">Enable Section</Label>
-                <Switch
-                  id="philosophy-enabled"
-                  checked={philosophy.enabled}
-                  onCheckedChange={(checked) => setPhilosophy({ ...philosophy, enabled: checked })}
-                />
+                <Label htmlFor="philosophy-enabled" className="text-sm">Enable</Label>
+                <Switch id="philosophy-enabled" checked={profileContent.philosophy.enabled} onCheckedChange={(enabled) => setProfileContent({ ...profileContent, philosophy: { ...profileContent.philosophy, enabled } })} />
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="philosophy-title">Section Title</Label>
-                <Input
-                  id="philosophy-title"
-                  value={philosophy.title}
-                  onChange={(e) => setPhilosophy({ ...philosophy, title: e.target.value })}
-                />
+                <Label>Section Title</Label>
+                <Input value={profileContent.philosophy.title} onChange={(event) => setProfileContent({ ...profileContent, philosophy: { ...profileContent.philosophy, title: event.target.value } })} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="philosophy-description">Philosophy Description</Label>
-                <Textarea
-                  id="philosophy-description"
-                  value={philosophy.description}
-                  onChange={(e) => setPhilosophy({ ...philosophy, description: e.target.value })}
-                  rows={6}
-                />
+                <Label>Description</Label>
+                <Textarea rows={7} value={profileContent.philosophy.description} onChange={(event) => setProfileContent({ ...profileContent, philosophy: { ...profileContent.philosophy, description: event.target.value } })} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Vision Tab */}
-        <TabsContent value="vision" className="space-y-4">
+        <TabsContent value="vision">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Organization Vision</CardTitle>
-                <CardDescription>
-                  The long-term goal and aspiration of the organization.
-                </CardDescription>
+                <CardTitle>Vision</CardTitle>
+                <CardDescription>Visi organisasi yang tampil di section Visi & Misi.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="vision-enabled" className="text-sm">Enable Section</Label>
-                <Switch
-                  id="vision-enabled"
-                  checked={vision.enabled}
-                  onCheckedChange={(checked) => setVision({ ...vision, enabled: checked })}
-                />
+                <Label htmlFor="vision-enabled" className="text-sm">Enable</Label>
+                <Switch id="vision-enabled" checked={profileContent.vision.enabled} onCheckedChange={(enabled) => setProfileContent({ ...profileContent, vision: { ...profileContent.vision, enabled } })} />
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="vision-title">Section Title</Label>
-                <Input
-                  id="vision-title"
-                  value={vision.title}
-                  onChange={(e) => setVision({ ...vision, title: e.target.value })}
-                />
+                <Label>Title</Label>
+                <Input value={profileContent.vision.title} onChange={(event) => setProfileContent({ ...profileContent, vision: { ...profileContent.vision, title: event.target.value } })} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="vision-description">Vision Statement</Label>
-                <Textarea
-                  id="vision-description"
-                  value={vision.description}
-                  onChange={(e) => setVision({ ...vision, description: e.target.value })}
-                  rows={4}
-                />
-              </div>
-              
-              {/* Preview */}
-              <div className="rounded-lg border bg-muted/30 p-6">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <Target className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{vision.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{vision.description}</p>
-                  </div>
-                </div>
+                <Label>Vision Statement</Label>
+                <Textarea rows={6} value={profileContent.vision.description} onChange={(event) => setProfileContent({ ...profileContent, vision: { ...profileContent.vision, description: event.target.value } })} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Mission Tab */}
-        <TabsContent value="mission" className="space-y-4">
+        <TabsContent value="mission">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Organization Mission</CardTitle>
-                <CardDescription>
-                  The specific actions and objectives to achieve the vision.
-                </CardDescription>
+                <CardTitle>Missions</CardTitle>
+                <CardDescription>Misi organisasi yang tampil sebagai daftar bernomor.</CardDescription>
               </div>
-              <Button onClick={addMission} size="sm" className="gap-2">
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={() => setProfileContent({ ...profileContent, missions: [...profileContent.missions, { id: nextId(profileContent.missions), text: "", enabled: true }] })}
+              >
                 <Plus className="h-4 w-4" />
                 Add Mission
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {missions.map((mission, index) => (
-                <div
-                  key={mission.id}
-                  className="flex items-start gap-4 rounded-lg border p-4"
-                >
-                  <button className="mt-1 cursor-grab text-muted-foreground hover:text-foreground">
-                    <GripVertical className="h-5 w-5" />
-                  </button>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Textarea
-                      value={mission.text}
-                      onChange={(e) => updateMission(mission.id, "text", e.target.value)}
-                      placeholder="Enter mission statement..."
-                      rows={2}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={mission.enabled}
-                      onCheckedChange={(checked) => updateMission(mission.id, "enabled", checked)}
-                    />
-                    <Badge variant={mission.enabled ? "default" : "secondary"}>
-                      {mission.enabled ? "Active" : "Hidden"}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeMission(mission.id)}
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
+              {profileContent.missions.map((mission) => (
+                <div key={mission.id} className="flex items-start gap-4 rounded-lg border p-4">
+                  <GripVertical className="mt-2 h-5 w-5 shrink-0 text-muted-foreground" />
+                  <Textarea className="min-h-20 flex-1" value={mission.text} onChange={(event) => updateMission(mission.id, { text: event.target.value })} />
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Switch checked={mission.enabled} onCheckedChange={(enabled) => updateMission(mission.id, { enabled })} />
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setProfileContent({ ...profileContent, missions: profileContent.missions.filter((item) => item.id !== mission.id) })}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -274,85 +264,107 @@ export default function VisionMissionManagement() {
           </Card>
         </TabsContent>
 
-        {/* Values Tab */}
-        <TabsContent value="values" className="space-y-4">
+        <TabsContent value="values">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Organization Values</CardTitle>
-                <CardDescription>
-                  Core values that define the organization&apos;s culture.
-                </CardDescription>
+                <CardTitle>Core Values</CardTitle>
+                <CardDescription>Nilai inti kabinet untuk profil publik dan narasi internal.</CardDescription>
               </div>
-              <Button onClick={addValue} size="sm" className="gap-2">
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={() => setProfileContent({ ...profileContent, values: [...profileContent.values, { id: nextId(profileContent.values), title: "", description: "", icon: "star", enabled: true }] })}
+              >
                 <Plus className="h-4 w-4" />
                 Add Value
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {values.map((value) => (
-                <div
-                  key={value.id}
-                  className="flex items-start gap-4 rounded-lg border p-4"
-                >
-                  <button className="mt-1 cursor-grab text-muted-foreground hover:text-foreground">
-                    <GripVertical className="h-5 w-5" />
-                  </button>
-                  <div className="grid flex-1 gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label>Title</Label>
-                      <Input
-                        value={value.title}
-                        onChange={(e) => updateValue(value.id, "title", e.target.value)}
-                        placeholder="e.g., Integrity"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Description</Label>
-                      <Input
-                        value={value.description}
-                        onChange={(e) => updateValue(value.id, "description", e.target.value)}
-                        placeholder="Brief description of this value"
-                      />
+              {profileContent.values.map((value) => {
+                const Icon = valueIcons[value.icon] ?? Star
+
+                return (
+                  <div key={value.id} className="grid gap-3 rounded-lg border p-4 md:grid-cols-[2fr_3fr_9rem_auto] md:items-center">
+                    <Input value={value.title} onChange={(event) => updateValue(value.id, { title: event.target.value })} placeholder="Title" />
+                    <Input value={value.description} onChange={(event) => updateValue(value.id, { description: event.target.value })} placeholder="Description" />
+                    <Select value={value.icon} onValueChange={(icon) => updateValue(value.id, { icon: icon as ProfileValue["icon"] })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(valueIcons).map((icon) => (
+                          <SelectItem key={icon} value={icon}>
+                            {icon}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <Switch checked={value.enabled} onCheckedChange={(enabled) => updateValue(value.id, { enabled })} />
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setProfileContent({ ...profileContent, values: profileContent.values.filter((item) => item.id !== value.id) })}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-primary/10 p-2">
-                      {getIconComponent(value.icon)}
-                    </div>
-                    <Switch
-                      checked={value.enabled}
-                      onCheckedChange={(checked) => updateValue(value.id, "enabled", checked)}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeValue(value.id)}
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
+                )
+              })}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="leaders">
+          <Card>
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Pengurus Inti</CardTitle>
+                <CardDescription>Konten ketua dan wakil ketua yang tampil di /profil.</CardDescription>
+              </div>
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={() => setProfileContent({ ...profileContent, leaders: [...profileContent.leaders, { id: nextId(profileContent.leaders), group: "Pengurus Inti", name: "", position: "", description: "", imageKey: "ketuaLead", enabled: true }] })}
+              >
+                <Plus className="h-4 w-4" />
+                Add Leader
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profileContent.leaders.map((leader) => (
+                <div key={leader.id} className="space-y-4 rounded-lg border p-4">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <Input value={leader.group} onChange={(event) => updateLeader(leader.id, { group: event.target.value })} placeholder="Group" />
+                    <Input value={leader.name} onChange={(event) => updateLeader(leader.id, { name: event.target.value })} placeholder="Name" />
+                    <Input value={leader.position} onChange={(event) => updateLeader(leader.id, { position: event.target.value })} placeholder="Position" />
+                  </div>
+                  <Textarea rows={5} value={leader.description} onChange={(event) => updateLeader(leader.id, { description: event.target.value })} placeholder="Description" />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Select value={leader.imageKey} onValueChange={(imageKey) => updateLeader(leader.id, { imageKey: imageKey as ProfileLeader["imageKey"] })}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ketuaLead">Ketua photo</SelectItem>
+                        <SelectItem value="wakilLead">Wakil photo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Switch checked={leader.enabled} onCheckedChange={(enabled) => updateLeader(leader.id, { enabled })} />
+                    <Badge variant={leader.enabled ? "default" : "secondary"}>{leader.enabled ? "Active" : "Hidden"}</Badge>
+                    <Button variant="ghost" size="sm" className="gap-2 text-destructive" onClick={() => removeLeader(leader.id)}>
                       <Trash2 className="h-4 w-4" />
+                      Remove
                     </Button>
                   </div>
                 </div>
               ))}
-
-              {/* Preview */}
-              <div className="mt-6 rounded-lg border bg-muted/30 p-6">
-                <h4 className="mb-4 font-semibold">Preview</h4>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {values.filter(v => v.enabled).map((value) => (
-                    <div key={value.id} className="rounded-lg border bg-card p-4 text-center">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                        {getIconComponent(value.icon)}
-                      </div>
-                      <h5 className="font-semibold">{value.title || "Title"}</h5>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {value.description || "Description"}
-                      </p>
-                    </div>
-                  ))}
+              {profileContent.leaders.length === 0 && (
+                <div className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+                  Belum ada leader di draft ini. Tambahkan leader baru atau simpan perubahan untuk mengosongkan section.
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

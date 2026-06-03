@@ -5,18 +5,23 @@ import { ArrowLeft, BriefcaseBusiness, CheckCircle2, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { workUnits } from "@/lib/public-content"
+import { getPublicWorkUnits } from "@/lib/public-profile"
 
 type UnitDetailPageProps = {
   params: Promise<{ slug: string }>
 }
 
-export function generateStaticParams() {
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const workUnits = await getPublicWorkUnits()
+
   return workUnits.map((unit) => ({ slug: unit.slug }))
 }
 
 export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
   const { slug } = await params
+  const workUnits = await getPublicWorkUnits()
   const unit = workUnits.find((item) => item.slug === slug)
 
   if (!unit) {

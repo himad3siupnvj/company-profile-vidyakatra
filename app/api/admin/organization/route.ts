@@ -4,6 +4,7 @@ import { getDb } from "@/db"
 import { divisions, members, organizationalUnits } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
+import { revalidateProfileContent } from "@/lib/profile-cache"
 
 export const runtime = "nodejs"
 
@@ -37,7 +38,6 @@ function serializeMember(row: {
   unitName: string | null
   divisionName: string | null
   email: string | null
-  phone: string | null
   avatarUrl: string | null
   joinedAt: Date | null
   createdAt: Date
@@ -49,7 +49,6 @@ function serializeMember(row: {
     department: row.unitName ?? "Unassigned",
     division: row.divisionName ?? "",
     email: row.email ?? "",
-    phone: row.phone ?? "",
     avatar: row.avatarUrl ?? "",
     status: "active" as const,
     joinDate: (row.joinedAt ?? row.createdAt).toISOString().slice(0, 10),
@@ -122,7 +121,6 @@ export async function GET() {
       unitName: organizationalUnits.name,
       divisionName: divisions.name,
       email: members.email,
-      phone: members.phone,
       avatarUrl: members.avatarUrl,
       joinedAt: members.joinedAt,
       createdAt: members.createdAt,
@@ -189,6 +187,7 @@ export async function POST(request: NextRequest) {
       entityId: created.id,
       metadata: { type: unitType },
     })
+    revalidateProfileContent()
 
     return NextResponse.json({ organizationalUnit: serializeOrgUnit(created), department: serializeOrgUnit(created) })
   }
@@ -220,6 +219,7 @@ export async function POST(request: NextRequest) {
       entityId: created.id,
       metadata: { organizationalUnitId },
     })
+    revalidateProfileContent()
 
     return NextResponse.json({ division: serializeDivision({ ...created, unitName: null }) })
   }
@@ -252,7 +252,6 @@ export async function POST(request: NextRequest) {
       organizationalUnitId,
       divisionId,
       email: String(payload.email ?? ""),
-      phone: String(payload.phone ?? ""),
       joinedAt: now,
       createdAt: now,
       updatedAt: now,
@@ -266,6 +265,7 @@ export async function POST(request: NextRequest) {
     entityId: created.id,
     metadata: { organizationalUnitId, divisionId },
   })
+  revalidateProfileContent()
 
   return NextResponse.json({
     member: serializeMember({
@@ -314,6 +314,7 @@ export async function PUT(request: NextRequest) {
     if (!updated) return NextResponse.json({ error: "Organizational unit not found" }, { status: 404 })
 
     await writeAuditLog({ actorId: guard.user?.id, action: "org_unit.update", entityType: "organizational_unit", entityId: id })
+    revalidateProfileContent()
 
     return NextResponse.json({ organizationalUnit: serializeOrgUnit(updated), department: serializeOrgUnit(updated) })
   }
@@ -341,6 +342,7 @@ export async function PUT(request: NextRequest) {
     if (!updated) return NextResponse.json({ error: "Division not found" }, { status: 404 })
 
     await writeAuditLog({ actorId: guard.user?.id, action: "division.update", entityType: "division", entityId: id })
+    revalidateProfileContent()
 
     return NextResponse.json({ division: serializeDivision({ ...updated, unitName: null }) })
   }
@@ -369,7 +371,6 @@ export async function PUT(request: NextRequest) {
       organizationalUnitId,
       divisionId,
       email: String(payload.email ?? ""),
-      phone: String(payload.phone ?? ""),
       avatarUrl: payload.avatarUrl || payload.avatar || null,
       updatedAt: now,
     })
@@ -379,6 +380,7 @@ export async function PUT(request: NextRequest) {
   if (!updated) return NextResponse.json({ error: "Member not found" }, { status: 404 })
 
   await writeAuditLog({ actorId: guard.user?.id, action: "member.update", entityType: "member", entityId: id })
+  revalidateProfileContent()
 
   return NextResponse.json({
     member: serializeMember({
@@ -409,6 +411,7 @@ export async function DELETE(request: NextRequest) {
       .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
       .where(eq(organizationalUnits.id, id))
     await writeAuditLog({ actorId: guard.user?.id, action: "org_unit.delete", entityType: "organizational_unit", entityId: id })
+    revalidateProfileContent()
 
     return NextResponse.json({ ok: true })
   }
@@ -419,6 +422,7 @@ export async function DELETE(request: NextRequest) {
       .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
       .where(eq(divisions.id, id))
     await writeAuditLog({ actorId: guard.user?.id, action: "division.delete", entityType: "division", entityId: id })
+    revalidateProfileContent()
 
     return NextResponse.json({ ok: true })
   }
@@ -428,6 +432,7 @@ export async function DELETE(request: NextRequest) {
     .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
     .where(eq(members.id, id))
   await writeAuditLog({ actorId: guard.user?.id, action: "member.delete", entityType: "member", entityId: id })
+  revalidateProfileContent()
 
   return NextResponse.json({ ok: true })
 }

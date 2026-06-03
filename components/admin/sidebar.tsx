@@ -15,6 +15,7 @@ import {
   Newspaper,
   Settings,
   UserCog,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -26,44 +27,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { getAccessibleAdminNavigation } from "@/lib/admin-access"
+import { useAdminUser } from "@/components/admin/admin-user-context"
 
-const navigation = [
-  {
-    name: "Dashboard",
-    href: "/x-panel",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Home Page",
-    href: "/x-panel/home",
-    icon: Home,
-  },
-  {
-    name: "Organization",
-    href: "/x-panel/organization",
-    icon: Users,
-  },
-  {
-    name: "Vision & Mission",
-    href: "/x-panel/vision-mission",
-    icon: Target,
-  },
-  {
-    name: "Berita Acara",
-    href: "/x-panel/news",
-    icon: Newspaper,
-  },
-  {
-    name: "Settings",
-    href: "/x-panel/settings",
-    icon: Settings,
-  },
-  {
-    name: "User Management",
-    href: "/x-panel/users",
-    icon: UserCog,
-  },
-]
+const navigationIcons = {
+  Dashboard: LayoutDashboard,
+  "Home Page": Home,
+  Organization: Users,
+  "Profile CMS": Target,
+  "Berita Acara": Newspaper,
+  Settings,
+  "User Management": UserCog,
+  "Auth Health": ShieldCheck,
+} as const
 
 function LogoBadge({
   src,
@@ -96,7 +72,9 @@ function LogoBadge({
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const { currentUser } = useAdminUser()
   const [collapsed, setCollapsed] = useState(false)
+  const navigation = getAccessibleAdminNavigation(currentUser?.role)
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -133,6 +111,7 @@ export function AdminSidebar() {
         {/* Navigation */}
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {navigation.map((item) => {
+            const Icon = navigationIcons[item.name as keyof typeof navigationIcons] ?? LayoutDashboard
             const isActive = pathname === item.href || 
               (item.href !== "/x-panel" && pathname.startsWith(item.href))
             
@@ -146,7 +125,7 @@ export function AdminSidebar() {
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 )}
               >
-                <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary")} />
+                <Icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary")} />
                 {!collapsed && <span>{item.name}</span>}
               </Link>
             )

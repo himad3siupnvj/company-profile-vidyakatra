@@ -14,49 +14,30 @@ import sospolLogo from "@/assets/organ/sospol.png"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { getProfileContent } from "@/lib/profile-content"
+import type { ProfileLeader } from "@/lib/profile-content-data"
+import { getPublicWorkUnits } from "@/lib/public-profile"
 import {
   Award,
   Cpu,
   Eye,
-  Heart,
   Rocket,
-  Shield,
   Target,
   Users,
-  Zap,
 } from "lucide-react"
-import { workUnits } from "@/lib/public-content"
 
-const cabinetLeads = [
-  {
-    group: "Ketua Umum",
-    people: [
-      {
-        name: "Sakhaa Sayyidah Kurniawan",
-        position: "Ketua Umum",
-        description: "Mengawal arah gerak kabinet, menjaga visi organisasi, serta memastikan setiap program kerja berjalan selaras dengan kebutuhan mahasiswa. Ketua umum berperan dalam membangun komunikasi strategis, menjaga budaya kolaboratif, dan mengarahkan kabinet agar tetap produktif, inklusif, dan berdampak.",
-        image: ketuaLead,
-      },
-    ],
-  },
-  {
-    group: "Wakil Ketua",
-    people: [
-      {
-        name: "Latanza Akbar Fadilah",
-        position: "Wakil Ketua",
-        description: "Mendampingi ketua umum dalam menjaga ritme kerja kabinet, memperkuat koordinasi internal, serta memastikan setiap departemen dan biro dapat bergerak secara terarah. Wakil ketua berperan dalam menjaga kesinambungan program, evaluasi kerja, dan komunikasi antarbagian agar kabinet tetap solid.",
-        image: wakilLead,
-      },
-    ],
-  },
-]
+export const revalidate = 3600
 
 type CabinetLeadPerson = {
   name: string
   position: string
   description: string
   image: StaticImageData
+}
+
+const leaderImages: Record<ProfileLeader["imageKey"], StaticImageData> = {
+  ketuaLead,
+  wakilLead,
 }
 
 type LeaderProfileProps = {
@@ -133,10 +114,6 @@ const etymology = [
   },
 ]
 
-const philosophyPoints = [
-  "Vidyakatra menggambarkan harmoni antara intelektualitas dan solidaritas. Ilmu tidak berdiri sendiri. Ia tumbuh dan bermakna karena ada kebersamaan yang menguatkan. Kabinet Vidyakatra hadir sebagai simbol integrasi antara kecerdasan intelektual dan empati sosial. Melalui nilai-nilai ini, Kabinet Vidyakatra berupaya mewujudkan lingkungan yang produktif, inklusif, dan berkelanjutan bagi seluruh keluarga besar mahasiswa D3 Sistem Informasi.",
-]
-
 const coreTeams = [
   {
     type: "Pengurus Inti",
@@ -161,37 +138,12 @@ const coreTeams = [
   },
 ]
 
-const coreValues = [
-  {
-    name: "Integritas",
-    description: "Menjunjung tinggi kejujuran dan etika dalam setiap tindakan",
-    icon: Shield,
-  },
-  {
-    name: "Inovasi",
-    description: "Selalu berinovasi dan mengikuti perkembangan teknologi",
-    icon: Zap,
-  },
-  {
-    name: "Kolaborasi",
-    description: "Bekerja sama untuk mencapai tujuan bersama",
-    icon: Users,
-  },
-  {
-    name: "Dedikasi",
-    description: "Berkomitmen penuh dalam setiap kegiatan dan tanggung jawab",
-    icon: Heart,
-  },
-]
+export default async function ProfilPage() {
+  const profileContent = await getProfileContent()
+  const workUnits = await getPublicWorkUnits()
+  const activeMissions = profileContent.missions.filter((mission) => mission.enabled)
+  const activeLeaders = profileContent.leaders.filter((leader) => leader.enabled)
 
-const missions = [
-  "Mengembangkan dan memfasilitasi kegiatan akademik maupun non-akademik untuk meningkatkan kemampuan, menyalurkan bakat, dan memperkuat solidaritas mahasiswa melalui pendekatan adaptif dan kolaboratif.",
-  "Menjadi penghubung yang responsif dan transparan antara fakultas dan mahasiswa dalam penyampaian informasi serta komunikasi.",
-  "Meningkatkan kapasitas kepemimpinan dan keorganisasian anggota melalui pembinaan, pelatihan, dan keterlibatan aktif di HIMA.",
-  "Membangun lingkungan organisasi yang suportif dan kolaboratif yang berorientasi pada pemberdayaan individu dan budaya kerja berkelanjutan."
-]
-
-export default function ProfilPage() {
   return (
     <>
       <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden py-16 md:py-20">
@@ -203,13 +155,13 @@ export default function ProfilPage() {
           <div className="mx-auto max-w-3xl text-center">
             <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
               <Cpu className="mr-1.5 h-3 w-3" />
-              Tentang Kami
+              {profileContent.intro.eyebrow}
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl text-balance">
-              Profil <span className="text-gradient">HIMA D3 SI</span>
+              {profileContent.intro.title}
             </h1>
             <p className="mt-6 text-lg text-muted-foreground">
-              Mengenal kabinet, arah gerak, dan struktur kerja HIMA D3 Sistem Informasi
+              {profileContent.intro.subtitle}
             </p>
           </div>
         </div>
@@ -259,13 +211,13 @@ export default function ProfilPage() {
               <div className="relative w-full space-y-5">
                 <div className="max-w-3xl space-y-3">
                   <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl">
-                    Kabinet Vidyakatra
+                    {profileContent.intro.cabinetName}
                   </h2>
                   <p className="text-sm font-bold uppercase leading-relaxed tracking-[0.18em] text-yellow-400 md:text-base">
-                    Bersatu dalam Pengetahuan, Bertumbuh dalam Kebersamaan Satu Tujuan
+                    {profileContent.intro.tagline}
                   </p>
                   <p className="max-w-2xl text-sm leading-relaxed text-[#b5b5b5] md:text-base">
-                    Vidyakatra menjadi cerminan filosofi kabinet bahwa kemajuan tidak lahir dari kompetisi semata, tetapi dari sinergi antara pengetahuan, karakter, dan solidaritas.
+                    {profileContent.intro.description}
                   </p>
                   <p className="inline-flex rounded-xl bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-400 shadow-[0_0_24px_rgba(250,204,21,0.12)]">
                     Lead the Change with Smart Systems!
@@ -294,10 +246,10 @@ export default function ProfilPage() {
                   <div className="group rounded-2xl bg-white/[0.035] p-4 shadow-[0_16px_50px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_56px_rgba(250,204,21,0.12)]">
                     <p className="text-sm font-semibold text-yellow-400">Makna Filosofis</p>
                     <h3 className="mt-1 text-xl font-bold text-white text-balance">
-                      Intelektualitas dan Solidaritas
+                      {profileContent.philosophy.title}
                     </h3>
                     <p className="mt-4 text-sm leading-relaxed text-[#b5b5b5]">
-                      Vidyakatra menggambarkan harmoni antara ilmu, karakter, dan kebersamaan. Ilmu menjadi bermakna ketika tumbuh bersama solidaritas dan memberi dampak bagi mahasiswa D3 Sistem Informasi.
+                      {profileContent.philosophy.description}
                     </p>
                   </div>
                 </div>
@@ -310,17 +262,19 @@ export default function ProfilPage() {
       <section id="visi-misi" className="border-y border-border/50 bg-card/30 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-2">
+            {profileContent.vision.enabled && (
             <Card className="border-primary/20 bg-primary/5 backdrop-blur transition-all duration-300 hover:border-primary/40 hover:glow-primary-sm">
               <CardContent className="p-8">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-brand">
                   <Eye className="h-7 w-7 text-primary-foreground" />
                 </div>
-                <h2 className="mb-4 text-2xl font-bold">Visi</h2>
+                <h2 className="mb-4 text-2xl font-bold">{profileContent.vision.title}</h2>
                 <p className="text-lg leading-relaxed text-muted-foreground">
-                  Mewujudkan Himpunan Mahasiswa D3 Sistem Informasi UPN "Veteran" Jakarta yang aktif dan kolaboratif sebagai wadah pengembangan, pemberdayaan, serta penyambung informasi bagi seluruh keluarga mahasiswa dalam kegiatan akademik maupun non-akademik yang inklusif, berkembang, dan berkelanjutan demi mencapai tujuan bersama.
+                  {profileContent.vision.description}
                 </p>
               </CardContent>
             </Card>
+            )}
 
             <Card className="border-secondary/20 bg-secondary/5 backdrop-blur transition-all duration-300 hover:border-secondary/40 hover:glow-secondary">
               <CardContent className="p-8">
@@ -329,12 +283,12 @@ export default function ProfilPage() {
                 </div>
                 <h2 className="mb-4 text-2xl font-bold">Misi</h2>
                 <ul className="space-y-3">
-                  {missions.map((mission, index) => (
-                    <li key={mission} className="flex items-start gap-3">
+                  {activeMissions.map((mission, index) => (
+                    <li key={mission.id} className="flex items-start gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-semibold text-primary">
                         {index + 1}
                       </span>
-                      <span className="text-sm text-muted-foreground">{mission}</span>
+                      <span className="text-sm text-muted-foreground">{mission.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -358,14 +312,17 @@ export default function ProfilPage() {
           </div>
 
           <div className="mx-auto max-w-5xl space-y-12">
-            {cabinetLeads.map((section, sectionIndex) => (
-              section.people.map((person) => (
-                <LeaderProfile
-                  key={person.name}
-                  person={person}
-                  reversed={sectionIndex % 2 === 1}
-                />
-              ))
+            {activeLeaders.map((leader, index) => (
+              <LeaderProfile
+                key={leader.id}
+                person={{
+                  name: leader.name,
+                  position: leader.position,
+                  description: leader.description,
+                  image: leaderImages[leader.imageKey],
+                }}
+                reversed={index % 2 === 1}
+              />
             ))}
           </div>
 
