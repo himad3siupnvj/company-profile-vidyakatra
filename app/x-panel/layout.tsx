@@ -16,6 +16,7 @@ export default function AdminLayout({
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<AdminCurrentUser | null>(null)
   const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -74,11 +75,11 @@ export default function AdminLayout({
       <div className="min-h-screen overflow-x-hidden bg-background">
         {/* Sidebar - hidden on mobile */}
         <div className="hidden md:block">
-          <AdminSidebar />
+          <AdminSidebar collapsed={isSidebarCollapsed} onCollapsedChange={setIsSidebarCollapsed} />
         </div>
 
         {/* Main Content */}
-        <div className="flex min-w-0 flex-col md:ml-64">
+        <div className={isSidebarCollapsed ? "flex min-w-0 flex-col transition-[margin] duration-300 md:ml-16" : "flex min-w-0 flex-col transition-[margin] duration-300 md:ml-64"}>
           <AdminHeader />
           <main className="min-w-0 flex-1 overflow-x-hidden p-3 sm:p-4 md:p-6">{children}</main>
         </div>

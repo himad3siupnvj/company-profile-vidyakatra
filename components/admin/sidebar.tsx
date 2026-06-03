@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -70,10 +69,14 @@ function LogoBadge({
   )
 }
 
-export function AdminSidebar() {
+type AdminSidebarProps = {
+  collapsed: boolean
+  onCollapsedChange: (collapsed: boolean) => void
+}
+
+export function AdminSidebar({ collapsed, onCollapsedChange }: AdminSidebarProps) {
   const pathname = usePathname()
   const { currentUser } = useAdminUser()
-  const [collapsed, setCollapsed] = useState(false)
   const navigation = getAccessibleAdminNavigation(currentUser?.role)
 
   return (
@@ -183,7 +186,7 @@ export function AdminSidebar() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => onCollapsedChange(!collapsed)}
             className="w-full justify-center text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-300"
           >
             {collapsed ? (
