@@ -17,6 +17,7 @@ import {
   isArticleWorkflowAction,
   type ArticleStatus,
 } from "@/lib/article-workflow"
+import { revalidatePublicArticles } from "@/lib/public-cache"
 
 export const runtime = "nodejs"
 
@@ -170,6 +171,8 @@ export async function POST(request: NextRequest) {
       .returning()
     const [category] = await db.select().from(articleCategories).where(eq(articleCategories.id, categoryId)).limit(1)
 
+    revalidatePublicArticles()
+
     return NextResponse.json({
       article: serializeArticle({
         ...updated,
@@ -202,6 +205,8 @@ export async function POST(request: NextRequest) {
     .returning()
 
   const [category] = await db.select().from(articleCategories).where(eq(articleCategories.id, categoryId)).limit(1)
+
+  revalidatePublicArticles()
 
   return NextResponse.json({
     article: serializeArticle({
@@ -273,6 +278,8 @@ export async function PUT(request: NextRequest) {
 
   const [category] = await db.select().from(articleCategories).where(eq(articleCategories.id, categoryId)).limit(1)
 
+  revalidatePublicArticles()
+
   return NextResponse.json({
     article: serializeArticle({
       ...updated,
@@ -296,6 +303,7 @@ export async function DELETE(request: NextRequest) {
 
   const db = getDb()
   await db.update(articles).set({ deletedAt: new Date(), updatedAt: new Date() }).where(eq(articles.id, id))
+  revalidatePublicArticles()
 
   return NextResponse.json({ ok: true })
 }
@@ -365,6 +373,8 @@ export async function PATCH(request: NextRequest) {
   const [author] = updated.authorId
     ? await db.select({ name: users.name }).from(users).where(eq(users.id, updated.authorId)).limit(1)
     : [null]
+
+  revalidatePublicArticles()
 
   return NextResponse.json({
     article: serializeArticle({

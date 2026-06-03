@@ -1,7 +1,9 @@
 import { and, desc, eq, isNull } from "drizzle-orm"
+import { unstable_cache } from "next/cache"
 import { getDb } from "@/db"
 import { articleCategories, articles } from "@/db/schema"
 import { getArticleReadTime, normalizeArticleDocument } from "@/lib/article-content"
+import { publicCacheTags } from "@/lib/cache-tags"
 import { newsData, type PublicNews } from "@/lib/public-content"
 
 function formatPublicDate(value: Date | null) {
@@ -66,7 +68,8 @@ function serializePublicArticle(row: Awaited<ReturnType<typeof getPublishedArtic
   }
 }
 
-export async function getPublicNews() {
+export const getPublicNews = unstable_cache(
+async function getPublicNews() {
   try {
     const rows = await getPublishedArticleRows()
 
@@ -78,7 +81,10 @@ export async function getPublicNews() {
   }
 
   return newsData
-}
+},
+["public-news"],
+{ revalidate: 300, tags: [publicCacheTags.articles] },
+)
 
 export async function getPublicNewsBySlug(slug: string) {
   const news = await getPublicNews()

@@ -17,7 +17,7 @@ export function generateStaticParams() {
   return newsData.map((news) => ({ slug: news.slug }))
 }
 
-export const dynamic = "force-dynamic"
+export const revalidate = 300
 
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
   const { slug } = await params

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   ChevronDown,
   Instagram,
@@ -17,6 +17,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { publicEmailComposeHref } from "@/lib/contact-links";
 import logoHima from "@/assets/hima.png";
 import logoKabinet from "@/assets/logoKabinet.png";
 
@@ -48,11 +49,19 @@ const collaborateLinks = [
     icon: Music2,
   },
   {
-    href: "mailto:himpunand3si@gmail.com",
+    href: publicEmailComposeHref,
     label: "Email",
     icon: Mail,
   },
 ];
+
+function getLinkTarget(href: string) {
+  return href.startsWith("/") ? undefined : "_blank";
+}
+
+function getLinkRel(href: string) {
+  return href.startsWith("/") ? undefined : "noopener noreferrer";
+}
 
 function LogoBadge({
   src,
@@ -163,8 +172,8 @@ export function Navbar() {
                   <a
                     key={link.label}
                     href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target={getLinkTarget(link.href)}
+                    rel={getLinkRel(link.href)}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[#b8b8b8] transition-colors duration-200 hover:bg-white/[0.04] hover:text-yellow-400"
                   >
                     <link.icon className="h-4 w-4" />
@@ -189,6 +198,9 @@ export function Navbar() {
               side="right"
               className="w-[300px] border-l border-white/10 bg-background p-0"
             >
+              <SheetHeader className="sr-only">
+                <SheetTitle>Public navigation</SheetTitle>
+              </SheetHeader>
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-white/10 p-4">
                   <Link
@@ -262,8 +274,8 @@ export function Navbar() {
                         <a
                           key={link.label}
                           href={link.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          target={getLinkTarget(link.href)}
+                          rel={getLinkRel(link.href)}
                           onClick={() => setIsOpen(false)}
                           className="flex items-center gap-3 rounded-lg px-1 py-3 text-sm font-medium text-[#b8b8b8] transition-colors duration-200 hover:text-white"
                         >

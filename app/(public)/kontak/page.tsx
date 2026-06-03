@@ -8,6 +8,7 @@ import {
   Music2,
   Youtube,
 } from "lucide-react"
+import { publicEmailComposeHref } from "@/lib/contact-links"
 
 const socialMedia = [
   {
@@ -48,6 +49,8 @@ const socialMedia = [
   },
 ]
 
+export const revalidate = 3600
+
 export default function KontakPage() {
   return (
     <>
@@ -69,7 +72,7 @@ export default function KontakPage() {
               <p className="mt-6 text-lg leading-relaxed text-[#b8b8b8] md:text-xl">
                 Memuat kanal resmi HIMA D3 Sistem Informasi UPN "Veteran" Jakarta untuk membangun jangkauan, meningkatkan interaksi, dan bertumbuh bersama mahasiswa.
               </p>
-              <a href="mailto:himpunand3si@gmail.com" className="mt-8 inline-flex">
+              <a href={publicEmailComposeHref} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex">
                 <Button className="gap-2 bg-gradient-brand px-6 text-primary-foreground shadow-[0_14px_40px_rgba(250,204,21,0.22)] transition-all duration-300 hover:-translate-y-1 hover:opacity-95">
                   Let&apos;s Collaborate!
                   <ArrowRight className="h-4 w-4" />

@@ -3,6 +3,7 @@ import Image from "next/image"
 import logoHima from "@/assets/hima.png"
 import logoKabinet from "@/assets/logoKabinet.png"
 import { Clock, Instagram, Mail, MapPin, Music2, Youtube, Linkedin } from "lucide-react"
+import { publicEmailAddress, publicEmailComposeHref } from "@/lib/contact-links"
 import { cn } from "@/lib/utils"
 
 const quickLinks = [
@@ -140,8 +141,8 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">
                 <Mail className="h-4 w-4 shrink-0 text-primary" />
-                <a href="mailto:himpunand3si@gmail.com" className="transition-colors duration-300 hover:text-primary">
-                  himpunand3si@gmail.com
+                <a href={publicEmailComposeHref} target="_blank" rel="noopener noreferrer" className="transition-colors duration-300 hover:text-primary">
+                  {publicEmailAddress}
                 </a>
               </li>
               <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">

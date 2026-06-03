@@ -9,6 +9,7 @@ import { articleCategories, articles } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { getArticleReadTime, slugify, toTitleCase } from "@/lib/article-content"
 import { generateArticleDraftFromText } from "@/lib/article-generator"
+import { revalidatePublicArticles } from "@/lib/public-cache"
 import { validateUploadFile } from "@/lib/storage"
 
 export const runtime = "nodejs"
@@ -150,6 +151,8 @@ export async function POST(request: NextRequest) {
         updatedAt: now,
       })
       .returning()
+
+    revalidatePublicArticles()
 
     return NextResponse.json({
       article: {

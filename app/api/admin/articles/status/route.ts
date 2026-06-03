@@ -11,6 +11,7 @@ import {
   isArticleWorkflowAction,
   type ArticleStatus,
 } from "@/lib/article-workflow"
+import { revalidatePublicArticles } from "@/lib/public-cache"
 
 export const runtime = "nodejs"
 
@@ -114,6 +115,8 @@ export async function PATCH(request: NextRequest) {
   const [author] = updated.authorId
     ? await db.select({ name: users.name }).from(users).where(eq(users.id, updated.authorId)).limit(1)
     : [null]
+
+  revalidatePublicArticles()
 
   return NextResponse.json({
     article: serializeArticle({
