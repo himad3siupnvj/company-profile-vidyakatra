@@ -46,7 +46,6 @@ interface Member {
   position: string
   department: string
   email: string
-  phone: string
   avatar: string
   status: "active" | "inactive"
   joinDate: string
@@ -62,14 +61,14 @@ interface Department {
 }
 
 const initialMembers: Member[] = [
-  { id: "member-1", name: "Ahmad Rizki Pratama", position: "Ketua Umum", department: "Executive", email: "ahmad@email.com", phone: "081234567890", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-2", name: "Siti Nurhaliza", position: "Wakil Ketua", department: "Executive", email: "siti@email.com", phone: "081234567891", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-3", name: "Budi Santoso", position: "Sekretaris", department: "Executive", email: "budi@email.com", phone: "081234567892", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-4", name: "Dian Permata", position: "Bendahara", department: "Executive", email: "dian@email.com", phone: "081234567893", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-5", name: "Reza Firmansyah", position: "Koordinator", department: "Media & Informasi", email: "reza@email.com", phone: "081234567894", avatar: "", status: "active", joinDate: "2024-02-01" },
-  { id: "member-6", name: "Maya Indah", position: "Staff", department: "Media & Informasi", email: "maya@email.com", phone: "081234567895", avatar: "", status: "active", joinDate: "2024-02-15" },
-  { id: "member-7", name: "Andi Wijaya", position: "Koordinator", department: "Pendidikan", email: "andi@email.com", phone: "081234567896", avatar: "", status: "active", joinDate: "2024-02-01" },
-  { id: "member-8", name: "Lisa Kurnia", position: "Staff", department: "Kewirausahaan", email: "lisa@email.com", phone: "081234567897", avatar: "", status: "inactive", joinDate: "2024-03-01" },
+  { id: "member-1", name: "Ahmad Rizki Pratama", position: "Ketua Umum", department: "Executive", email: "ahmad@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-2", name: "Siti Nurhaliza", position: "Wakil Ketua", department: "Executive", email: "siti@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-3", name: "Budi Santoso", position: "Sekretaris", department: "Executive", email: "budi@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-4", name: "Dian Permata", position: "Bendahara", department: "Executive", email: "dian@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
+  { id: "member-5", name: "Reza Firmansyah", position: "Koordinator", department: "Media & Informasi", email: "reza@email.com", avatar: "", status: "active", joinDate: "2024-02-01" },
+  { id: "member-6", name: "Maya Indah", position: "Staff", department: "Media & Informasi", email: "maya@email.com", avatar: "", status: "active", joinDate: "2024-02-15" },
+  { id: "member-7", name: "Andi Wijaya", position: "Koordinator", department: "Pendidikan", email: "andi@email.com", avatar: "", status: "active", joinDate: "2024-02-01" },
+  { id: "member-8", name: "Lisa Kurnia", position: "Staff", department: "Kewirausahaan", email: "lisa@email.com", avatar: "", status: "inactive", joinDate: "2024-03-01" },
 ]
 
 const initialDepartments: Department[] = [
@@ -94,7 +93,6 @@ export default function OrganizationManagement() {
     position: "",
     department: "",
     email: "",
-    phone: "",
   })
 
   useEffect(() => {
@@ -141,7 +139,7 @@ export default function OrganizationManagement() {
 
       const data = await response.json()
       setMembers([...members, data.member])
-      setNewMember({ name: "", position: "", department: "", email: "", phone: "" })
+      setNewMember({ name: "", position: "", department: "", email: "" })
       setIsAddMemberOpen(false)
     } catch {
       // The form stays open so the user can retry.
@@ -247,15 +245,6 @@ export default function OrganizationManagement() {
                   value={newMember.email}
                   onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
                   placeholder="email@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={newMember.phone}
-                  onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-                  placeholder="081234567890"
                 />
               </div>
             </div>
@@ -385,7 +374,6 @@ export default function OrganizationManagement() {
                         <TableCell>
                           <div className="text-sm">
                             <p>{member.email}</p>
-                            <p className="text-muted-foreground">{member.phone}</p>
                           </div>
                         </TableCell>
                         <TableCell>

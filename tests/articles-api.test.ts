@@ -63,7 +63,7 @@ describe("articles API", () => {
 
   it("soft deletes articles through update, not hard delete", async () => {
     const where = vi.fn().mockResolvedValue(undefined)
-    const set = vi.fn(() => ({ where }))
+    const set = vi.fn((payload: Record<string, unknown>) => ({ where }))
     const update = vi.fn(() => ({ set }))
     mocks.getDb.mockReturnValue({ update })
 
@@ -103,7 +103,7 @@ describe("articles API", () => {
     const select = vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn(() => ({ limit })) })) }))
     const returning = vi.fn().mockResolvedValue([updated])
     const where = vi.fn(() => ({ returning }))
-    const set = vi.fn(() => ({ where }))
+    const set = vi.fn((payload: Record<string, unknown>) => ({ where }))
     const update = vi.fn(() => ({ set }))
     const insert = vi.fn()
     mocks.getDb.mockReturnValue({ select, update, insert })
