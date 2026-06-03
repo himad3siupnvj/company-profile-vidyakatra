@@ -45,6 +45,7 @@ import {
   type ArticleDocument,
 } from "@/components/admin/notion-article-editor"
 import { getArticleReadTime } from "@/lib/article-content"
+import { optimizeImageForUpload, type ImageProcessingStage } from "@/lib/client-image-processing"
 import {
   getArticleWorkflowActions,
   type ArticleWorkflowAction,
@@ -113,7 +114,7 @@ export default function ArticleManagementPage() {
   })
   const [articleContent, setArticleContent] = useState<ArticleDocument>(createEmptyArticleDocument())
   const [updatingArticleId, setUpdatingArticleId] = useState<string | null>(null)
-  const [isUploadingCover, setIsUploadingCover] = useState(false)
+  const [coverUploadStage, setCoverUploadStage] = useState<ImageProcessingStage>("idle")
   const [isGeneratingSource, setIsGeneratingSource] = useState(false)
   const [isSavingArticle, setIsSavingArticle] = useState(false)
 
@@ -220,11 +221,24 @@ export default function ArticleManagementPage() {
     if (!file) return
 
     setErrorMessage("")
-    setIsUploadingCover(true)
+    setCoverUploadStage("compressing")
+
+    let uploadFile = file
+
+    try {
+      uploadFile = await optimizeImageForUpload(file, { maxWidth: 1600, maxHeight: 1200 })
+    } catch {
+      uploadFile = file
+    }
+
+    setCoverUploadStage("uploading")
 
     const formData = new FormData()
-    formData.append("file", file)
+    formData.append("file", uploadFile)
     formData.append("purpose", "article-image")
+    formData.append("section", "articles")
+    formData.append("category", newArticle.category || "general")
+    formData.append("kind", "cover")
 
     try {
       const response = await fetch("/api/admin/assets", {
@@ -246,7 +260,7 @@ export default function ArticleManagementPage() {
     } catch {
       setErrorMessage("Upload cover gagal. Coba lagi sebentar.")
     } finally {
-      setIsUploadingCover(false)
+      setCoverUploadStage("idle")
     }
   }
 
@@ -562,14 +576,14 @@ export default function ArticleManagementPage() {
                             onChange={(event) => setNewArticle({ ...newArticle, thumbnailUrl: event.target.value })}
                             placeholder="Paste URL gambar cover..."
                           />
-                          <Button type="button" variant="outline" size="sm" className="relative w-full gap-2" disabled={isUploadingCover}>
-                            {isUploadingCover ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                            Upload Cover
+                          <Button type="button" variant="outline" size="sm" className="relative w-full gap-2" disabled={coverUploadStage !== "idle"}>
+                            {coverUploadStage !== "idle" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            {coverUploadStage === "compressing" ? "Compressing..." : coverUploadStage === "uploading" ? "Uploading..." : "Upload Cover"}
                             <input
                               type="file"
                               accept="image/jpeg,image/png,image/webp,image/gif"
                               className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
-                              disabled={isUploadingCover}
+                              disabled={coverUploadStage !== "idle"}
                               onChange={(event) => handleUploadCover(event.target.files?.[0] ?? null)}
                             />
                           </Button>
@@ -625,6 +639,8 @@ export default function ArticleManagementPage() {
                       previewTitle={newArticle.title}
                       previewCategory={articleCategories.find((category) => category.value === newArticle.category)?.label ?? "Berita Acara"}
                       previewMeta={`${newArticle.author || "Tim Media"} / ${getArticleReadTime(articleContent)}`}
+                      uploadCategory={newArticle.category || "general"}
+                      uploadKind="content"
                     />
                   </div>
                 </div>

@@ -7,6 +7,7 @@ import {
   createStoragePath,
   uploadFileToStorage,
   validateUploadFile,
+  type StoragePathContext,
   type UploadPurpose,
 } from "@/lib/storage"
 
@@ -24,6 +25,21 @@ function serializeAsset(row: typeof assets.$inferSelect) {
     mimeType: row.mimeType,
     sizeBytes: row.sizeBytes,
     createdAt: row.createdAt.toISOString(),
+  }
+}
+
+function getOptionalString(formData: FormData, key: string) {
+  const value = formData.get(key)
+
+  return typeof value === "string" && value.trim() ? value.trim() : null
+}
+
+function getStoragePathContext(formData: FormData): StoragePathContext {
+  return {
+    year: getOptionalString(formData, "year"),
+    section: getOptionalString(formData, "section"),
+    category: getOptionalString(formData, "category"),
+    kind: getOptionalString(formData, "kind"),
   }
 }
 
@@ -60,7 +76,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: validation.error }, { status: 400 })
   }
 
-  const path = createStoragePath(file, purpose)
+  const path = createStoragePath(file, purpose, getStoragePathContext(formData))
 
   try {
     const url = await uploadFileToStorage(file, path)

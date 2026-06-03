@@ -10,6 +10,20 @@ const allowedSourceTypes = new Set([
 
 export type UploadPurpose = "article-image" | "article-source"
 
+export type StoragePathContext = {
+  year?: number | string | null
+  section?: string | null
+  category?: string | null
+  kind?: string | null
+}
+
+type DefaultStoragePathContext = {
+  year: number
+  section: string
+  category: string
+  kind: string
+}
+
 export function validateUploadFile(file: File, purpose: UploadPurpose) {
   if (purpose === "article-image") {
     if (!allowedImageTypes.has(file.type)) {
@@ -63,11 +77,47 @@ function sanitizeFileName(fileName: string) {
   return `${safeName || "upload"}${extension.toLowerCase()}`
 }
 
-export function createStoragePath(file: File, purpose: UploadPurpose) {
-  const folder = purpose === "article-source" ? "articles/sources/berita-acara" : "articles/images"
-  const date = new Date().toISOString().slice(0, 10)
+function sanitizePathSegment(value: unknown, fallback: string) {
+  if (typeof value !== "string" && typeof value !== "number") return fallback
 
-  return `${folder}/${date}/${crypto.randomUUID()}-${sanitizeFileName(file.name)}`
+  const safeSegment = String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 48)
+
+  return safeSegment || fallback
+}
+
+function getDefaultPathContext(purpose: UploadPurpose): DefaultStoragePathContext {
+  const year = new Date().getFullYear()
+
+  if (purpose === "article-source") {
+    return {
+      year,
+      section: "articles",
+      category: "berita-acara",
+      kind: "source",
+    }
+  }
+
+  return {
+    year,
+    section: "articles",
+    category: "general",
+    kind: "image",
+  }
+}
+
+export function createStoragePath(file: File, purpose: UploadPurpose, context: StoragePathContext = {}) {
+  const defaults = getDefaultPathContext(purpose)
+  const year = sanitizePathSegment(context.year ?? defaults.year, String(defaults.year))
+  const section = sanitizePathSegment(context.section ?? defaults.section, defaults.section)
+  const category = sanitizePathSegment(context.category ?? defaults.category, defaults.category)
+  const kind = sanitizePathSegment(context.kind ?? defaults.kind, defaults.kind)
+
+  return `${year}/${section}/${category}/${kind}/${crypto.randomUUID()}-${sanitizeFileName(file.name)}`
 }
 
 export async function uploadFileToStorage(file: File, path: string) {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import type { ArticleBlock, ArticleDocument } from "@/lib/article-content"
+import { optimizeImageForUpload, type ImageProcessingStage } from "@/lib/client-image-processing"
 import { cn } from "@/lib/utils"
 
 export type { ArticleBlock, ArticleDocument }
@@ -37,6 +38,8 @@ type NotionArticleEditorProps = {
   previewTitle?: string
   previewCategory?: string
   previewMeta?: string
+  uploadCategory?: string
+  uploadKind?: string
 }
 
 export function createEmptyArticleDocument(): ArticleDocument {
@@ -49,10 +52,13 @@ export function NotionArticleEditor({
   previewTitle = "Judul artikel",
   previewCategory = "Berita Acara",
   previewMeta,
+  uploadCategory = "general",
+  uploadKind = "content",
 }: NotionArticleEditorProps) {
   const [slashBlockId, setSlashBlockId] = useState<string | null>(null)
   const [mode, setMode] = useState<"edit" | "preview">("edit")
   const [uploadingBlockId, setUploadingBlockId] = useState<string | null>(null)
+  const [uploadStage, setUploadStage] = useState<ImageProcessingStage>("idle")
   const [uploadError, setUploadError] = useState("")
 
   const blocks = value.content.length ? value.content : createEmptyArticleDocument().content
@@ -101,10 +107,24 @@ export function NotionArticleEditor({
 
     setUploadError("")
     setUploadingBlockId(blockId)
+    setUploadStage("compressing")
+
+    let uploadFile = file
+
+    try {
+      uploadFile = await optimizeImageForUpload(file, { maxWidth: 1600, maxHeight: 1200 })
+    } catch {
+      uploadFile = file
+    }
+
+    setUploadStage("uploading")
 
     const formData = new FormData()
-    formData.append("file", file)
+    formData.append("file", uploadFile)
     formData.append("purpose", "article-image")
+    formData.append("section", "articles")
+    formData.append("category", uploadCategory)
+    formData.append("kind", uploadKind)
 
     try {
       const response = await fetch("/api/admin/assets", {
@@ -126,6 +146,7 @@ export function NotionArticleEditor({
       setUploadError("Upload image gagal. Coba lagi sebentar.")
     } finally {
       setUploadingBlockId(null)
+      setUploadStage("idle")
     }
   }
 
@@ -236,7 +257,7 @@ export function NotionArticleEditor({
                     </div>
                     <Button type="button" variant="outline" size="sm" className="relative gap-2" disabled={uploadingBlockId === block.id}>
                       {uploadingBlockId === block.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      Upload
+                      {uploadingBlockId === block.id && uploadStage === "compressing" ? "Compressing..." : uploadingBlockId === block.id && uploadStage === "uploading" ? "Uploading..." : "Upload"}
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/gif"
