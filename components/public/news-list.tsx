@@ -89,14 +89,14 @@ export function NewsList({ newsItems }: NewsListProps) {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredNews.map((news) => (
               <Link key={news.id} href={`/berita/${news.slug}`} className="group">
-                <Card className="h-full overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:glow-primary-sm">
-                  <div className="aspect-[16/10] overflow-hidden">
+                <Card className="h-full gap-0 overflow-hidden border-border/50 bg-card/80 p-0 backdrop-blur transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:glow-primary-sm">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                     <Image
                       src={news.image}
                       alt={news.title}
                       width={400}
                       height={250}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
                   <CardContent className="p-4">

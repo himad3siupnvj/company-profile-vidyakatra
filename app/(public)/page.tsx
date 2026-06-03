@@ -24,6 +24,8 @@ import {
   Sparkles,
   Play,
   Youtube,
+  User,
+  Clock,
 } from "lucide-react";
 
 export const revalidate = 300;
@@ -282,14 +284,14 @@ export default async function HomePage() {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {latestNews.map((news) => (
               <Link key={news.id} href={`/berita/${news.slug}`} className="min-w-0">
-                <Card className="group h-full overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
-                  <div className="aspect-[16/10] overflow-hidden bg-muted">
+                <Card className="group h-full gap-0 overflow-hidden border-border/50 bg-card/80 p-0 backdrop-blur transition-all duration-300 hover:border-primary/50 hover:glow-primary-sm">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                     <Image
                       src={news.image}
                       alt={news.title}
                       width={800}
                       height={500}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
                   <CardContent className="p-6">
@@ -301,12 +303,22 @@ export default async function HomePage() {
                         {news.date}
                       </span>
                     </div>
-                    <h3 className="mb-2 line-clamp-2 font-semibold leading-tight transition-colors group-hover:text-primary">
+                    <h3 className="mb-2 line-clamp-2 font-semibold leading-tight text-primary transition-colors">
                       {news.title}
                     </h3>
                     <p className="line-clamp-2 text-sm text-muted-foreground">
                       {news.excerpt}
                     </p>
+                    <div className="mt-5 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <User className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{news.author}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        {news.readTime}
+                      </span>
+                    </div>
                   </CardContent>
                 </Card>
               </Link>
