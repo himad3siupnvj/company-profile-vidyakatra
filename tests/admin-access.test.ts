@@ -11,6 +11,7 @@ describe("admin access helpers", () => {
 
     expect(staffNav).toContain("Dashboard")
     expect(staffNav).toContain("Berita Acara")
+    expect(getAccessibleAdminNavigation("administrator").map((item) => item.name)).toContain("Cabinets")
     expect(staffNav).not.toContain("Settings")
     expect(staffNav).not.toContain("User Management")
   })
@@ -26,6 +27,8 @@ describe("admin access helpers", () => {
 
   it("guards admin routes by required permissions", () => {
     expect(canAccessAdminPath("staff", "/x-panel/news")).toBe(true)
+    expect(canAccessAdminPath("administrator", "/x-panel/cabinets")).toBe(true)
+    expect(canAccessAdminPath("staff", "/x-panel/cabinets")).toBe(false)
     expect(canAccessAdminPath("staff", "/x-panel/settings")).toBe(false)
     expect(canAccessAdminPath("administrator", "/x-panel/settings")).toBe(true)
   })

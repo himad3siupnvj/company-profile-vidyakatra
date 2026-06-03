@@ -33,6 +33,6 @@ This inventory tracks hardcoded, placeholder, and missing public-facing images t
 
 ## Follow-Up
 
-- Replace hardcoded public article and profile images after Profile CMS and dashboard content support are ready.
+- Replace hardcoded public article and profile images after Cabinets CMS and dashboard content support are ready.
 - Prefer Supabase Storage public object URLs for images persisted in article/profile records.
 - Keep external video embeds as URLs rather than uploaded media files.

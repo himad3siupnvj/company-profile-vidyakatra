@@ -3,7 +3,7 @@
 ## Public Rendering
 
 - `/`, `/berita`, and `/berita/[slug]` use a 5 minute revalidate window because they read public article data.
-- `/profil`, `/profil/[slug]`, and `/kontak` use a 1 hour revalidate window because their content is mostly static until Profile CMS is added.
+- `/profil`, `/profil/[slug]`, and `/kontak` use a 1 hour revalidate window because their content is mostly static until Cabinets CMS updates it.
 - Public article database reads are wrapped in a tagged cache using `public:articles`, so normal visitor traffic reuses cached data instead of querying the database on every request.
 
 ## Cache Invalidation
@@ -31,6 +31,6 @@ Admin CMS pages stay client-driven behind `/x-panel`. API routes remain dynamic 
 Initial settings are conservative for the current CMS size. Revisit after real traffic/content testing:
 
 - Public page revalidate windows if articles change more frequently than expected.
-- Supabase read volume after dashboard aggregates and Profile CMS are connected.
+- Supabase read volume after dashboard aggregates and Cabinets CMS are connected.
 - Storage usage after replacing hardcoded profile/article images with uploaded assets.
 - Image size and format tuning after WebP conversion/resizing is implemented.

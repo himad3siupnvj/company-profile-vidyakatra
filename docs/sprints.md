@@ -124,16 +124,16 @@ Inventory: see `docs/public-image-inventory.md`.
 
 - [ ] Add light theme support as a final polish pass after core CMS flows are stable.
 
-## Backlog: Profile CMS
+## Backlog: Cabinets CMS
 
 - [x] Add dashboard editor for `/profil` page content.
 - [x] Make cabinet intro, philosophy, vision, mission, and core values editable from CMS.
 - [x] Add CMS editing for pengurus inti content: ketua, wakil ketua, koordinator, sekretaris, and bendahara.
 - [x] Add CMS editing for department/biro profile pages shown at `/profil/[slug]`.
-- [x] Connect `/x-panel/vision-mission` to API and database-backed settings.
+- [x] Connect `/x-panel/cabinets` to API and database-backed settings.
 - [x] Replace hardcoded profile data in `lib/public-content.ts` and public profile routes with database-backed content and safe fallback.
 
-Note: profile page content is stored in `site_settings.profileContent`; department/biro public pages read organization units and members from the database with existing logo/program fallback data.
+Note: cabinets/profile page content is stored in `site_settings.profileContent`; department/biro public pages read organization units and members from the database with existing logo/program fallback data.
 
 ## Draft: Leadership Hierarchy Tree
 

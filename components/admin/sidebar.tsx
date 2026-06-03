@@ -33,7 +33,7 @@ const navigationIcons = {
   Dashboard: LayoutDashboard,
   "Home Page": Home,
   Organization: Users,
-  "Profile CMS": Target,
+  Cabinets: Target,
   "Berita Acara": Newspaper,
   Settings,
   "User Management": UserCog,
