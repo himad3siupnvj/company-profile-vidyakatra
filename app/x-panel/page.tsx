@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import {
   AlertCircle,
@@ -18,6 +20,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { useAdminUser } from "@/components/admin/admin-user-context"
+import { hasPermission } from "@/lib/permissions"
 
 const contentHealth = [
   {
@@ -97,6 +101,19 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AdminDashboard() {
+  const { currentUser } = useAdminUser()
+  const role = currentUser?.role
+  const canCreateArticle = Boolean(role && hasPermission(role, "article.create"))
+  const canReviewArticles = Boolean(role && hasPermission(role, "article.review"))
+  const canManageOrg = Boolean(role && (hasPermission(role, "member.manage") || hasPermission(role, "org_unit.manage")))
+  const canManageSettings = Boolean(role && hasPermission(role, "settings.manage"))
+  const visibleContentHealth = contentHealth.filter((item) => {
+    if (item.label === "Profil organisasi") return canManageSettings || canManageOrg
+    if (item.label === "Social media overview") return canManageSettings
+
+    return true
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -122,12 +139,12 @@ export default function AdminDashboard() {
               Preview Site
             </Link>
           </Button>
-          <Button asChild className="gap-2">
+          {canCreateArticle && <Button asChild className="gap-2">
             <Link href="/x-panel/news?action=create">
               <FileText className="h-4 w-4" />
               Buat Berita
             </Link>
-          </Button>
+          </Button>}
         </div>
       </div>
 
@@ -139,20 +156,20 @@ export default function AdminDashboard() {
           changeType="positive"
           icon={Eye}
         />
-        <StatsCard
+        {canManageOrg && <StatsCard
           title="Unit Kerja"
           value={6}
           change="4 departemen, 2 biro"
           changeType="neutral"
           icon={Building2}
-        />
-        <StatsCard
+        />}
+        {canManageSettings && <StatsCard
           title="Reach Sosial"
           value="2.5K+"
           change="Instagram akun terjangkau"
           changeType="positive"
           icon={Share2}
-        />
+        />}
         <StatsCard
           title="Berita Acara"
           value={6}
@@ -173,7 +190,7 @@ export default function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
-            {contentHealth.map((item) => (
+            {visibleContentHealth.map((item) => (
               <div key={item.label} className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -222,7 +239,7 @@ export default function AdminDashboard() {
         <div className="min-w-0 space-y-6">
           <QuickActions />
 
-          <Card>
+          {canReviewArticles && <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold">Antrian Review</CardTitle>
             </CardHeader>
@@ -240,11 +257,11 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </CardContent>
-          </Card>
+          </Card>}
         </div>
       </div>
 
-      <Card>
+      {canManageSettings && <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold">Kanal Digital</CardTitle>
         </CardHeader>
@@ -267,7 +284,7 @@ export default function AdminDashboard() {
             </div>
           ))}
         </CardContent>
-      </Card>
+      </Card>}
     </div>
   )
 }

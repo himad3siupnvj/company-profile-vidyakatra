@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Bell, ExternalLink, Search, Menu, LogOut, User, Settings, X } from "lucide-react"
@@ -19,19 +19,15 @@ import { Badge } from "@/components/ui/badge"
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { AdminSidebarMobile } from "./sidebar-mobile"
+import { useAdminUser } from "@/components/admin/admin-user-context"
 
 interface AdminHeaderProps {
   sidebarCollapsed?: boolean
-}
-
-interface CurrentUser {
-  id: string
-  name: string
-  email: string
-  role: string
 }
 
 function getInitials(name: string) {
@@ -46,35 +42,7 @@ function getInitials(name: string) {
 export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
-
-  useEffect(() => {
-    let active = true
-
-    async function loadCurrentUser() {
-      try {
-        const response = await fetch("/api/auth/me", { cache: "no-store" })
-
-        if (!response.ok) return
-
-        const data = await response.json()
-
-        if (active) {
-          setCurrentUser(data.user ?? null)
-        }
-      } catch {
-        if (active) {
-          setCurrentUser(null)
-        }
-      }
-    }
-
-    loadCurrentUser()
-
-    return () => {
-      active = false
-    }
-  }, [])
+  const { currentUser } = useAdminUser()
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" })
@@ -93,6 +61,9 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 max-w-[85vw] p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Admin navigation</SheetTitle>
+          </SheetHeader>
           <AdminSidebarMobile />
         </SheetContent>
       </Sheet>

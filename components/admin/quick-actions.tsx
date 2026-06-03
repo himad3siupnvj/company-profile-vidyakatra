@@ -7,46 +7,36 @@ import {
   Settings,
   ArrowRight,
 } from "lucide-react"
+import { getAccessibleQuickActions } from "@/lib/admin-access"
+import { useAdminUser } from "@/components/admin/admin-user-context"
 
-const actions = [
-  {
-    title: "Tambah Pengurus",
-    description: "Tambahkan pengurus kabinet Vidyakatra",
-    icon: UserPlus,
-    href: "/x-panel/organization?action=add",
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    title: "Buat Berita Acara",
-    description: "Tulis draft berita acara untuk workflow approval",
-    icon: FileEdit,
-    href: "/x-panel/news?action=create",
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    title: "Atur Social Overview",
-    description: "Perbarui kanal dan insight sosial media",
-    icon: Settings,
-    href: "/x-panel/settings?tab=social",
-    color: "bg-primary/10 text-primary",
-  },
-]
+const actionIcons = {
+  "Tambah Pengurus": UserPlus,
+  "Buat Berita Acara": FileEdit,
+  "Atur Social Overview": Settings,
+} as const
 
 export function QuickActions() {
+  const { currentUser } = useAdminUser()
+  const actions = getAccessibleQuickActions(currentUser?.role)
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold">Aksi Cepat</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3">
-        {actions.map((action) => (
+        {actions.map((action) => {
+          const Icon = actionIcons[action.title as keyof typeof actionIcons] ?? ArrowRight
+
+          return (
           <Link key={action.title} href={action.href} className="min-w-0">
             <Button
               variant="outline"
               className="h-auto w-full min-w-0 justify-start gap-3 whitespace-normal border-white/10 bg-white/[0.02] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.05] hover:shadow-[0_12px_30px_rgba(250,204,21,0.08)] sm:gap-4 sm:p-4"
             >
-              <div className={`shrink-0 rounded-lg p-2 ${action.color}`}>
-                <action.icon className="h-4 w-4" />
+              <div className="shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
+                <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{action.title}</p>
@@ -55,13 +45,19 @@ export function QuickActions() {
               <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </Button>
           </Link>
-        ))}
-        <Link href="/x-panel/settings" className="mt-2">
+          )
+        })}
+        {actions.length === 0 && (
+          <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+            Tidak ada aksi cepat untuk role ini.
+          </div>
+        )}
+        {currentUser?.role && actions.some((action) => action.href.startsWith("/x-panel/settings")) && <Link href="/x-panel/settings" className="mt-2">
           <Button variant="secondary" className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
             <Settings className="h-4 w-4" />
             Kelola Pengaturan
           </Button>
-        </Link>
+        </Link>}
       </CardContent>
     </Card>
   )
