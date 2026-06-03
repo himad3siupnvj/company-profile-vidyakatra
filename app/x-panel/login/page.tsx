@@ -54,7 +54,8 @@ export default function AdminLoginPage() {
       }
 
       setLoginPhase("redirecting")
-      router.push("/x-panel")
+      const nextPath = new URLSearchParams(window.location.search).get("next")
+      router.push(nextPath?.startsWith("/x-panel") && nextPath !== "/x-panel/login" ? nextPath : "/x-panel")
       router.refresh()
     } catch {
       setError("Login gagal. Coba lagi sebentar.")

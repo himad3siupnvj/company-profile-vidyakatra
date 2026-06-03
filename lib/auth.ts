@@ -8,6 +8,7 @@ import { users } from "@/db/schema"
 import { hasPermission, type Permission, type UserRole } from "@/lib/permissions"
 
 export const sessionCookieName = "cms_session"
+export const sessionMaxAgeSeconds = 60 * 60 * 24 * 7
 
 export interface AuthUser {
   id: string
@@ -65,7 +66,7 @@ export async function verifyPassword(password: string, storedHash: string) {
   return bcrypt.compare(password, storedHash)
 }
 
-export async function signSession(payload: Omit<SessionPayload, "exp">, maxAgeSeconds = 60 * 60 * 24 * 7) {
+export async function signSession(payload: Omit<SessionPayload, "exp">, maxAgeSeconds = sessionMaxAgeSeconds) {
   return new SignJWT({ role: payload.role })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setSubject(payload.sub)
