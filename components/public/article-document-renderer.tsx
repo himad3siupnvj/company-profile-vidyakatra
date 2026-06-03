@@ -10,7 +10,7 @@ export function ArticleDocumentRenderer({ document }: ArticleDocumentRendererPro
       {document.content.map((block) => {
         if (block.type === "heading" && block.level === 1) {
           return (
-            <h2 key={block.id} className="pt-4 text-2xl font-bold leading-tight text-foreground">
+            <h2 key={block.id} className="pt-5 text-center text-2xl font-bold leading-tight text-foreground md:text-3xl">
               {block.text}
             </h2>
           )
@@ -18,7 +18,7 @@ export function ArticleDocumentRenderer({ document }: ArticleDocumentRendererPro
 
         if (block.type === "heading") {
           return (
-            <h3 key={block.id} className="pt-3 text-xl font-semibold leading-tight text-foreground">
+            <h3 key={block.id} className="pt-4 text-center text-xl font-semibold leading-snug text-foreground md:text-2xl">
               {block.text}
             </h3>
           )
@@ -26,7 +26,7 @@ export function ArticleDocumentRenderer({ document }: ArticleDocumentRendererPro
 
         if (block.type === "quote") {
           return (
-            <blockquote key={block.id} className="border-l-4 border-primary pl-5 text-foreground/90 italic">
+            <blockquote key={block.id} className="rounded-r-xl border-l-4 border-primary bg-primary/5 py-4 pl-5 pr-4 text-lg font-medium leading-8 text-foreground/90 italic">
               {block.text}
             </blockquote>
           )
@@ -34,7 +34,7 @@ export function ArticleDocumentRenderer({ document }: ArticleDocumentRendererPro
 
         if (block.type === "list") {
           return (
-            <ul key={block.id} className="list-disc pl-6">
+            <ul key={block.id} className="list-disc space-y-2 pl-6 text-foreground/85 marker:text-primary">
               <li>{block.text}</li>
             </ul>
           )
@@ -42,9 +42,9 @@ export function ArticleDocumentRenderer({ document }: ArticleDocumentRendererPro
 
         if (block.type === "image") {
           return (
-            <figure key={block.id} className="py-2">
+            <figure key={block.id} className="mx-auto max-w-2xl py-4">
               {block.url ? (
-                <img src={block.url} alt={block.alt} className="aspect-[16/10] w-full rounded-xl object-cover" />
+                <img src={block.url} alt={block.alt} className="mx-auto aspect-[16/10] w-full rounded-md border border-border/50 object-cover shadow-[0_14px_44px_rgba(0,0,0,0.2)]" />
               ) : (
                 <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                   Image URL kosong
@@ -55,7 +55,7 @@ export function ArticleDocumentRenderer({ document }: ArticleDocumentRendererPro
           )
         }
 
-        return <p key={block.id}>{block.text}</p>
+        return <p key={block.id} className="text-justify text-[1.02rem] leading-8 text-foreground/80 md:text-lg md:leading-9">{block.text}</p>
       })}
     </div>
   )
