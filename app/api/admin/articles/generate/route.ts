@@ -446,6 +446,7 @@ export async function POST(request: NextRequest) {
     const draft = generateArticleDraftFromText(extracted.text)
     const imageBlocks = await uploadExtractedImages(extracted.images, guard.user?.id ?? null)
     draft.content.content.push(...imageBlocks)
+    const firstImage = imageBlocks.find((block) => block.type === "image")
 
     if (!draft.title || !draft.content.content.length) {
       return NextResponse.json({ error: "Source tidak punya teks yang bisa diekstrak." }, { status: 400 })
@@ -467,8 +468,8 @@ export async function POST(request: NextRequest) {
         status: "draft",
         authorName: draft.author,
         readTime: getArticleReadTime(draft.content),
-        thumbnailUrl: null,
-        thumbnailAlt: null,
+        thumbnailUrl: firstImage?.url ?? null,
+        thumbnailAlt: firstImage?.alt ?? null,
         isFeatured: false,
         publishedAt: null,
         createdAt: now,
@@ -491,9 +492,9 @@ export async function POST(request: NextRequest) {
         author: created.authorName ?? "Tim Media",
         publishedAt: null,
         createdAt: created.createdAt.toISOString().slice(0, 10),
-        thumbnail: "/news/default.jpg",
-        thumbnailAlt: created.title,
-        image: "/news/default.jpg",
+        thumbnail: created.thumbnailUrl ?? "/news/default.jpg",
+        thumbnailAlt: created.thumbnailAlt ?? created.title,
+        image: created.thumbnailUrl ?? "/news/default.jpg",
         readTime: created.readTime ?? getArticleReadTime(draft.content),
         featured: false,
         views: 0,
