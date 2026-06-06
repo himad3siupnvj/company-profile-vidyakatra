@@ -144,7 +144,11 @@ export async function getUserByCredentials(email: string, password: string) {
     return null
   }
 
-  await db.update(users).set({ lastLoginAt: new Date(), updatedAt: new Date() }).where(eq(users.id, user.id))
+  try {
+    await getDb().update(users).set({ lastLoginAt: new Date(), updatedAt: new Date() }).where(eq(users.id, user.id))
+  } catch (error) {
+    console.warn("Failed to update lastLoginAt after successful login.", error)
+  }
 
   return {
     id: user.id,

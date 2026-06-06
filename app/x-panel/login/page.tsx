@@ -1,23 +1,40 @@
 "use client"
 
-import { FormEvent, useState } from "react"
-import { useRouter } from "next/navigation"
+import { FormEvent, useEffect, useState } from "react"
 import { Loader2, LockKeyhole, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+const loginRequestTimeoutMs = 12000
+
 export default function AdminLoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loginPhase, setLoginPhase] = useState<"idle" | "submitting" | "redirecting">("idle")
+  const [isClientReady, setIsClientReady] = useState(false)
 
   const isSubmitting = loginPhase !== "idle"
+  const nextPath = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("next") ?? ""
+
+  useEffect(() => {
+    setIsClientReady(true)
+
+    const errorCode = new URLSearchParams(window.location.search).get("error")
+
+    if (errorCode === "required") setError("Email dan password wajib diisi.")
+    if (errorCode === "invalid") setError("Email atau password tidak sesuai.")
+    if (errorCode === "service") setError("Layanan login sedang bermasalah. Coba lagi sebentar.")
+    if (errorCode === "rate-limit") setError("Terlalu banyak percobaan login. Coba lagi sebentar.")
+  }, [])
 
   async function getLoginError(response: Response) {
+    if (response.status === 429) {
+      return "Terlalu banyak percobaan login. Coba lagi sebentar."
+    }
+
     try {
       const data = await response.json()
 
@@ -39,12 +56,18 @@ export default function AdminLoginPage() {
     event.preventDefault()
     setError("")
     setLoginPhase("submitting")
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), loginRequestTimeoutMs)
+    const formData = new FormData(event.currentTarget)
+    const loginEmail = String(formData.get("email") ?? "")
+    const loginPassword = String(formData.get("password") ?? "")
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        signal: controller.signal,
       })
 
       if (!response.ok) {
@@ -54,12 +77,16 @@ export default function AdminLoginPage() {
       }
 
       setLoginPhase("redirecting")
-      const nextPath = new URLSearchParams(window.location.search).get("next")
-      router.push(nextPath?.startsWith("/x-panel") && nextPath !== "/x-panel/login" ? nextPath : "/x-panel")
-      router.refresh()
-    } catch {
-      setError("Login gagal. Coba lagi sebentar.")
+      window.location.assign(nextPath?.startsWith("/x-panel") && nextPath !== "/x-panel/login" ? nextPath : "/x-panel")
+    } catch (error) {
+      setError(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Login terlalu lama merespons. Coba lagi sebentar."
+          : "Login gagal. Coba lagi sebentar.",
+      )
       setLoginPhase("idle")
+    } finally {
+      window.clearTimeout(timeoutId)
     }
   }
 
@@ -78,11 +105,19 @@ export default function AdminLoginPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form
+            className="space-y-4"
+            action="/api/auth/login/form"
+            method="post"
+            data-client-ready={isClientReady ? "true" : "false"}
+            onSubmit={handleSubmit}
+          >
+            <input type="hidden" name="next" value={nextPath} />
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 autoComplete="email"
                 value={email}
@@ -96,6 +131,7 @@ export default function AdminLoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
