@@ -21,7 +21,9 @@ type ExtractedImage = {
   extension: string
   alt: string
   page?: number
+  positionRatio?: number
 }
+type ArticleImageBlock = Extract<ArticleBlock, { type: "image" }>
 
 const pdfPaintImageXObject = 85
 const pdfPaintInlineImageXObject = 86
@@ -303,6 +305,17 @@ async function extractPdfSource(buffer: Buffer) {
     },
   })
 
+  for (let index = 0; index < images.length; index += 1) {
+    const image = images[index]
+    const imagesOnPage = images.filter((candidate) => candidate.page === image.page)
+    const pageImageIndex = imagesOnPage.indexOf(image)
+    const pageProgress = (pageImageIndex + 1) / (imagesOnPage.length + 1)
+    image.positionRatio = Math.min(
+      1,
+      Math.max(0, (((image.page ?? 1) - 1) + pageProgress) / Math.max(1, parsed.numpages)),
+    )
+  }
+
   return { text: parsed.text, images }
 }
 
@@ -328,12 +341,17 @@ async function extractDocxSource(buffer: Buffer) {
           mimeType: "image/webp",
           extension: "webp",
           alt: `Gambar dokumen ${images.length + 1}`,
+          positionRatio: 0,
         })
 
         return { src: "" }
       }),
     },
   )
+
+  images.forEach((image, index) => {
+    image.positionRatio = (index + 1) / (images.length + 1)
+  })
 
   return { text: result.value, images }
 }
@@ -359,7 +377,7 @@ async function extractContentFromSource(file: File) {
 }
 
 async function uploadExtractedImages(images: ExtractedImage[], userId: string | null) {
-  const uploadedBlocks: ArticleBlock[] = []
+  const uploadedImages: Array<{ block: ArticleImageBlock; positionRatio: number }> = []
   const db = getDb()
 
   for (let index = 0; index < images.length; index += 1) {
@@ -383,16 +401,39 @@ async function uploadExtractedImages(images: ExtractedImage[], userId: string | 
       createdAt: new Date(),
     })
 
-    uploadedBlocks.push({
-      id: `generated-image-${index + 1}`,
-      type: "image",
-      url,
-      alt: image.alt,
-      caption: image.page ? `Dokumentasi halaman ${image.page}` : "",
+    uploadedImages.push({
+      positionRatio: image.positionRatio ?? (index + 1) / (images.length + 1),
+      block: {
+        id: `generated-image-${index + 1}`,
+        type: "image",
+        url,
+        alt: image.alt,
+        caption: image.page ? `Dokumentasi halaman ${image.page}` : "",
+      },
     })
   }
 
-  return uploadedBlocks
+  return uploadedImages
+}
+
+function insertImagesBySourcePosition(
+  contentBlocks: ArticleBlock[],
+  uploadedImages: Array<{ block: ArticleImageBlock; positionRatio: number }>,
+) {
+  if (!uploadedImages.length) return contentBlocks
+
+  const result = [...contentBlocks]
+  const sortedImages = [...uploadedImages].sort((a, b) => a.positionRatio - b.positionRatio)
+  let inserted = 0
+
+  for (const image of sortedImages) {
+    const sourceIndex = Math.round(image.positionRatio * contentBlocks.length)
+    const insertionIndex = Math.min(result.length, Math.max(1, sourceIndex + inserted))
+    result.splice(insertionIndex, 0, image.block)
+    inserted += 1
+  }
+
+  return result
 }
 
 async function resolveCategoryId(category: string) {
@@ -444,9 +485,9 @@ export async function POST(request: NextRequest) {
 
     const extracted = await extractContentFromSource(file)
     const draft = generateArticleDraftFromText(extracted.text)
-    const imageBlocks = await uploadExtractedImages(extracted.images, guard.user?.id ?? null)
-    draft.content.content.push(...imageBlocks)
-    const firstImage = imageBlocks.find((block) => block.type === "image")
+    const uploadedImages = await uploadExtractedImages(extracted.images, guard.user?.id ?? null)
+    draft.content.content = insertImagesBySourcePosition(draft.content.content, uploadedImages)
+    const firstImage = uploadedImages[0]?.block
 
     if (!draft.title || !draft.content.content.length) {
       return NextResponse.json({ error: "Source tidak punya teks yang bisa diekstrak." }, { status: 400 })
