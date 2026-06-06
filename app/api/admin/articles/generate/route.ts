@@ -2,7 +2,6 @@ import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { eq } from "drizzle-orm"
 import mammoth from "mammoth"
-import { PDFParse } from "pdf-parse"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { articleCategories, articles } from "@/db/schema"
@@ -18,12 +17,75 @@ let isPdfWorkerConfigured = false
 
 type SupportedSourceType = "pdf" | "docx"
 
-function configurePdfWorker() {
-  if (isPdfWorkerConfigured) return
+function ensurePdfJsGlobals() {
+  const globals = globalThis as typeof globalThis & {
+    DOMMatrix?: typeof DOMMatrix
+    ImageData?: typeof ImageData
+    Path2D?: typeof Path2D
+  }
 
-  const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "legacy", "build", "pdf.worker.mjs")
-  PDFParse.setWorker(pathToFileURL(workerPath).href)
-  isPdfWorkerConfigured = true
+  if (!globals.DOMMatrix) {
+    class ServerDOMMatrix {
+      constructor(_init?: string | number[]) {}
+
+      invertSelf() {
+        return this
+      }
+
+      multiplySelf(_other?: unknown) {
+        return this
+      }
+
+      preMultiplySelf(_other?: unknown) {
+        return this
+      }
+
+      translate(_x?: number, _y?: number) {
+        return this
+      }
+
+      scale(_scaleX?: number, _scaleY?: number) {
+        return this
+      }
+    }
+
+    globals.DOMMatrix = ServerDOMMatrix as unknown as typeof DOMMatrix
+  }
+
+  if (!globals.ImageData) {
+    globals.ImageData = class ServerImageData {
+      readonly data: Uint8ClampedArray
+      readonly width: number
+      readonly height: number
+
+      constructor(width: number, height: number) {
+        this.width = width
+        this.height = height
+        this.data = new Uint8ClampedArray(width * height * 4)
+      }
+    } as unknown as typeof ImageData
+  }
+
+  if (!globals.Path2D) {
+    globals.Path2D = class ServerPath2D {
+      constructor(_path?: unknown) {}
+
+      addPath(_path: unknown, _transform?: unknown) {}
+    } as unknown as typeof Path2D
+  }
+}
+
+async function loadPdfParser() {
+  ensurePdfJsGlobals()
+  const { PDFParse } = await import("pdf-parse")
+
+  if (!isPdfWorkerConfigured) {
+    const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "legacy", "build", "pdf.worker.mjs")
+    PDFParse.setWorker(pathToFileURL(workerPath).href)
+    isPdfWorkerConfigured = true
+  }
+
+  return PDFParse
 }
 
 function getSupportedSourceType(file: File): SupportedSourceType | null {
@@ -60,7 +122,7 @@ async function extractTextFromSource(file: File) {
     return result.value
   }
 
-  configurePdfWorker()
+  const PDFParse = await loadPdfParser()
 
   const parser = new PDFParse({ data: buffer })
 
