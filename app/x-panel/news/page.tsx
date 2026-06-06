@@ -45,6 +45,7 @@ import {
   NotionArticleEditor,
   type ArticleDocument,
 } from "@/components/admin/notion-article-editor"
+import { ArticleDocumentRenderer } from "@/components/public/article-document-renderer"
 import { getArticleReadTime } from "@/lib/article-content"
 import { optimizeImageForUpload, type ImageProcessingStage } from "@/lib/client-image-processing"
 import {
@@ -116,6 +117,7 @@ export default function ArticleManagementPage() {
   const [coverUploadStage, setCoverUploadStage] = useState<ImageProcessingStage>("idle")
   const [isGeneratingSource, setIsGeneratingSource] = useState(false)
   const [isSavingArticle, setIsSavingArticle] = useState(false)
+  const [previewArticle, setPreviewArticle] = useState<Article | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -386,6 +388,36 @@ export default function ArticleManagementPage() {
 
   return (
     <div className="space-y-6">
+      <Dialog open={Boolean(previewArticle)} onOpenChange={(open) => !open && setPreviewArticle(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{previewArticle?.title ?? "Preview Artikel"}</DialogTitle>
+            <DialogDescription>
+              {previewArticle
+                ? `${previewArticle.categoryLabel ?? previewArticle.category} / ${previewArticle.author} / ${previewArticle.readTime}`
+                : "Preview isi artikel."}
+            </DialogDescription>
+          </DialogHeader>
+          {previewArticle && (
+            <div className="space-y-6">
+              <div className="overflow-hidden rounded-md border bg-muted">
+                <img
+                  src={previewArticle.thumbnail}
+                  alt={previewArticle.thumbnailAlt}
+                  className="aspect-[16/8] w-full object-cover"
+                />
+              </div>
+              {previewArticle.excerpt && (
+                <p className="text-lg leading-8 text-muted-foreground">{previewArticle.excerpt}</p>
+              )}
+              <ArticleDocumentRenderer
+                document={previewArticle.content ?? createEmptyArticleDocument()}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Article Management</h1>
@@ -748,7 +780,7 @@ export default function ArticleManagementPage() {
                               </DropdownMenuItem>
                             )
                           })}
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setPreviewArticle(article)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View
                           </DropdownMenuItem>
