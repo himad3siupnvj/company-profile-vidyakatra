@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test"
 import fs from "node:fs"
 import path from "node:path"
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000"
 
 function loadLocalEnv() {
   const envPath = path.join(__dirname, ".env")
@@ -35,7 +35,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "corepack pnpm dev",
+    command: "npm run dev -- --webpack --hostname 127.0.0.1 --port 3000",
     url: baseURL,
     reuseExistingServer: true,
     timeout: 120_000,

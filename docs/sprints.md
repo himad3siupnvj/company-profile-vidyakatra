@@ -77,12 +77,11 @@ Role UX note: admin navigation, quick actions, dashboard shortcuts, and client r
 
 ## Backlog: Quality & Finishing
 
-- [ ] Polish the article modal/editor UX, especially image blocks and Notion-like controls.
+- [x] Polish the article modal/editor UX, especially image blocks and Notion-like controls.
 - [x] Polish public berita acara detail layout into a cleaner press-release style template.
-- [ ] Improve PDF/DOCX generated article structure: title detection, paragraph cleanup, page marker removal, and berita acara formatting.
-- [ ] Add legacy `.doc` generator support, if still needed.
-- [ ] Replace admin fallback dummy data with strict loading, empty, and error states for production.
-- [ ] Connect dashboard cards and editorial queues to real database aggregates.
+- [x] Improve PDF/DOCX generated article structure: title detection, paragraph cleanup, page marker removal, and berita acara formatting.
+- [x] Replace admin fallback dummy data with strict loading, empty, and error states for production.
+- [x] Connect dashboard cards and editorial queues to real database aggregates.
 - [ ] Run manual QA with real users for login, generate, edit, publish, public article rendering, image upload, and export flows.
 
 ## Backlog: Media Optimization

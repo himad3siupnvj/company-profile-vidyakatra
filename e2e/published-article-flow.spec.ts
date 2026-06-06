@@ -26,12 +26,10 @@ test.describe("published article flow", () => {
     let createdArticleId: string | null = null
 
     await page.goto("/x-panel/login")
+    await expect(page.locator("form[data-client-ready='true']")).toBeVisible()
     await page.getByLabel("Email").fill(adminEmail!)
     await page.getByLabel("Password").fill(adminPassword!)
-    const loginResponsePromise = page.waitForResponse((response) => response.url().includes("/api/auth/login"))
     await page.getByLabel("Password").press("Enter")
-    const loginResponse = await loginResponsePromise
-    expect(loginResponse.ok(), await loginResponse.text()).toBe(true)
     await expect(page).toHaveURL(/\/x-panel\/?$/)
 
     const createResponse = await page.request.post("/api/admin/articles", {
