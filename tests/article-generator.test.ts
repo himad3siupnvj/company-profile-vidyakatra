@@ -21,6 +21,32 @@ describe("article source generator", () => {
     )
   })
 
+  it("detects Indonesian datelines and structures berita acara labels", () => {
+    const draft = generateArticleDraftFromText(`
+      RAPAT KOORDINASI KABINET VIDYAKATRA Jakarta, 5 Juni 2026 - HIMA D3 Sistem Informasi melaksanakan rapat koordinasi bulanan.
+
+      Halaman 1 dari 2
+
+      Tujuan Kegiatan: Menyelaraskan agenda kerja dan kebutuhan publikasi setiap departemen.
+
+      2/2
+    `)
+
+    expect(draft.title).toBe("RAPAT KOORDINASI KABINET VIDYAKATRA")
+    expect(draft.content.content[0]).toMatchObject({
+      type: "paragraph",
+      text: "Jakarta, 5 Juni 2026 - HIMA D3 Sistem Informasi melaksanakan rapat koordinasi bulanan.",
+    })
+    expect(draft.content.content[1]).toMatchObject({
+      type: "heading",
+      level: 2,
+      text: "Tujuan Kegiatan",
+    })
+    expect(draft.content.content.map((block) => (block.type === "image" ? block.caption : block.text))).not.toContain(
+      "Halaman 1 dari 2",
+    )
+  })
+
   it("falls back to a usable title and empty document for blank sources", () => {
     const draft = generateArticleDraftFromText(" ")
 

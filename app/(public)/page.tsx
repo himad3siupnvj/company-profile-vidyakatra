@@ -12,15 +12,10 @@ import {
   Calendar,
   Trophy,
   ArrowRight,
-  Lightbulb,
-  Code,
   Megaphone,
-  BookOpen,
-  Cpu,
   Instagram,
   Linkedin,
   Music2,
-  Rocket,
   Sparkles,
   Play,
   Youtube,
@@ -35,29 +30,6 @@ const stats = [
   { label: "Program Kerja", value: "25+", icon: Calendar },
   { label: "Prestasi", value: "50+", icon: Trophy },
   { label: "Tahun Berdiri", value: "2023  ", icon: Zap },
-];
-
-const divisions = [
-  {
-    name: "Akademik",
-    description: "Mengembangkan potensi akademik dan keilmuan mahasiswa",
-    icon: BookOpen,
-  },
-  {
-    name: "Teknologi",
-    description: "Wadah pengembangan skill programming dan IT",
-    icon: Code,
-  },
-  {
-    name: "Kreativitas",
-    description: "Mengasah kreativitas melalui berbagai kegiatan seni",
-    icon: Lightbulb,
-  },
-  {
-    name: "Humas",
-    description: "Menjalin hubungan dengan pihak internal dan eksternal",
-    icon: Megaphone,
-  },
 ];
 
 const socialMedia = [

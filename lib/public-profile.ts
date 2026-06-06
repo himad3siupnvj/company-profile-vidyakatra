@@ -1,4 +1,4 @@
-import { asc, eq, isNull } from "drizzle-orm"
+import { asc, isNull } from "drizzle-orm"
 import { unstable_cache } from "next/cache"
 import { getDb } from "@/db"
 import { members, organizationalUnits } from "@/db/schema"

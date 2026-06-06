@@ -68,23 +68,30 @@ function serializePublicArticle(row: Awaited<ReturnType<typeof getPublishedArtic
   }
 }
 
-export const getPublicNews = unstable_cache(
-async function getPublicNews() {
+async function getPublicNewsFromStore() {
   try {
     const rows = await getPublishedArticleRows()
 
-    if (rows.length) {
-      return rows.map(serializePublicArticle)
-    }
+    return rows.map(serializePublicArticle)
   } catch {
     // Public pages stay available with curated fallback content when the database is unavailable.
+    return newsData
+  }
+}
+
+const getCachedPublicNews = unstable_cache(
+  getPublicNewsFromStore,
+  ["public-news"],
+  { revalidate: 300, tags: [publicCacheTags.articles] },
+)
+
+export async function getPublicNews() {
+  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+    return getPublicNewsFromStore()
   }
 
-  return newsData
-},
-["public-news"],
-{ revalidate: 300, tags: [publicCacheTags.articles] },
-)
+  return getCachedPublicNews()
+}
 
 export async function getPublicNewsBySlug(slug: string) {
   const news = await getPublicNews()

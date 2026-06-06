@@ -1,16 +1,10 @@
 import Image, { type StaticImageData } from "next/image"
 import Link from "next/link"
-import ekrafLogo from "@/assets/organ/ekraf.png"
-import humsiwaLogo from "@/assets/organ/humsiwa.png"
 import ketuaLead from "@/assets/lead/Sakhaa_BPH_Final.jpg"
 import wakilLead from "@/assets/lead/Latanza_BPH.jpg"
 import koorDeptLogo from "@/assets/organ/koor dept.png"
 import logoKabinet from "@/assets/logoKabinet.png"
-import medkomLogo from "@/assets/organ/medkom.png"
-import pendidikanLogo from "@/assets/organ/pendidikan.png"
-import psdmLogo from "@/assets/organ/psdm.png"
 import sekbenLogo from "@/assets/organ/sekben.png"
-import sospolLogo from "@/assets/organ/sospol.png"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -18,7 +12,6 @@ import { getProfileContent } from "@/lib/profile-content"
 import type { ProfileLeader } from "@/lib/profile-content-data"
 import { getPublicWorkUnits } from "@/lib/public-profile"
 import {
-  Award,
   Cpu,
   Eye,
   Rocket,
