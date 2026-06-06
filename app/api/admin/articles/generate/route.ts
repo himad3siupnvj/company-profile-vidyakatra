@@ -1,18 +1,147 @@
+import { createRequire } from "node:module"
 import { eq } from "drizzle-orm"
 import mammoth from "mammoth"
-import pdfParse from "pdf-parse"
+import type { PdfPage } from "pdf-parse"
+import sharp from "sharp"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
-import { articleCategories, articles } from "@/db/schema"
+import { articleCategories, articles, assets } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
-import { getArticleReadTime, slugify, toTitleCase } from "@/lib/article-content"
+import { getArticleReadTime, slugify, toTitleCase, type ArticleBlock } from "@/lib/article-content"
 import { generateArticleDraftFromText } from "@/lib/article-generator"
 import { revalidatePublicArticles } from "@/lib/public-cache"
-import { validateUploadFile } from "@/lib/storage"
+import { createStoragePath, uploadFileToStorage, validateUploadFile } from "@/lib/storage"
 
 export const runtime = "nodejs"
 
 type SupportedSourceType = "pdf" | "docx"
+type ExtractedImage = {
+  buffer: Buffer
+  mimeType: string
+  extension: string
+  alt: string
+  page?: number
+}
+
+const pdfPaintImageXObject = 85
+const pdfPaintInlineImageXObject = 86
+const pdfPaintJpegXObject = 82
+const maxExtractedImages = 12
+const minimumImageArea = 40_000
+const imageMaxBytes = 1 * 1024 * 1024
+const pdfImageBlobs = new Map<string, Blob>()
+let isPdfBlobCaptureInstalled = false
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string) {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(message)), timeoutMs)
+    }),
+  ])
+}
+
+function ensureLegacyPdfDom() {
+  const globals = globalThis as unknown as { document?: unknown; Image?: unknown }
+
+  if (!globals.document) {
+    globals.document = {
+      fonts: {
+        add: () => undefined,
+        delete: () => undefined,
+      },
+    }
+  }
+
+  if (!globals.Image) {
+    if (!isPdfBlobCaptureInstalled) {
+      const createObjectURL = URL.createObjectURL.bind(URL)
+      const revokeObjectURL = URL.revokeObjectURL.bind(URL)
+
+      URL.createObjectURL = (blob) => {
+        const url = createObjectURL(blob)
+        if (blob instanceof Blob) {
+          pdfImageBlobs.set(url, blob)
+        }
+        return url
+      }
+      URL.revokeObjectURL = (url) => {
+        pdfImageBlobs.delete(url)
+        revokeObjectURL(url)
+      }
+      isPdfBlobCaptureInstalled = true
+    }
+
+    globals.Image = class ServerPdfImage {
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+      width = 0
+      height = 0
+      kind = 3
+      data = new Uint8Array()
+      sourceBuffer: Buffer | null = null
+      ready: Promise<void> = Promise.resolve()
+
+      set src(value: string) {
+        const loadSource = async () => {
+          const encoded = value.match(/^data:[^;]+;base64,(.+)$/)?.[1]
+          if (encoded) return Buffer.from(encoded, "base64")
+
+          if (value.startsWith("blob:")) {
+            const blob = pdfImageBlobs.get(value)
+            if (!blob) throw new Error("PDF image blob could not be read")
+
+            return Buffer.from(await blob.arrayBuffer())
+          }
+
+          throw new Error("Unsupported PDF image source")
+        }
+
+        this.ready = loadSource()
+          .then((source) => {
+            this.sourceBuffer = source
+          })
+          .catch(() => {
+            this.sourceBuffer = null
+          })
+        queueMicrotask(() => this.onload?.())
+      }
+    }
+  }
+}
+
+async function loadPdfParse() {
+  ensureLegacyPdfDom()
+  const require = createRequire(import.meta.url)
+
+  return require("pdf-parse") as typeof import("pdf-parse").default
+}
+
+async function optimizeExtractedImage(input: Buffer) {
+  let output = await withTimeout(
+    sharp(input)
+      .rotate()
+      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer(),
+    5_000,
+    "Image optimization timed out",
+  )
+
+  if (output.length > imageMaxBytes) {
+    output = await withTimeout(
+      sharp(input)
+        .rotate()
+        .resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 68 })
+        .toBuffer(),
+      5_000,
+      "Image optimization timed out",
+    )
+  }
+
+  return output.length <= imageMaxBytes ? output : null
+}
 
 function getSupportedSourceType(file: File): SupportedSourceType | null {
   const name = file.name.toLowerCase()
@@ -29,7 +158,187 @@ function getSupportedSourceType(file: File): SupportedSourceType | null {
   return null
 }
 
-async function extractTextFromSource(file: File) {
+function getPdfObject(
+  store: {
+    objs?: Record<string, { data?: unknown; resolved?: boolean }>
+    get(id: string, callback?: (value: unknown) => void): unknown
+  },
+  id: string,
+) {
+  const resolved = store.objs?.[id]
+  if (resolved?.resolved) return Promise.resolve(resolved.data ?? null)
+
+  return new Promise<unknown>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(`PDF image ${id} timed out`)), 3_000)
+    const done = (value: unknown) => {
+      clearTimeout(timeout)
+      resolve(value)
+    }
+
+    try {
+      const direct = store.get(id)
+      if (direct) {
+        done(direct)
+        return
+      }
+
+      store.get(id, done)
+    } catch {
+      try {
+        store.get(id, done)
+      } catch (error) {
+        clearTimeout(timeout)
+        reject(error)
+      }
+    }
+  })
+}
+
+async function encodePdfImage(value: unknown, page: number): Promise<ExtractedImage | null> {
+  if (!value || typeof value !== "object") return null
+
+  const image = value as {
+    width?: number
+    height?: number
+    kind?: number
+    data?: Uint8Array | Uint8ClampedArray
+    sourceBuffer?: Buffer | null
+    ready?: Promise<void>
+  }
+  if (image.ready) {
+    await Promise.race([
+      image.ready.catch(() => undefined),
+      new Promise<void>((resolve) => setTimeout(resolve, 2_000)),
+    ])
+  }
+
+  if (image.sourceBuffer) {
+    const metadata = await sharp(image.sourceBuffer).metadata().catch(() => null)
+    if (!metadata?.width || !metadata.height || metadata.width * metadata.height < minimumImageArea) return null
+
+    const buffer = await optimizeExtractedImage(image.sourceBuffer)
+    if (!buffer) return null
+
+    return {
+      buffer,
+      mimeType: "image/webp",
+      extension: "webp",
+      alt: `Gambar dari halaman ${page}`,
+      page,
+    }
+  }
+
+  const width = Number(image.width ?? 0)
+  const height = Number(image.height ?? 0)
+  const data = image.data
+
+  if (!data || width <= 0 || height <= 0 || width * height < minimumImageArea) return null
+
+  const channels = image.kind === 1 ? 1 : image.kind === 2 ? 3 : 4
+  const expectedLength = width * height * channels
+  if (data.length < expectedLength) return null
+
+  const buffer = await optimizeExtractedImage(
+    await sharp(Buffer.from(data.buffer, data.byteOffset, expectedLength), {
+      raw: { width, height, channels },
+    })
+      .png()
+      .toBuffer(),
+  )
+  if (!buffer) return null
+
+  return {
+    buffer,
+    mimeType: "image/webp",
+    extension: "webp",
+    alt: `Gambar dari halaman ${page}`,
+    page,
+  }
+}
+
+async function extractPdfSource(buffer: Buffer) {
+  const images: ExtractedImage[] = []
+  let pageNumber = 0
+  const pdfParse = await loadPdfParse()
+
+  const parsed = await pdfParse(buffer, {
+    pagerender: async (page: PdfPage) => {
+      pageNumber += 1
+      const textContent = await page.getTextContent({
+        normalizeWhitespace: false,
+        disableCombineTextItems: false,
+      })
+      let lastY: number | undefined
+      let text = ""
+
+      for (const item of textContent.items) {
+        const y = item.transform[5]
+        text += lastY === undefined || lastY === y ? item.str : `\n${item.str}`
+        lastY = y
+      }
+
+      if (images.length < maxExtractedImages) {
+        const operators = await page.getOperatorList()
+
+        for (let index = 0; index < operators.fnArray.length && images.length < maxExtractedImages; index += 1) {
+          const operator = operators.fnArray[index]
+          const args = operators.argsArray[index]
+          let rawImage: unknown = null
+
+          if (
+            (operator === pdfPaintImageXObject || operator === pdfPaintJpegXObject) &&
+            typeof args[0] === "string"
+          ) {
+            rawImage = await getPdfObject(page.objs, args[0]).catch(() => null)
+          } else if (operator === pdfPaintInlineImageXObject) {
+            rawImage = args[0]
+          }
+
+          const encoded = await encodePdfImage(rawImage, pageNumber).catch(() => null)
+          if (encoded) images.push(encoded)
+        }
+      }
+
+      return text
+    },
+  })
+
+  return { text: parsed.text, images }
+}
+
+async function extractDocxSource(buffer: Buffer) {
+  const images: ExtractedImage[] = []
+  const result = await mammoth.extractRawText({ buffer })
+  await mammoth.convertToHtml(
+    { buffer },
+    {
+      convertImage: mammoth.images.imgElement(async (image) => {
+        if (images.length >= maxExtractedImages) return { src: "" }
+
+        const imageBuffer = Buffer.from(await image.read("base64"), "base64")
+        const metadata = await sharp(imageBuffer).metadata().catch(() => null)
+        if (!metadata?.width || !metadata.height || metadata.width * metadata.height < minimumImageArea) {
+          return { src: "" }
+        }
+
+        const optimized = await optimizeExtractedImage(imageBuffer).catch(() => null)
+        if (!optimized) return { src: "" }
+        images.push({
+          buffer: optimized,
+          mimeType: "image/webp",
+          extension: "webp",
+          alt: `Gambar dokumen ${images.length + 1}`,
+        })
+
+        return { src: "" }
+      }),
+    },
+  )
+
+  return { text: result.value, images }
+}
+
+async function extractContentFromSource(file: File) {
   const sourceType = getSupportedSourceType(file)
 
   if (!sourceType) {
@@ -43,14 +352,47 @@ async function extractTextFromSource(file: File) {
   const buffer = Buffer.from(await file.arrayBuffer())
 
   if (sourceType === "docx") {
-    const result = await mammoth.extractRawText({ buffer })
-
-    return result.value
+    return extractDocxSource(buffer)
   }
 
-  const parsed = await pdfParse(buffer)
+  return extractPdfSource(buffer)
+}
 
-  return parsed.text
+async function uploadExtractedImages(images: ExtractedImage[], userId: string | null) {
+  const uploadedBlocks: ArticleBlock[] = []
+  const db = getDb()
+
+  for (let index = 0; index < images.length; index += 1) {
+    const image = images[index]
+    const file = new File([new Uint8Array(image.buffer)], `document-image-${index + 1}.${image.extension}`, {
+      type: image.mimeType,
+    })
+    const path = createStoragePath(file, "article-image", {
+      section: "articles",
+      category: "generated",
+      kind: "content",
+    })
+    const url = await uploadFileToStorage(file, path)
+
+    await db.insert(assets).values({
+      url,
+      fileName: file.name,
+      mimeType: image.mimeType,
+      sizeBytes: image.buffer.length,
+      uploadedBy: userId,
+      createdAt: new Date(),
+    })
+
+    uploadedBlocks.push({
+      id: `generated-image-${index + 1}`,
+      type: "image",
+      url,
+      alt: image.alt,
+      caption: image.page ? `Dokumentasi halaman ${image.page}` : "",
+    })
+  }
+
+  return uploadedBlocks
 }
 
 async function resolveCategoryId(category: string) {
@@ -100,8 +442,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const sourceText = await extractTextFromSource(file)
-    const draft = generateArticleDraftFromText(sourceText)
+    const extracted = await extractContentFromSource(file)
+    const draft = generateArticleDraftFromText(extracted.text)
+    const imageBlocks = await uploadExtractedImages(extracted.images, guard.user?.id ?? null)
+    draft.content.content.push(...imageBlocks)
 
     if (!draft.title || !draft.content.content.length) {
       return NextResponse.json({ error: "Source tidak punya teks yang bisa diekstrak." }, { status: 400 })
