@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Eye, Heading1, Heading2, ImagePlus, List, Loader2, Pilcrow, Plus, Quote, Trash2, Type, Upload } from "lucide-react"
+import { useMemo, useState, type DragEvent } from "react"
+import { Eye, GripVertical, Heading1, Heading2, ImagePlus, List, Loader2, Pilcrow, Plus, Quote, Trash2, Type, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -60,6 +60,8 @@ export function NotionArticleEditor({
   const [uploadingBlockId, setUploadingBlockId] = useState<string | null>(null)
   const [uploadStage, setUploadStage] = useState<ImageProcessingStage>("idle")
   const [uploadError, setUploadError] = useState("")
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
+  const [dropTarget, setDropTarget] = useState<{ id: string; position: "before" | "after" } | null>(null)
 
   const blocks = value.content.length ? value.content : createEmptyArticleDocument().content
 
@@ -90,6 +92,46 @@ export function NotionArticleEditor({
   const removeBlock = (id: string) => {
     const nextBlocks = blocks.filter((block) => block.id !== id)
     updateBlocks(nextBlocks.length ? nextBlocks : createEmptyArticleDocument().content)
+  }
+
+  const handleDragStart = (event: DragEvent<HTMLButtonElement>, blockId: string) => {
+    setDraggedBlockId(blockId)
+    event.dataTransfer.effectAllowed = "move"
+    event.dataTransfer.setData("text/plain", blockId)
+  }
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>, blockId: string) => {
+    if (!draggedBlockId || draggedBlockId === blockId) return
+
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "move"
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const position = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after"
+    setDropTarget({ id: blockId, position })
+  }
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>, targetId: string) => {
+    event.preventDefault()
+    const sourceId = draggedBlockId || event.dataTransfer.getData("text/plain")
+    if (!sourceId || sourceId === targetId) return
+
+    const sourceIndex = blocks.findIndex((block) => block.id === sourceId)
+    const targetIndex = blocks.findIndex((block) => block.id === targetId)
+    if (sourceIndex < 0 || targetIndex < 0) return
+
+    const nextBlocks = [...blocks]
+    const [movedBlock] = nextBlocks.splice(sourceIndex, 1)
+    const adjustedTargetIndex = nextBlocks.findIndex((block) => block.id === targetId)
+    const insertionIndex = adjustedTargetIndex + (dropTarget?.position === "after" ? 1 : 0)
+    nextBlocks.splice(insertionIndex, 0, movedBlock)
+    updateBlocks(nextBlocks)
+    setDraggedBlockId(null)
+    setDropTarget(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedBlockId(null)
+    setDropTarget(null)
   }
 
   const getSlashQuery = (block: ArticleBlock) => {
@@ -211,8 +253,31 @@ export function NotionArticleEditor({
               : []
 
             return (
-            <div key={block.id} className="group relative rounded-md border border-transparent px-10 py-1 transition-colors hover:border-border hover:bg-muted/10">
+            <div
+              key={block.id}
+              className={cn(
+                "group relative rounded-md border border-transparent px-10 py-1 transition-all hover:border-border hover:bg-muted/10",
+                draggedBlockId === block.id && "opacity-40",
+                dropTarget?.id === block.id && dropTarget.position === "before" && "border-t-primary",
+                dropTarget?.id === block.id && dropTarget.position === "after" && "border-b-primary",
+              )}
+              onDragOver={(event) => handleDragOver(event, block.id)}
+              onDrop={(event) => handleDrop(event, block.id)}
+            >
               <div className="absolute left-1 top-2 hidden items-center gap-1 group-hover:flex">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 cursor-grab text-muted-foreground active:cursor-grabbing"
+                  draggable
+                  onDragStart={(event) => handleDragStart(event, block.id)}
+                  onDragEnd={handleDragEnd}
+                  aria-label="Drag to reorder block"
+                  title="Drag to reorder"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"
