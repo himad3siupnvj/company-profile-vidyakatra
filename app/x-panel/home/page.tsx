@@ -244,7 +244,7 @@ export default function HomePageManagement() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {achievements.map((achievement, index) => (
+              {achievements.map((achievement) => (
                 <div
                   key={achievement.id}
                   className="flex items-start gap-4 rounded-lg border p-4"

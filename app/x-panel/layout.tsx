@@ -7,6 +7,8 @@ import { AdminHeader } from "@/components/admin/header"
 import { AdminUserProvider, type AdminCurrentUser } from "@/components/admin/admin-user-context"
 import { canAccessAdminPath } from "@/lib/admin-access"
 
+const currentUserRequestTimeoutMs = 12000
+
 export default function AdminLayout({
   children,
 }: {
@@ -23,9 +25,14 @@ export default function AdminLayout({
 
     async function loadCurrentUser() {
       setIsLoadingUser(true)
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), currentUserRequestTimeoutMs)
 
       try {
-        const response = await fetch("/api/auth/me", { cache: "no-store" })
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          signal: controller.signal,
+        })
 
         if (!response.ok) {
           if (active) setCurrentUser(null)
@@ -42,6 +49,7 @@ export default function AdminLayout({
         if (active) setCurrentUser(null)
         router.replace("/x-panel/login")
       } finally {
+        window.clearTimeout(timeoutId)
         if (active) setIsLoadingUser(false)
       }
     }

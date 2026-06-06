@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { siteSettings } from "@/db/schema"

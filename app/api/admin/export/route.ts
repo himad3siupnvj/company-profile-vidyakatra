@@ -40,7 +40,7 @@ async function getRows(entity: ExportEntity) {
   if (entity === "users") {
     const rows = await db.select().from(users).orderBy(desc(users.createdAt))
 
-    return rows.map(({ passwordHash, claimCode, ...row }) => row)
+    return rows.map(({ passwordHash: _passwordHash, claimCode: _claimCode, ...row }) => row)
   }
 
   if (entity === "organizational-units") {

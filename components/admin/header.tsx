@@ -39,7 +39,7 @@ function getInitials(name: string) {
     .slice(0, 2)
 }
 
-export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
+export function AdminHeader({ sidebarCollapsed: _sidebarCollapsed }: AdminHeaderProps) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const { currentUser } = useAdminUser()
@@ -163,7 +163,7 @@ export function AdminHeader({ sidebarCollapsed }: AdminHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex min-w-0 items-center gap-2 px-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-avatar.jpg" alt={currentUser?.name ?? "Admin"} />
+                <AvatarImage src="/placeholder-user.jpg" alt={currentUser?.name ?? "Admin"} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                   {getInitials(currentUser?.name ?? "Admin")}
                 </AvatarFallback>

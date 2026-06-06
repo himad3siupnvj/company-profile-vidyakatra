@@ -239,33 +239,57 @@ export function NotionArticleEditor({
                 <div className="my-4 space-y-2 rounded-lg border border-dashed bg-muted/20 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium text-muted-foreground">Image block</p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 gap-2 text-destructive hover:text-destructive"
-                      onClick={() => removeBlock(block.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </Button>
-                  </div>
-                  <div className="flex flex-col gap-2 rounded-md border bg-background/50 p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Upload image</p>
-                      <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, atau GIF. Maks 1 MB.</p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-2"
+                        onClick={() => addBlockAfter(block.id)}
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add below
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-2 text-destructive hover:text-destructive"
+                        onClick={() => removeBlock(block.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Remove
+                      </Button>
                     </div>
-                    <Button type="button" variant="outline" size="sm" className="relative gap-2" disabled={uploadingBlockId === block.id}>
-                      {uploadingBlockId === block.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {uploadingBlockId === block.id && uploadStage === "compressing" ? "Compressing..." : uploadingBlockId === block.id && uploadStage === "uploading" ? "Uploading..." : "Upload"}
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
-                        disabled={uploadingBlockId === block.id}
-                        onChange={(event) => uploadImage(block.id, event.target.files?.[0] ?? null)}
-                      />
-                    </Button>
+                  </div>
+                  <div className="grid gap-3 rounded-md border bg-background/50 p-3 sm:grid-cols-[180px_1fr]">
+                    <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-dashed bg-muted/40">
+                      {block.url ? (
+                        <img src={block.url} alt={block.alt || block.caption || "Article image preview"} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="px-4 text-center text-xs text-muted-foreground">
+                          <ImagePlus className="mx-auto mb-2 h-6 w-6" />
+                          Preview image
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex min-w-0 flex-col justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Upload image</p>
+                        <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, atau GIF. Maks 1 MB.</p>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" className="relative w-full gap-2 sm:w-fit" disabled={uploadingBlockId === block.id}>
+                        {uploadingBlockId === block.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {uploadingBlockId === block.id && uploadStage === "compressing" ? "Compressing..." : uploadingBlockId === block.id && uploadStage === "uploading" ? "Uploading..." : block.url ? "Replace image" : "Upload image"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                          disabled={uploadingBlockId === block.id}
+                          onChange={(event) => uploadImage(block.id, event.target.files?.[0] ?? null)}
+                        />
+                      </Button>
+                    </div>
                   </div>
                   {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
                   <Input

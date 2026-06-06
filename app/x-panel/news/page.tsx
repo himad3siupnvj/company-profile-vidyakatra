@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -69,17 +70,14 @@ interface Article {
   content?: ArticleDocument
 }
 
-const initialArticles: Article[] = [
-  { id: "article-1", title: "Company Profile Vidyakatra", excerpt: "Mengenal arah gerak dan budaya kerja Kabinet Vidyakatra...", category: "berita", categoryLabel: "Berita Acara", status: "published", author: "Tim Media", publishedAt: "2026-05-10", createdAt: "2026-05-08", thumbnail: "/news/default.jpg", thumbnailAlt: "Company Profile Vidyakatra", readTime: "4 min", featured: true, views: 245 },
-  { id: "article-2", title: "Workshop UI/UX Design Bersama Praktisi Industri", excerpt: "Dokumentasi kegiatan peningkatan kemampuan desain interface mahasiswa...", category: "kegiatan", categoryLabel: "Kegiatan", status: "draft", author: "Media & Informasi", publishedAt: null, createdAt: "2026-05-12", thumbnail: "/news/default.jpg", thumbnailAlt: "Workshop UI UX", readTime: "5 min", featured: false, views: 0 },
-]
-
 const articleCategories = [
   { value: "berita", label: "Berita Acara" },
   { value: "kegiatan", label: "Kegiatan" },
   { value: "pengumuman", label: "Pengumuman" },
   { value: "prestasi", label: "Prestasi" },
 ]
+
+const articlesRequestTimeoutMs = 8000
 
 const workflowActionLabels: Record<ArticleWorkflowAction, string> = {
   submit: "Submit for Review",
@@ -98,9 +96,10 @@ const workflowActionIcons = {
 } satisfies Record<ArticleWorkflowAction, typeof Send>
 
 export default function ArticleManagementPage() {
-  const [articles, setArticles] = useState<Article[]>(initialArticles)
+  const [articles, setArticles] = useState<Article[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [isLoadingArticles, setIsLoadingArticles] = useState(true)
   const [isCreateArticleOpen, setIsCreateArticleOpen] = useState(false)
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null)
   const [newArticle, setNewArticle] = useState({
@@ -128,14 +127,33 @@ export default function ArticleManagementPage() {
 
   useEffect(() => {
     async function loadArticles() {
-      try {
-        const response = await fetch("/api/admin/articles")
-        if (!response.ok) return
+      setIsLoadingArticles(true)
+      setErrorMessage("")
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), articlesRequestTimeoutMs)
 
-        const data = await response.json()
+      try {
+        const response = await fetch("/api/admin/articles", {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+        const data = await response.json().catch(() => null)
+
+        if (!response.ok) {
+          setErrorMessage(data?.error ?? "Artikel gagal dimuat.")
+          return
+        }
+
         setArticles(data.articles)
-      } catch {
-        // Keep local fallback data when the backend is unavailable.
+      } catch (error) {
+        setErrorMessage(
+          error instanceof DOMException && error.name === "AbortError"
+            ? "Artikel belum bisa dimuat. Koneksi database terlalu lama merespons."
+            : "Artikel gagal dimuat. Coba refresh halaman.",
+        )
+      } finally {
+        window.clearTimeout(timeoutId)
+        setIsLoadingArticles(false)
       }
     }
 
@@ -385,7 +403,7 @@ export default function ArticleManagementPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Published</p>
-              <p className="text-xl font-bold">{articles.filter((article) => article.status === "published").length}</p>
+              {isLoadingArticles ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{articles.filter((article) => article.status === "published").length}</p>}
             </div>
           </CardContent>
         </Card>
@@ -396,7 +414,7 @@ export default function ArticleManagementPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Submitted</p>
-              <p className="text-xl font-bold">{articles.filter((article) => article.status === "submitted").length}</p>
+              {isLoadingArticles ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{articles.filter((article) => article.status === "submitted").length}</p>}
             </div>
           </CardContent>
         </Card>
@@ -407,7 +425,7 @@ export default function ArticleManagementPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Drafts</p>
-              <p className="text-xl font-bold">{articles.filter((article) => article.status === "draft").length}</p>
+              {isLoadingArticles ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{articles.filter((article) => article.status === "draft").length}</p>}
             </div>
           </CardContent>
         </Card>
@@ -418,7 +436,7 @@ export default function ArticleManagementPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Views</p>
-              <p className="text-xl font-bold">{articles.reduce((acc, article) => acc + article.views, 0).toLocaleString()}</p>
+              {isLoadingArticles ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold">{articles.reduce((acc, article) => acc + article.views, 0).toLocaleString()}</p>}
             </div>
           </CardContent>
         </Card>
@@ -674,7 +692,17 @@ export default function ArticleManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredArticles.map((article) => (
+                {isLoadingArticles ? Array.from({ length: 4 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-12 w-full" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                )) : filteredArticles.map((article) => (
                   <TableRow key={article.id} className={updatingArticleId === article.id ? "opacity-60" : undefined}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -743,6 +771,17 @@ export default function ArticleManagementPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {!isLoadingArticles && filteredArticles.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7}>
+                      <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                        {articles.length === 0
+                          ? "Belum ada artikel di database. Buat draft baru atau generate dari PDF/DOCX."
+                          : "Tidak ada artikel yang cocok dengan filter saat ini."}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
