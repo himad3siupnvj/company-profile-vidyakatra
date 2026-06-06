@@ -11,6 +11,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.71.1(react@19.2.4))
+      '@napi-rs/canvas':
+        specifier: 0.1.80
+        version: 0.1.80
       '@radix-ui/react-accordion':
         specifier: 1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -228,6 +231,10 @@ importers:
       vitest:
         specifier: ^4.1.7
         version: 4.1.7(@types/node@22.19.11)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@22.19.11)(esbuild@0.28.0)(jiti@2.6.1)(tsx@4.22.3))
+    optionalDependencies:
+      '@napi-rs/canvas-linux-x64-gnu':
+        specifier: 0.1.80
+        version: 0.1.80
 
 packages:
 
