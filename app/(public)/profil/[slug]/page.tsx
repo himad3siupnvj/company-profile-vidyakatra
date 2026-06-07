@@ -88,21 +88,24 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(12rem,14rem))] sm:gap-4">
             {unit.members.map((member) => (
-              <Card key={member.name} className="overflow-hidden border-border/50 bg-card/80 backdrop-blur">
-                <div className="aspect-[4/5] overflow-hidden bg-muted">
+              <Card
+                key={member.name}
+                className="group overflow-hidden border-border/50 bg-card/80 backdrop-blur transition-colors hover:border-primary/30"
+              >
+                <div className="relative aspect-[3/4] overflow-hidden bg-muted">
                   <Image
                     src={member.image}
                     alt={member.name}
-                    width={500}
-                    height={650}
-                    className="h-full w-full object-cover object-center"
+                    fill
+                    sizes="(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
+                    className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                 </div>
-                <CardContent className="p-5">
-                  <h3 className="text-lg font-semibold">{member.name}</h3>
-                  <p className="mt-1 text-sm text-primary">{member.role}</p>
+                <CardContent className="min-h-24 p-3 sm:p-4">
+                  <h3 className="text-sm font-semibold leading-snug sm:text-base">{member.name}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-primary sm:text-sm">{member.role}</p>
                 </CardContent>
               </Card>
             ))}
