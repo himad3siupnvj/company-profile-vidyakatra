@@ -22,6 +22,13 @@
       "when": 1781146412469,
       "tag": "0002_perfect_guardsmen",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781163357802,
+      "tag": "0003_odd_ender_wiggin",
+      "breakpoints": true
     }
   ]
 }

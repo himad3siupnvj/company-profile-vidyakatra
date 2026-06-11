@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
         claimCode,
         role: payload.role,
         memberId,
+        periodId: member.periodId,
         status: "unclaimed",
         createdAt: now,
         updatedAt: now,

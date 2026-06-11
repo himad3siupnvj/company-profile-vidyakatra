@@ -12,6 +12,7 @@ import {
   isArticleWorkflowAction,
   type ArticleStatus,
 } from "@/lib/article-workflow"
+import { saveArticleVersion } from "@/lib/article-versioning"
 import { revalidatePublicArticles } from "@/lib/public-cache"
 
 export const runtime = "nodejs"
@@ -99,39 +100,49 @@ export async function PATCH(request: NextRequest) {
 
   const now = new Date()
   const nextStatus = getNextArticleStatus(action)
-  const [updated] = await db
-    .update(articles)
-    .set({
-      status: nextStatus,
-      reviewerId: action === "approve" || action === "reject" ? guard.user?.id ?? null : article.reviewerId,
-      rejectedNote: action === "reject" ? rejectedNote : null,
-      publishedAt: action === "approve" ? now : action === "restore" ? null : article.publishedAt,
-      updatedAt: now,
+  const updated = await db.transaction(async (tx) => {
+    const [result] = await tx
+      .update(articles)
+      .set({
+        status: nextStatus,
+        reviewerId: action === "approve" || action === "reject" ? guard.user?.id ?? null : article.reviewerId,
+        rejectedNote: action === "reject" ? rejectedNote : null,
+        publishedAt: action === "approve" ? now : action === "restore" ? null : article.publishedAt,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(articles.id, id),
+          eq(articles.status, article.status),
+          isNull(articles.deletedAt),
+        ),
+      )
+      .returning()
+
+    if (!result) return null
+
+    if (action === "approve") {
+      await saveArticleVersion(tx, article, guard.user?.id ?? null, "publish")
+    }
+
+    await tx.insert(auditLogs).values({
+      actorId: guard.user?.id ?? null,
+      action: `article.${action}`,
+      entityType: "article",
+      entityId: id,
+      metadata: {
+        previousStatus: article.status,
+        newStatus: nextStatus,
+      },
+      createdAt: now,
     })
-    .where(
-      and(
-        eq(articles.id, id),
-        eq(articles.status, article.status),
-        isNull(articles.deletedAt),
-      ),
-    )
-    .returning()
+
+    return result
+  })
 
   if (!updated) {
     return NextResponse.json({ error: "Article status changed. Refresh and try again." }, { status: 409 })
   }
-
-  await db.insert(auditLogs).values({
-    actorId: guard.user?.id ?? null,
-    action: `article.${action}`,
-    entityType: "article",
-    entityId: id,
-    metadata: {
-      previousStatus: article.status,
-      newStatus: nextStatus,
-    },
-    createdAt: now,
-  })
 
   const [category] = updated.categoryId
     ? await db.select().from(articleCategories).where(eq(articleCategories.id, updated.categoryId)).limit(1)

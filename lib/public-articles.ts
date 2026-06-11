@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull } from "drizzle-orm"
 import { unstable_cache } from "next/cache"
 import { getDb } from "@/db"
-import { articleCategories, articles } from "@/db/schema"
+import { articleCategories, articles, periods } from "@/db/schema"
 import { getArticleReadTime, normalizeArticleDocument } from "@/lib/article-content"
 import { publicCacheTags } from "@/lib/cache-tags"
 import { newsData, type PublicNews } from "@/lib/public-content"
@@ -27,6 +27,7 @@ async function getPublishedArticleRows(slug?: string) {
   const db = getDb()
   const filters = [
     eq(articles.status, "published"),
+    eq(periods.status, "active"),
     isNull(articles.deletedAt),
     ...(slug ? [eq(articles.slug, slug)] : []),
   ]
@@ -48,6 +49,7 @@ async function getPublishedArticleRows(slug?: string) {
       isFeatured: articles.isFeatured,
     })
     .from(articles)
+    .innerJoin(periods, eq(articles.periodId, periods.id))
     .leftJoin(articleCategories, eq(articles.categoryId, articleCategories.id))
     .where(and(...filters))
     .orderBy(desc(articles.publishedAt), desc(articles.createdAt))

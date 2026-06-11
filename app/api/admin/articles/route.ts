@@ -18,7 +18,9 @@ import {
   isArticleWorkflowAction,
   type ArticleStatus,
 } from "@/lib/article-workflow"
+import { saveArticleVersion } from "@/lib/article-versioning"
 import { revalidatePublicArticles } from "@/lib/public-cache"
+import { getActivePeriodId } from "@/lib/active-period"
 
 export const runtime = "nodejs"
 
@@ -165,6 +167,11 @@ export async function POST(request: NextRequest) {
   }
 
   const categoryId = await resolveCategoryId(payload.category)
+  const activePeriodId = await getActivePeriodId()
+
+  if (!activePeriodId) {
+    return NextResponse.json({ error: "No active organization period is configured" }, { status: 409 })
+  }
   const content = normalizeArticleDocument(payload.content, String(payload.content ?? payload.excerpt ?? ""))
   const db = getDb()
   const [existingArticle] = await db
@@ -188,6 +195,7 @@ export async function POST(request: NextRequest) {
         excerpt: String(payload.excerpt ?? ""),
         content,
         categoryId,
+        periodId: existingArticle.periodId ?? activePeriodId,
         authorName: String(payload.author ?? "Tim Media"),
         thumbnailUrl: payload.thumbnailUrl || payload.image || null,
         thumbnailAlt: payload.thumbnailAlt || title,
@@ -223,6 +231,7 @@ export async function POST(request: NextRequest) {
       status: "draft",
       authorId: guard.user?.id ?? null,
       authorName: String(payload.author ?? "Tim Media"),
+      periodId: activePeriodId,
       thumbnailUrl: payload.thumbnailUrl || payload.image || null,
       thumbnailAlt: payload.thumbnailAlt || title,
       readTime: payload.readTime || getArticleReadTime(content),
@@ -279,34 +288,39 @@ export async function PUT(request: NextRequest) {
   const content = normalizeArticleDocument(payload.content, String(payload.excerpt ?? ""))
   const now = new Date()
 
-  const [updated] = await db
-    .update(articles)
-    .set({
-      title,
-      slug: existing.slug,
-      excerpt: String(payload.excerpt ?? ""),
-      content,
-      categoryId,
-      authorName: String(payload.author ?? existing.authorName ?? "Tim Media"),
-      thumbnailUrl: payload.thumbnailUrl || payload.image || null,
-      thumbnailAlt: payload.thumbnailAlt || title,
-      readTime: payload.readTime || getArticleReadTime(content),
-      isFeatured: Boolean(payload.featured),
-      rejectedNote: null,
-      updatedAt: now,
-    })
-    .where(eq(articles.id, id))
-    .returning()
+  const updated = await db.transaction(async (tx) => {
+    await saveArticleVersion(tx, existing, guard.user?.id ?? null, "major_update")
+    const [result] = await tx
+      .update(articles)
+      .set({
+        title,
+        slug: existing.slug,
+        excerpt: String(payload.excerpt ?? ""),
+        content,
+        categoryId,
+        authorName: String(payload.author ?? existing.authorName ?? "Tim Media"),
+        thumbnailUrl: payload.thumbnailUrl || payload.image || null,
+        thumbnailAlt: payload.thumbnailAlt || title,
+        readTime: payload.readTime || getArticleReadTime(content),
+        isFeatured: Boolean(payload.featured),
+        rejectedNote: null,
+        updatedAt: now,
+      })
+      .where(eq(articles.id, id))
+      .returning()
 
-  await db.insert(auditLogs).values({
-    actorId: guard.user?.id ?? null,
-    action: "article.update",
-    entityType: "article",
-    entityId: id,
-    metadata: {
-      status: existing.status,
-    },
-    createdAt: now,
+    await tx.insert(auditLogs).values({
+      actorId: guard.user?.id ?? null,
+      action: "article.update",
+      entityType: "article",
+      entityId: id,
+      metadata: {
+        status: existing.status,
+      },
+      createdAt: now,
+    })
+
+    return result
   })
 
   const [category] = await db.select().from(articleCategories).where(eq(articleCategories.id, categoryId)).limit(1)
@@ -395,39 +409,49 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Rejected note is required" }, { status: 400 })
   }
 
-  const [updated] = await db
-    .update(articles)
-    .set({
-      status: nextStatus,
-      reviewerId: action === "approve" || action === "reject" ? guard.user?.id ?? null : article.reviewerId,
-      rejectedNote: action === "reject" ? rejectedNote : null,
-      publishedAt: action === "approve" ? now : action === "restore" ? null : article.publishedAt,
-      updatedAt: now,
+  const updated = await db.transaction(async (tx) => {
+    const [result] = await tx
+      .update(articles)
+      .set({
+        status: nextStatus,
+        reviewerId: action === "approve" || action === "reject" ? guard.user?.id ?? null : article.reviewerId,
+        rejectedNote: action === "reject" ? rejectedNote : null,
+        publishedAt: action === "approve" ? now : action === "restore" ? null : article.publishedAt,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(articles.id, id),
+          eq(articles.status, article.status),
+          isNull(articles.deletedAt),
+        ),
+      )
+      .returning()
+
+    if (!result) return null
+
+    if (action === "approve") {
+      await saveArticleVersion(tx, article, guard.user?.id ?? null, "publish")
+    }
+
+    await tx.insert(auditLogs).values({
+      actorId: guard.user?.id ?? null,
+      action: `article.${action}`,
+      entityType: "article",
+      entityId: id,
+      metadata: {
+        previousStatus: article.status,
+        newStatus: nextStatus,
+      },
+      createdAt: now,
     })
-    .where(
-      and(
-        eq(articles.id, id),
-        eq(articles.status, article.status),
-        isNull(articles.deletedAt),
-      ),
-    )
-    .returning()
+
+    return result
+  })
 
   if (!updated) {
     return NextResponse.json({ error: "Article status changed. Refresh and try again." }, { status: 409 })
   }
-
-  await db.insert(auditLogs).values({
-    actorId: guard.user?.id ?? null,
-    action: `article.${action}`,
-    entityType: "article",
-    entityId: id,
-    metadata: {
-      previousStatus: article.status,
-      newStatus: nextStatus,
-    },
-    createdAt: now,
-  })
 
   const [category] = updated.categoryId
     ? await db.select().from(articleCategories).where(eq(articleCategories.id, updated.categoryId)).limit(1)

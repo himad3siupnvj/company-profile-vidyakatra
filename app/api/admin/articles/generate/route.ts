@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { articleCategories, articles, assets } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
+import { getActivePeriodId } from "@/lib/active-period"
 import { getArticleReadTime, slugify, toTitleCase, type ArticleBlock } from "@/lib/article-content"
 import { generateArticleDraftFromText } from "@/lib/article-generator"
 import { revalidatePublicArticles } from "@/lib/public-cache"
@@ -498,6 +499,12 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const db = getDb()
     const categoryId = await resolveCategoryId(draft.category)
+    const activePeriodId = await getActivePeriodId()
+
+    if (!activePeriodId) {
+      return NextResponse.json({ error: "No active organization period is configured" }, { status: 409 })
+    }
+
     const [created] = await db
       .insert(articles)
       .values({
@@ -509,6 +516,7 @@ export async function POST(request: NextRequest) {
         status: "draft",
         authorId: guard.user?.id ?? null,
         authorName: draft.author,
+        periodId: activePeriodId,
         readTime: getArticleReadTime(draft.content),
         thumbnailUrl: firstImage?.url ?? null,
         thumbnailAlt: firstImage?.alt ?? null,

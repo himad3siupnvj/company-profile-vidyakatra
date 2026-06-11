@@ -271,6 +271,35 @@ export const articles = pgTable(
 // ─── Assets ───────────────────────────────────────────────────────────────────
 // Semua file upload terpusat di sini. image/* only, max 1 MB (global).
 
+export const articleVersions = pgTable(
+  "article_versions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    versionNumber: integer("version_number").notNull(),
+    reason: varchar("reason", { length: 40 }).notNull(),
+    snapshot: jsonb("snapshot").notNull(),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("article_versions_article_number_idx").on(
+      table.articleId,
+      table.versionNumber,
+    ),
+    index("article_versions_article_created_idx").on(
+      table.articleId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const assets = pgTable("assets", {
   id: uuid("id").defaultRandom().primaryKey(),
   url: text("url").notNull(),

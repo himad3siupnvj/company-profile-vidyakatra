@@ -4,6 +4,7 @@ import { getDb } from "@/db"
 import { divisions, members, organizationalUnits } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
+import { getActivePeriodId } from "@/lib/active-period"
 import { revalidateProfileContent } from "@/lib/profile-cache"
 
 export const runtime = "nodejs"
@@ -159,6 +160,11 @@ export async function POST(request: NextRequest) {
   const type = String(payload.type ?? "member")
   const now = new Date()
   const db = getDb()
+  const activePeriodId = await getActivePeriodId()
+
+  if (!activePeriodId) {
+    return NextResponse.json({ error: "No active organization period is configured" }, { status: 409 })
+  }
 
   if (type === "organizational-unit" || type === "department") {
     const name = String(payload.name ?? "").trim()
@@ -173,6 +179,7 @@ export async function POST(request: NextRequest) {
       .values({
         name,
         type: unitType,
+        periodId: activePeriodId,
         description: String(payload.description ?? ""),
         color: String(payload.color ?? "bg-primary"),
         sortOrder: Number(payload.sortOrder ?? 0),
@@ -206,6 +213,7 @@ export async function POST(request: NextRequest) {
       .values({
         name,
         organizationalUnitId,
+        periodId: activePeriodId,
         description: String(payload.description ?? ""),
         sortOrder: Number(payload.sortOrder ?? 0),
         createdAt: now,
@@ -252,6 +260,7 @@ export async function POST(request: NextRequest) {
       position,
       organizationalUnitId,
       divisionId,
+      periodId: activePeriodId,
       email: String(payload.email ?? ""),
       joinedAt: now,
       createdAt: now,

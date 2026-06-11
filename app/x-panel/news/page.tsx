@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Archive, CheckCircle2, Edit, Eye, FileText, ImagePlus, Info, Loader2, Monitor, MoreHorizontal, PenLine, Plus, RotateCcw, Search, Send, Trash2, Upload, XCircle } from "lucide-react"
+import { Archive, CheckCircle2, Edit, Eye, FileText, History, ImagePlus, Info, Loader2, Monitor, MoreHorizontal, PenLine, Plus, RotateCcw, Search, Send, Trash2, Upload, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -74,6 +74,22 @@ interface Article {
   content?: ArticleDocument
 }
 
+interface ArticleVersion {
+  id: string
+  versionNumber: number
+  reason: string
+  createdAt: string
+  createdByName: string
+  snapshot: {
+    title: string
+    excerpt: string | null
+    content: ArticleDocument
+    status: Article["status"]
+    thumbnailUrl: string | null
+    thumbnailAlt: string | null
+  }
+}
+
 const articleCategories = [
   { value: "berita", label: "Berita Acara" },
   { value: "kegiatan", label: "Kegiatan" },
@@ -124,6 +140,9 @@ export default function ArticleManagementPage() {
   const [isGeneratingSource, setIsGeneratingSource] = useState(false)
   const [isSavingArticle, setIsSavingArticle] = useState(false)
   const [previewArticle, setPreviewArticle] = useState<Article | null>(null)
+  const [historyArticle, setHistoryArticle] = useState<Article | null>(null)
+  const [articleVersions, setArticleVersions] = useState<ArticleVersion[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -408,6 +427,31 @@ export default function ArticleManagementPage() {
 
   const [errorMessage, setErrorMessage] = useState("")
 
+  const handleOpenHistory = async (article: Article) => {
+    setHistoryArticle(article)
+    setArticleVersions([])
+    setIsLoadingHistory(true)
+
+    try {
+      const response = await fetch(
+        `/api/admin/articles/versions?articleId=${encodeURIComponent(article.id)}`,
+        { cache: "no-store" },
+      )
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setErrorMessage(data?.error ?? "Riwayat artikel gagal dimuat.")
+        return
+      }
+
+      setArticleVersions(data.versions ?? [])
+    } catch {
+      setErrorMessage("Riwayat artikel gagal dimuat.")
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
+
   const getStatusColor = (status: Article["status"]) => {
     const colors: Record<Article["status"], string> = {
       published: "bg-green-100 text-green-700",
@@ -449,6 +493,53 @@ export default function ArticleManagementPage() {
                 document={previewArticle.content ?? createEmptyArticleDocument()}
               />
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(historyArticle)} onOpenChange={(open) => !open && setHistoryArticle(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Version History</DialogTitle>
+            <DialogDescription>
+              Snapshot sebelum perubahan besar atau publikasi untuk {historyArticle?.title}.
+            </DialogDescription>
+          </DialogHeader>
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Memuat riwayat...
+            </div>
+          ) : articleVersions.length ? (
+            <div className="space-y-4">
+              {articleVersions.map((version) => (
+                <Card key={version.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <CardTitle className="text-base">
+                        Versi {version.versionNumber}: {version.snapshot.title}
+                      </CardTitle>
+                      <Badge variant="outline">
+                        {version.reason === "publish" ? "Sebelum publikasi" : "Sebelum edit"}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(version.createdAt).toLocaleString("id-ID")} oleh {version.createdByName}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {version.snapshot.excerpt && (
+                      <p className="text-sm text-muted-foreground">{version.snapshot.excerpt}</p>
+                    )}
+                    <ArticleDocumentRenderer document={version.snapshot.content} />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              Belum ada snapshot. Riwayat dibuat saat artikel diedit atau dipublikasikan.
+            </p>
           )}
         </DialogContent>
       </Dialog>
@@ -796,7 +887,7 @@ export default function ArticleManagementPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label={`Aksi untuk ${article.title}`}>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -825,6 +916,10 @@ export default function ArticleManagementPage() {
                           <DropdownMenuItem onClick={() => setPreviewArticle(article)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenHistory(article)}>
+                            <History className="mr-2 h-4 w-4" />
+                            History
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleEditArticle(article)}

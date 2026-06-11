@@ -139,7 +139,9 @@ describe("articles API", () => {
     const update = vi.fn(() => ({ set }))
     const values = vi.fn().mockResolvedValue(undefined)
     const insert = vi.fn(() => ({ values }))
-    mocks.getDb.mockReturnValue({ select, update, insert })
+    const execute = vi.fn().mockResolvedValue(undefined)
+    const transaction = vi.fn(async (callback) => callback({ update, insert, execute }))
+    mocks.getDb.mockReturnValue({ select, transaction })
 
     const response = await PATCH(jsonRequest("PATCH", { id: "article-1", action: "approve" }))
     const body = await response.json()
@@ -149,6 +151,7 @@ describe("articles API", () => {
     expect(update).toHaveBeenCalledTimes(1)
     expect(set.mock.calls[0][0]).toMatchObject({ status: "published", reviewerId: "user-1" })
     expect(insert).toHaveBeenCalledTimes(1)
+    expect(execute).toHaveBeenCalledTimes(2)
     expect(values.mock.calls[0][0]).toMatchObject({
       action: "article.approve",
       entityId: "article-1",
@@ -177,11 +180,14 @@ describe("articles API", () => {
       })),
     }))
     const insert = vi.fn()
-    mocks.getDb.mockReturnValue({ select, update, insert })
+    const execute = vi.fn()
+    const transaction = vi.fn(async (callback) => callback({ update, insert, execute }))
+    mocks.getDb.mockReturnValue({ select, transaction })
 
     const response = await PATCH(jsonRequest("PATCH", { id: "article-1", action: "approve" }))
 
     expect(response.status).toBe(409)
     expect(insert).not.toHaveBeenCalled()
+    expect(execute).not.toHaveBeenCalled()
   })
 })

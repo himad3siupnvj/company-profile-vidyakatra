@@ -1,7 +1,7 @@
-import { asc, isNull } from "drizzle-orm"
+import { and, asc, eq, isNull } from "drizzle-orm"
 import { unstable_cache } from "next/cache"
 import { getDb } from "@/db"
-import { members, organizationalUnits } from "@/db/schema"
+import { members, organizationalUnits, periods } from "@/db/schema"
 import { slugify } from "@/lib/article-content"
 import { publicCacheTags } from "@/lib/cache-tags"
 import { workUnits, type WorkUnit } from "@/lib/public-content"
@@ -16,7 +16,8 @@ export const getPublicWorkUnits = unstable_cache(
       const units = await db
         .select()
         .from(organizationalUnits)
-        .where(isNull(organizationalUnits.deletedAt))
+        .innerJoin(periods, eq(organizationalUnits.periodId, periods.id))
+        .where(and(isNull(organizationalUnits.deletedAt), eq(periods.status, "active")))
         .orderBy(asc(organizationalUnits.sortOrder), asc(organizationalUnits.name))
       const unitMembers = await db
         .select({
@@ -27,12 +28,13 @@ export const getPublicWorkUnits = unstable_cache(
           avatarUrl: members.avatarUrl,
         })
         .from(members)
-        .where(isNull(members.deletedAt))
+        .innerJoin(periods, eq(members.periodId, periods.id))
+        .where(and(isNull(members.deletedAt), eq(periods.status, "active")))
         .orderBy(asc(members.sortOrder), asc(members.name))
 
       if (!units.length) return workUnits
 
-      return units.map((unit) => {
+      return units.map(({ organizational_units: unit }) => {
         const slug = slugify(unit.name)
         const fallback = fallbackBySlug.get(slug) ?? fallbackUnit
         const mappedMembers = unitMembers
