@@ -17,6 +17,7 @@ function serializeOrgUnit(row: typeof organizationalUnits.$inferSelect & { membe
     head: row.head ?? "-",
     memberCount: row.memberCount ?? 0,
     color: row.color ?? "bg-primary",
+    sortOrder: row.sortOrder,
   }
 }
 
@@ -406,10 +407,20 @@ export async function DELETE(request: NextRequest) {
   const now = new Date()
 
   if (type === "organizational-unit" || type === "department") {
-    await db
-      .update(organizationalUnits)
-      .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
-      .where(eq(organizationalUnits.id, id))
+    await db.transaction(async (tx) => {
+      await tx
+        .update(members)
+        .set({ organizationalUnitId: null, divisionId: null, updatedAt: now })
+        .where(eq(members.organizationalUnitId, id))
+      await tx
+        .update(divisions)
+        .set({ organizationalUnitId: null, updatedAt: now })
+        .where(eq(divisions.organizationalUnitId, id))
+      await tx
+        .update(organizationalUnits)
+        .set({ deletedAt: now, deletedBy: guard.user?.id ?? null, updatedAt: now })
+        .where(eq(organizationalUnits.id, id))
+    })
     await writeAuditLog({ actorId: guard.user?.id, action: "org_unit.delete", entityType: "organizational_unit", entityId: id })
     revalidateProfileContent()
 

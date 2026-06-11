@@ -1,19 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useMemo, useState } from "react"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  Building2,
+  Edit,
+  ImagePlus,
+  MoreHorizontal,
+  Network,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -24,6 +26,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -31,14 +41,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, ImagePlus, Users, Network, Building2 } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Member {
   id: string
@@ -51,43 +62,67 @@ interface Member {
   joinDate: string
 }
 
-interface Department {
+interface OrganizationalUnit {
   id: string
   name: string
+  type: "department" | "bureau"
   description: string
   head: string
   memberCount: number
   color: string
+  sortOrder: number
 }
 
-const initialMembers: Member[] = [
-  { id: "member-1", name: "Ahmad Rizki Pratama", position: "Ketua Umum", department: "Executive", email: "ahmad@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-2", name: "Siti Nurhaliza", position: "Wakil Ketua", department: "Executive", email: "siti@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-3", name: "Budi Santoso", position: "Sekretaris", department: "Executive", email: "budi@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-4", name: "Dian Permata", position: "Bendahara", department: "Executive", email: "dian@email.com", avatar: "", status: "active", joinDate: "2024-01-15" },
-  { id: "member-5", name: "Reza Firmansyah", position: "Koordinator", department: "Media & Informasi", email: "reza@email.com", avatar: "", status: "active", joinDate: "2024-02-01" },
-  { id: "member-6", name: "Maya Indah", position: "Staff", department: "Media & Informasi", email: "maya@email.com", avatar: "", status: "active", joinDate: "2024-02-15" },
-  { id: "member-7", name: "Andi Wijaya", position: "Koordinator", department: "Pendidikan", email: "andi@email.com", avatar: "", status: "active", joinDate: "2024-02-01" },
-  { id: "member-8", name: "Lisa Kurnia", position: "Staff", department: "Kewirausahaan", email: "lisa@email.com", avatar: "", status: "inactive", joinDate: "2024-03-01" },
-]
+interface UnitForm {
+  name: string
+  type: "department" | "bureau"
+  description: string
+  color: string
+}
 
-const initialDepartments: Department[] = [
-  { id: "department-1", name: "Executive", description: "Badan Pengurus Harian", head: "Ahmad Rizki Pratama", memberCount: 4, color: "bg-primary" },
-  { id: "department-2", name: "Media & Informasi", description: "Divisi publikasi dan media sosial", head: "Reza Firmansyah", memberCount: 8, color: "bg-blue-500" },
-  { id: "department-3", name: "Pendidikan", description: "Divisi pendidikan dan pelatihan", head: "Andi Wijaya", memberCount: 12, color: "bg-green-500" },
-  { id: "department-4", name: "Kewirausahaan", description: "Divisi bisnis dan kewirausahaan", head: "Lisa Kurnia", memberCount: 10, color: "bg-orange-500" },
-  { id: "department-5", name: "Hubungan Masyarakat", description: "Divisi humas dan kerjasama", head: "Dewi Sartika", memberCount: 6, color: "bg-purple-500" },
-  { id: "department-6", name: "Kesejahteraan", description: "Divisi kesejahteraan mahasiswa", head: "Fajar Nugroho", memberCount: 8, color: "bg-pink-500" },
-  { id: "department-7", name: "Olahraga & Seni", description: "Divisi olahraga dan kesenian", head: "Galih Pratama", memberCount: 14, color: "bg-cyan-500" },
-  { id: "department-8", name: "Kerohanian", description: "Divisi keagamaan", head: "Hana Pertiwi", memberCount: 6, color: "bg-emerald-500" },
-]
+const emptyUnitForm: UnitForm = {
+  name: "",
+  type: "department",
+  description: "",
+  color: "bg-primary",
+}
+
+const unitColors = [
+  { value: "bg-primary", label: "Primary", swatch: "bg-primary" },
+  { value: "bg-blue-500", label: "Blue", swatch: "bg-blue-500" },
+  { value: "bg-emerald-500", label: "Emerald", swatch: "bg-emerald-500" },
+  { value: "bg-amber-500", label: "Amber", swatch: "bg-amber-500" },
+  { value: "bg-rose-500", label: "Rose", swatch: "bg-rose-500" },
+  { value: "bg-violet-500", label: "Violet", swatch: "bg-violet-500" },
+] as const
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+function isLeadershipPosition(position: string) {
+  return /ketua|wakil|sekretaris|bendahara|koordinator/i.test(position)
+}
 
 export default function OrganizationManagement() {
-  const [members, setMembers] = useState<Member[]>(initialMembers)
-  const [departments, setDepartments] = useState<Department[]>(initialDepartments)
+  const [members, setMembers] = useState<Member[]>([])
+  const [units, setUnits] = useState<OrganizationalUnit[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterDepartment, setFilterDepartment] = useState<string>("all")
+  const [filterUnit, setFilterUnit] = useState("all")
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState("")
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
+  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false)
+  const [editingUnit, setEditingUnit] = useState<OrganizationalUnit | null>(null)
+  const [unitForm, setUnitForm] = useState<UnitForm>(emptyUnitForm)
+  const [isSavingUnit, setIsSavingUnit] = useState(false)
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null)
   const [newMember, setNewMember] = useState({
     name: "",
     position: "",
@@ -95,39 +130,52 @@ export default function OrganizationManagement() {
     email: "",
   })
 
+  const loadOrganization = async () => {
+    setIsLoading(true)
+    setErrorMessage("")
+
+    try {
+      const response = await fetch("/api/admin/organization")
+      if (!response.ok) throw new Error("Failed to load organization data")
+
+      const data = await response.json()
+      setMembers(data.members ?? [])
+      setUnits(data.organizationalUnits ?? data.departments ?? [])
+    } catch {
+      setErrorMessage("Data organisasi belum bisa dimuat. Coba refresh halaman.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get("action") === "add") {
-      setIsAddMemberOpen(true)
-    }
+    if (params.get("action") === "add") setIsAddMemberOpen(true)
+    void loadOrganization()
   }, [])
 
-  useEffect(() => {
-    async function loadOrganization() {
-      try {
-        const response = await fetch("/api/admin/organization")
-        if (!response.ok) return
+  const filteredMembers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
 
-        const data = await response.json()
-        setMembers(data.members)
-        setDepartments(data.departments)
-      } catch {
-        // Keep local fallback data when the backend is unavailable.
-      }
-    }
+    return members.filter((member) => {
+      const matchesSearch =
+        !query ||
+        member.name.toLowerCase().includes(query) ||
+        member.position.toLowerCase().includes(query) ||
+        member.email.toLowerCase().includes(query)
+      const matchesUnit = filterUnit === "all" || member.department === filterUnit
+      return matchesSearch && matchesUnit
+    })
+  }, [filterUnit, members, searchQuery])
 
-    loadOrganization()
-  }, [])
-
-  const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesDepartment = filterDepartment === "all" || member.department === filterDepartment
-    return matchesSearch && matchesDepartment
-  })
+  const leadership = useMemo(
+    () => members.filter((member) => isLeadershipPosition(member.position)),
+    [members],
+  )
 
   const handleAddMember = async () => {
+    setErrorMessage("")
+
     try {
       const response = await fetch("/api/admin/organization", {
         method: "POST",
@@ -135,176 +183,292 @@ export default function OrganizationManagement() {
         body: JSON.stringify({ type: "member", ...newMember }),
       })
 
-      if (!response.ok) return
+      if (!response.ok) throw new Error("Failed to add member")
 
       const data = await response.json()
-      setMembers([...members, data.member])
+      setMembers((current) => [...current, data.member])
       setNewMember({ name: "", position: "", department: "", email: "" })
       setIsAddMemberOpen(false)
     } catch {
-      // The form stays open so the user can retry.
+      setErrorMessage("Anggota belum berhasil ditambahkan. Periksa kembali datanya.")
     }
   }
 
   const handleDeleteMember = async (id: string) => {
     const previousMembers = members
-    setMembers(members.filter(m => m.id !== id))
+    setMembers((current) => current.filter((member) => member.id !== id))
 
     try {
-      const response = await fetch(`/api/admin/organization?id=${id}`, { method: "DELETE" })
-      if (!response.ok) {
-        setMembers(previousMembers)
-      }
+      const response = await fetch(`/api/admin/organization?id=${id}&type=member`, {
+        method: "DELETE",
+      })
+      if (!response.ok) throw new Error("Failed to delete member")
     } catch {
       setMembers(previousMembers)
+      setErrorMessage("Anggota belum berhasil dihapus.")
     }
   }
 
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+  const openCreateUnit = () => {
+    setEditingUnit(null)
+    setUnitForm(emptyUnitForm)
+    setIsUnitDialogOpen(true)
   }
+
+  const openEditUnit = (unit: OrganizationalUnit) => {
+    setEditingUnit(unit)
+    setUnitForm({
+      name: unit.name,
+      type: unit.type,
+      description: unit.description,
+      color: unit.color,
+    })
+    setIsUnitDialogOpen(true)
+  }
+
+  const handleSaveUnit = async () => {
+    if (!unitForm.name.trim()) {
+      setErrorMessage("Nama departemen atau biro wajib diisi.")
+      return
+    }
+
+    setIsSavingUnit(true)
+    setErrorMessage("")
+
+    try {
+      const response = await fetch("/api/admin/organization", {
+        method: editingUnit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "organizational-unit",
+          id: editingUnit?.id,
+          name: unitForm.name,
+          unitType: unitForm.type,
+          description: unitForm.description,
+          color: unitForm.color,
+          sortOrder: editingUnit?.sortOrder ?? units.length,
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to save organizational unit")
+
+      const data = await response.json()
+      const savedUnit = data.organizationalUnit as OrganizationalUnit
+      setUnits((current) =>
+        editingUnit
+          ? current.map((unit) => (unit.id === savedUnit.id ? { ...unit, ...savedUnit } : unit))
+          : [...current, savedUnit],
+      )
+      setIsUnitDialogOpen(false)
+      setEditingUnit(null)
+      setUnitForm(emptyUnitForm)
+    } catch {
+      setErrorMessage("Departemen atau biro belum berhasil disimpan.")
+    } finally {
+      setIsSavingUnit(false)
+    }
+  }
+
+  const handleDeleteUnit = async (unit: OrganizationalUnit) => {
+    const confirmed = window.confirm(
+      `Hapus ${unit.type === "bureau" ? "biro" : "departemen"} ${unit.name}? Anggota di dalamnya akan menjadi unassigned.`,
+    )
+    if (!confirmed) return
+
+    setDeletingUnitId(unit.id)
+    setErrorMessage("")
+
+    try {
+      const response = await fetch(
+        `/api/admin/organization?id=${unit.id}&type=organizational-unit`,
+        { method: "DELETE" },
+      )
+      if (!response.ok) throw new Error("Failed to delete organizational unit")
+
+      setUnits((current) => current.filter((item) => item.id !== unit.id))
+      setMembers((current) =>
+        current.map((member) =>
+          member.department === unit.name ? { ...member, department: "Unassigned" } : member,
+        ),
+      )
+      if (filterUnit === unit.name) setFilterUnit("all")
+    } catch {
+      setErrorMessage("Departemen atau biro belum berhasil dihapus.")
+    } finally {
+      setDeletingUnitId(null)
+    }
+  }
+
+  const departmentCount = units.filter((unit) => unit.type === "department").length
+  const bureauCount = units.filter((unit) => unit.type === "bureau").length
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Organization Management</h1>
           <p className="text-muted-foreground">
-            Kelola pengurus, departemen, dan struktur organisasi Kabinet Vidyakatra.
+            Kelola pengurus, departemen, biro, dan struktur organisasi Kabinet Vidyakatra.
           </p>
         </div>
-        <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Member
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Member</DialogTitle>
-              <DialogDescription>
-                Add a new member to the organization.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="flex justify-center">
-                <div className="relative">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-muted">
-                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="gap-2" onClick={openCreateUnit}>
+            <Building2 className="h-4 w-4" />
+            Add Department
+          </Button>
+          <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Member
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add New Member</DialogTitle>
+                <DialogDescription>Add a new member to the organization.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-muted">
+                      <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
+                      aria-label="Add member photo"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button size="sm" variant="secondary" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0">
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={newMember.name}
-                  onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                  placeholder="Enter full name"
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="position">Position</Label>
+                  <Label htmlFor="name">Full Name</Label>
                   <Input
-                    id="position"
-                    value={newMember.position}
-                    onChange={(e) => setNewMember({ ...newMember, position: e.target.value })}
-                    placeholder="e.g., Staff"
+                    id="name"
+                    value={newMember.name}
+                    onChange={(event) => setNewMember({ ...newMember, name: event.target.value })}
+                    placeholder="Enter full name"
                   />
                 </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="position">Position</Label>
+                    <Input
+                      id="position"
+                      value={newMember.position}
+                      onChange={(event) =>
+                        setNewMember({ ...newMember, position: event.target.value })
+                      }
+                      placeholder="e.g., Staff"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="member-unit">Department / Bureau</Label>
+                    <Select
+                      value={newMember.department}
+                      onValueChange={(value) => setNewMember({ ...newMember, department: value })}
+                    >
+                      <SelectTrigger id="member-unit">
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.name}>
+                            {unit.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Select
-                    value={newMember.department}
-                    onValueChange={(value) => setNewMember({ ...newMember, department: value })}
-                  >
-                    <SelectTrigger id="department">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.name}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newMember.email}
+                    onChange={(event) => setNewMember({ ...newMember, email: event.target.value })}
+                    placeholder="email@example.com"
+                  />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newMember.email}
-                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                  placeholder="email@example.com"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddMember}>Add Member</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddMember}>Add Member</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {errorMessage && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {errorMessage}
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-primary/10 p-3">
-              <Users className="h-6 w-6 text-primary" />
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="rounded-md bg-primary/10 p-3">
+              <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Members</p>
+              <p className="text-sm text-muted-foreground">Total Members</p>
               <p className="text-2xl font-bold">{members.length}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-secondary/80 p-3">
-              <Building2 className="h-6 w-6 text-secondary-foreground" />
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="rounded-md bg-blue-500/10 p-3">
+              <Building2 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Departments</p>
-              <p className="text-2xl font-bold">{departments.length}</p>
+              <p className="text-sm text-muted-foreground">Departments</p>
+              <p className="text-2xl font-bold">{departmentCount}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-green-100 p-3">
-              <Network className="h-6 w-6 text-green-700" />
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="rounded-md bg-amber-500/10 p-3">
+              <Building2 className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Active Members</p>
-              <p className="text-2xl font-bold">{members.filter(m => m.status === "active").length}</p>
+              <p className="text-sm text-muted-foreground">Bureaus</p>
+              <p className="text-2xl font-bold">{bureauCount}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="rounded-md bg-emerald-500/10 p-3">
+              <Network className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Active Members</p>
+              <p className="text-2xl font-bold">
+                {members.filter((member) => member.status === "active").length}
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="members" className="space-y-4">
         <TabsList>
           <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="departments">Departments</TabsTrigger>
+          <TabsTrigger value="units">Departments & Bureaus</TabsTrigger>
           <TabsTrigger value="structure">Org Structure</TabsTrigger>
         </TabsList>
 
-        {/* Members Tab */}
-        <TabsContent value="members" className="space-y-4">
+        <TabsContent value="members">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -316,18 +480,18 @@ export default function OrganizationManagement() {
                       placeholder="Search members..."
                       className="w-full pl-9 sm:w-64"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(event) => setSearchQuery(event.target.value)}
                     />
                   </div>
-                  <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue placeholder="All Departments" />
+                  <Select value={filterUnit} onValueChange={setFilterUnit}>
+                    <SelectTrigger className="w-full sm:w-52">
+                      <SelectValue placeholder="All units" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.name}>
-                          {dept.name}
+                      <SelectItem value="all">All units</SelectItem>
+                      {units.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.name}>
+                          {unit.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -342,10 +506,10 @@ export default function OrganizationManagement() {
                     <TableRow>
                       <TableHead>Member</TableHead>
                       <TableHead>Position</TableHead>
-                      <TableHead>Department</TableHead>
+                      <TableHead>Department / Bureau</TableHead>
                       <TableHead>Contact</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-12"></TableHead>
+                      <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -355,14 +519,18 @@ export default function OrganizationManagement() {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
                               <AvatarImage src={member.avatar} />
-                              <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
+                              <AvatarFallback className="bg-secondary text-xs text-secondary-foreground">
                                 {getInitials(member.name)}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <p className="font-medium">{member.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                Joined {new Date(member.joinDate).toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
+                                Joined{" "}
+                                {new Date(member.joinDate).toLocaleDateString("id-ID", {
+                                  month: "short",
+                                  year: "numeric",
+                                })}
                               </p>
                             </div>
                           </div>
@@ -371,11 +539,7 @@ export default function OrganizationManagement() {
                         <TableCell>
                           <Badge variant="secondary">{member.department}</Badge>
                         </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p>{member.email}</p>
-                          </div>
-                        </TableCell>
+                        <TableCell>{member.email || "-"}</TableCell>
                         <TableCell>
                           <Badge variant={member.status === "active" ? "default" : "secondary"}>
                             {member.status}
@@ -384,7 +548,7 @@ export default function OrganizationManagement() {
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" aria-label={`Actions for ${member.name}`}>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -405,6 +569,13 @@ export default function OrganizationManagement() {
                         </TableCell>
                       </TableRow>
                     ))}
+                    {!isLoading && filteredMembers.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                          No members found.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -412,105 +583,261 @@ export default function OrganizationManagement() {
           </Card>
         </TabsContent>
 
-        {/* Departments Tab */}
-        <TabsContent value="departments" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {departments.map((dept) => (
-              <Card key={dept.id} className="overflow-hidden">
-                <div className={`h-2 ${dept.color}`} />
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{dept.name}</CardTitle>
-                  <CardDescription>{dept.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Head:</span>
-                      <span className="font-medium">{dept.head}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Members:</span>
-                      <Badge variant="secondary">{dept.memberCount}</Badge>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="mt-4 w-full">
-                    View Details
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+        <TabsContent value="units" className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">Departments & Bureaus</h2>
+              <p className="text-sm text-muted-foreground">
+                Unit yang tampil di profil publik dan pilihan data anggota.
+              </p>
+            </div>
+            <Button size="sm" className="gap-2" onClick={openCreateUnit}>
+              <Plus className="h-4 w-4" />
+              Add Unit
+            </Button>
           </div>
+
+          {units.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {units.map((unit) => (
+                <Card key={unit.id} className="overflow-hidden">
+                  <div className={`h-1.5 ${unit.color}`} />
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="mb-2 flex items-center gap-2">
+                          <Badge variant="outline">
+                            {unit.type === "bureau" ? "Bureau" : "Department"}
+                          </Badge>
+                          <Badge variant="secondary">{unit.memberCount} members</Badge>
+                        </div>
+                        <CardTitle className="text-base">{unit.name}</CardTitle>
+                        <CardDescription className="mt-1 line-clamp-2 min-h-10">
+                          {unit.description || "No description yet."}
+                        </CardDescription>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label={`Actions for ${unit.name}`}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditUnit(unit)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            disabled={deletingUnitId === unit.id}
+                            onClick={() => handleDeleteUnit(unit)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="border-t pt-4">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">Unit Head</p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="text-xs">
+                          {unit.head === "-" ? "?" : getInitials(unit.head)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">
+                        {unit.head === "-" ? "Not assigned" : unit.head}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-md border border-dashed px-6 text-center">
+              <Building2 className="mb-4 h-10 w-10 text-muted-foreground" />
+              <h3 className="font-semibold">No departments or bureaus yet</h3>
+              <p className="mt-1 max-w-md text-sm text-muted-foreground">
+                Add the first unit so members can be assigned and the organization chart can be built.
+              </p>
+              <Button className="mt-4 gap-2" onClick={openCreateUnit}>
+                <Plus className="h-4 w-4" />
+                Add Unit
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
-        {/* Org Structure Tab */}
-        <TabsContent value="structure" className="space-y-4">
+        <TabsContent value="structure">
           <Card>
             <CardHeader>
               <CardTitle>Organization Chart</CardTitle>
               <CardDescription>
-                Visual representation of the organization hierarchy.
+                Struktur ini otomatis mengikuti jabatan anggota dan unit organisasi.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center">
-                {/* Ketua Umum */}
-                <div className="flex flex-col items-center">
-                  <Card className="w-48 border-2 border-primary">
-                    <CardContent className="p-4 text-center">
-                      <Avatar className="mx-auto h-12 w-12">
-                        <AvatarFallback className="bg-primary text-primary-foreground">AR</AvatarFallback>
-                      </Avatar>
-                      <p className="mt-2 font-semibold">Ahmad Rizki P.</p>
-                      <p className="text-xs text-muted-foreground">Ketua Umum</p>
-                    </CardContent>
-                  </Card>
-                  <div className="h-8 w-0.5 bg-border" />
+              {members.length === 0 && units.length === 0 ? (
+                <div className="flex min-h-64 flex-col items-center justify-center text-center">
+                  <Network className="mb-4 h-10 w-10 text-muted-foreground" />
+                  <h3 className="font-semibold">Organization chart is empty</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Add departments, bureaus, and members to generate the chart.
+                  </p>
                 </div>
-
-                {/* BPH Row */}
-                <div className="flex gap-4">
-                  {[
-                    { name: "Siti N.", role: "Wakil Ketua", initials: "SN" },
-                    { name: "Budi S.", role: "Sekretaris", initials: "BS" },
-                    { name: "Dian P.", role: "Bendahara", initials: "DP" },
-                  ].map((member) => (
-                    <div key={member.name} className="flex flex-col items-center">
-                      <div className="h-8 w-0.5 bg-border" />
-                      <Card className="w-40">
-                        <CardContent className="p-3 text-center">
-                          <Avatar className="mx-auto h-10 w-10">
-                            <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
-                              {member.initials}
+              ) : (
+                <div className="overflow-x-auto pb-4">
+                  <div className="mx-auto flex min-w-[720px] max-w-6xl flex-col items-center px-4">
+                    <div className="rounded-md border-2 border-primary bg-card px-6 py-4 text-center shadow-sm">
+                      <div className="flex -space-x-2 justify-center">
+                        {leadership.slice(0, 4).map((member) => (
+                          <Avatar key={member.id} className="h-10 w-10 border-2 border-background">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                              {getInitials(member.name)}
                             </AvatarFallback>
                           </Avatar>
-                          <p className="mt-2 text-sm font-medium">{member.name}</p>
-                          <p className="text-xs text-muted-foreground">{member.role}</p>
-                        </CardContent>
-                      </Card>
+                        ))}
+                        {leadership.length === 0 && (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Users className="h-5 w-5" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-2 font-semibold">Executive Board</p>
+                      <p className="text-xs text-muted-foreground">
+                        {leadership.length} leadership members
+                      </p>
                     </div>
-                  ))}
-                </div>
 
-                {/* Departments Row */}
-                <div className="mt-8 w-full">
-                  <div className="mx-auto h-0.5 w-3/4 bg-border" />
-                  <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8">
-                    {departments.slice(1).map((dept) => (
-                      <Card key={dept.id} className="text-center">
-                        <CardContent className="p-3">
-                          <div className={`mx-auto mb-2 h-8 w-8 rounded-full ${dept.color}`} />
-                          <p className="text-xs font-medium leading-tight">{dept.name}</p>
-                          <p className="text-xs text-muted-foreground">{dept.memberCount} members</p>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    <div className="h-8 w-px bg-border" />
+                    <div className="h-px w-[calc(100%-12rem)] bg-border" />
+
+                    <div className="grid w-full grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
+                      {units.map((unit) => {
+                        const unitMembers = members.filter(
+                          (member) => member.department === unit.name,
+                        )
+                        const unitHead =
+                          unitMembers.find((member) => isLeadershipPosition(member.position)) ??
+                          unitMembers[0]
+
+                        return (
+                          <div key={unit.id} className="flex flex-col items-center">
+                            <div className="h-6 w-px bg-border" />
+                            <div className="w-full rounded-md border bg-card p-4 text-center shadow-sm">
+                              <div className={`mx-auto h-2 w-12 rounded-full ${unit.color}`} />
+                              <Badge variant="outline" className="mt-3">
+                                {unit.type === "bureau" ? "Bureau" : "Department"}
+                              </Badge>
+                              <p className="mt-2 text-sm font-semibold leading-snug">{unit.name}</p>
+                              <div className="mt-3 flex items-center justify-center gap-2 border-t pt-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={unitHead?.avatar} />
+                                  <AvatarFallback className="text-[10px]">
+                                    {unitHead ? getInitials(unitHead.name) : "?"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0 text-left">
+                                  <p className="truncate text-xs font-medium">
+                                    {unitHead?.name ?? "Not assigned"}
+                                  </p>
+                                  <p className="truncate text-[11px] text-muted-foreground">
+                                    {unitHead?.position ?? `${unit.memberCount} members`}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isUnitDialogOpen} onOpenChange={setIsUnitDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingUnit ? "Edit Organizational Unit" : "Add Organizational Unit"}</DialogTitle>
+            <DialogDescription>
+              Create a department or bureau for member assignment and the public profile.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="unit-name">Unit Name</Label>
+              <Input
+                id="unit-name"
+                value={unitForm.name}
+                onChange={(event) => setUnitForm({ ...unitForm, name: event.target.value })}
+                placeholder="e.g., Media and Information"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unit-type">Unit Type</Label>
+              <Select
+                value={unitForm.type}
+                onValueChange={(value: "department" | "bureau") =>
+                  setUnitForm({ ...unitForm, type: value })
+                }
+              >
+                <SelectTrigger id="unit-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="department">Department</SelectItem>
+                  <SelectItem value="bureau">Bureau</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unit-description">Description</Label>
+              <Textarea
+                id="unit-description"
+                rows={4}
+                value={unitForm.description}
+                onChange={(event) =>
+                  setUnitForm({ ...unitForm, description: event.target.value })
+                }
+                placeholder="Brief responsibility of this unit"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Chart Color</Label>
+              <div className="flex flex-wrap gap-2">
+                {unitColors.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    className={`flex h-9 items-center gap-2 rounded-md border px-3 text-sm ${
+                      unitForm.color === color.value ? "border-foreground" : "border-border"
+                    }`}
+                    onClick={() => setUnitForm({ ...unitForm, color: color.value })}
+                  >
+                    <span className={`h-3 w-3 rounded-full ${color.swatch}`} />
+                    {color.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUnitDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveUnit} disabled={isSavingUnit}>
+              {isSavingUnit ? "Saving..." : editingUnit ? "Save Changes" : "Add Unit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
