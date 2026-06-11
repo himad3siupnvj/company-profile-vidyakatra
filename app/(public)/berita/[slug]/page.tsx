@@ -1,4 +1,3 @@
-import type { Metadata } from "next"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Calendar, Clock, FileText, User } from "lucide-react"
@@ -9,7 +8,6 @@ import { ShareArticleButton } from "@/components/public/share-article-button"
 import type { ArticleDocument } from "@/lib/article-content"
 import { getPublicNewsBySlug } from "@/lib/public-articles"
 import { newsData } from "@/lib/public-content"
-import { getSiteUrl } from "@/app/site-url"
 
 type NewsDetailPageProps = {
   params: Promise<{ slug: string }>
@@ -21,43 +19,6 @@ export function generateStaticParams() {
 
 export const revalidate = 300
 
-async function getNewsDetail(slug: string) {
-  return getPublicNewsBySlug(slug).then(
-    (news) => news ?? newsData.find((item) => item.slug === slug),
-  )
-}
-
-export async function generateMetadata({ params }: NewsDetailPageProps): Promise<Metadata> {
-  const { slug } = await params
-  const news = await getNewsDetail(slug)
-
-  if (!news) return {}
-
-  const path = `/berita/${news.slug}`
-  const image = news.image.startsWith("http")
-    ? news.image
-    : new URL(news.image, getSiteUrl()).toString()
-
-  return {
-    title: news.title,
-    description: news.excerpt,
-    alternates: { canonical: path },
-    openGraph: {
-      type: "article",
-      url: path,
-      title: news.title,
-      description: news.excerpt,
-      images: [{ url: image, alt: news.title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: news.title,
-      description: news.excerpt,
-      images: [image],
-    },
-  }
-}
-
 const categoryLabels = {
   berita: "Berita Acara",
   kegiatan: "Kegiatan",
@@ -67,7 +28,7 @@ const categoryLabels = {
 
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
   const { slug } = await params
-  const news = await getNewsDetail(slug)
+  const news = await getPublicNewsBySlug(slug)
 
   if (!news) {
     notFound()
