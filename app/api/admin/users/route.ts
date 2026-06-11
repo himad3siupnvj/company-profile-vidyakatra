@@ -23,7 +23,6 @@ function serializeUser(row: typeof users.$inferSelect) {
     claimCode: row.status === "unclaimed" ? row.claimCode : null,
     lastLogin: row.lastLoginAt ? row.lastLoginAt.toISOString().slice(0, 16).replace("T", " ") : "-",
     createdAt: row.createdAt.toISOString().slice(0, 10),
-    avatar: "",
   }
 }
 
@@ -62,12 +61,10 @@ export async function POST(request: NextRequest) {
   if (guard.response) return guard.response
 
   const payload = await request.json()
-  const name = String(payload.name ?? "").trim()
-  const email = String(payload.email ?? "").trim().toLowerCase()
   const memberId = String(payload.memberId ?? "").trim()
 
-  if (!name || !email || !memberId) {
-    return NextResponse.json({ error: "Member, name, and email are required" }, { status: 400 })
+  if (!memberId) {
+    return NextResponse.json({ error: "Anggota terkait wajib dipilih." }, { status: 400 })
   }
 
   if (!isUserRole(payload.role)) {
@@ -78,7 +75,16 @@ export async function POST(request: NextRequest) {
   const [member] = await db.select().from(members).where(eq(members.id, memberId)).limit(1)
 
   if (!member) {
-    return NextResponse.json({ error: "Linked member is required" }, { status: 400 })
+    return NextResponse.json({ error: "Anggota terkait tidak ditemukan." }, { status: 400 })
+  }
+
+  const name = member.name.trim()
+  const email = member.email?.trim().toLowerCase() ?? ""
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json(
+      { error: "Anggota harus memiliki alamat email yang valid sebelum dibuatkan akun CMS." },
+      { status: 400 },
+    )
   }
 
   const now = new Date()
@@ -111,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ user: serializeUser(created) })
   } catch {
-    return NextResponse.json({ error: "Email is already used" }, { status: 409 })
+    return NextResponse.json({ error: "Email anggota sudah digunakan oleh akun lain." }, { status: 409 })
   }
 }
 

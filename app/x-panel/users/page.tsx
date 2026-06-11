@@ -37,7 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Shield, UserCog, Users, Key } from "lucide-react"
+import { Key, Loader2, MoreHorizontal, Plus, Search, Shield, Trash2, UserCog, Users } from "lucide-react"
 import { getPermissions, getRoleGroup, roleLabels, type UserRole, userRoles } from "@/lib/permissions"
 import { getFirstNameInitial } from "@/lib/name-initials"
 
@@ -50,7 +50,6 @@ interface User {
   claimCode: string | null
   lastLogin: string
   createdAt: string
-  avatar: string
 }
 
 interface MemberOption {
@@ -60,14 +59,6 @@ interface MemberOption {
   department: string
   position: string
 }
-
-const initialUsers: User[] = [
-  { id: "user-1", name: "Super Admin", email: "admin@himad3si.ac.id", role: "administrator", status: "active", claimCode: null, lastLogin: "2024-12-14 10:30", createdAt: "2024-01-01", avatar: "" },
-  { id: "user-2", name: "Ahmad Rizki", email: "ahmad@himad3si.ac.id", role: "ketua", status: "active", claimCode: null, lastLogin: "2024-12-14 09:15", createdAt: "2024-02-15", avatar: "" },
-  { id: "user-3", name: "Siti Nurhaliza", email: "siti@himad3si.ac.id", role: "sekretaris", status: "unclaimed", claimCode: "A1B2C3D4", lastLogin: "-", createdAt: "2024-02-15", avatar: "" },
-  { id: "user-4", name: "Budi Santoso", email: "budi@himad3si.ac.id", role: "kepala_departemen", status: "inactive", claimCode: null, lastLogin: "2024-11-20 11:00", createdAt: "2024-03-10", avatar: "" },
-  { id: "user-5", name: "Dian Permata", email: "dian@himad3si.ac.id", role: "bendahara", status: "active", claimCode: null, lastLogin: "2024-12-12 16:30", createdAt: "2024-04-01", avatar: "" },
-]
 
 const roleGroupMeta = {
   super_admin: {
@@ -99,9 +90,18 @@ const roleOptions = userRoles.map((role) => ({
   permissions: getPermissions(role),
 }))
 
+const statusLabels: Record<User["status"], string> = {
+  unclaimed: "Belum diklaim",
+  active: "Aktif",
+  inactive: "Nonaktif",
+}
+
 export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>(initialUsers)
+  const [users, setUsers] = useState<User[]>([])
   const [members, setMembers] = useState<MemberOption[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [message, setMessage] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [filterRole, setFilterRole] = useState<string>("all")
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
@@ -120,17 +120,17 @@ export default function UserManagement() {
           fetch("/api/admin/organization"),
         ])
 
-        if (usersResponse.ok) {
-          const data = await usersResponse.json()
-          setUsers(data.users)
-        }
+        const usersData = await usersResponse.json()
+        if (!usersResponse.ok) throw new Error(usersData.error || "Data pengguna gagal dimuat.")
+        setUsers(usersData.users)
 
-        if (organizationResponse.ok) {
-          const data = await organizationResponse.json()
-          setMembers(data.members)
-        }
-      } catch {
-        // Keep local fallback data when the backend is unavailable.
+        const organizationData = await organizationResponse.json()
+        if (!organizationResponse.ok) throw new Error(organizationData.error || "Data anggota gagal dimuat.")
+        setMembers(organizationData.members)
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Data pengguna gagal dimuat.")
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -145,8 +145,13 @@ export default function UserManagement() {
   })
 
   const handleAddUser = async () => {
-    if (!newUser.role) return
+    if (!newUser.memberId || !newUser.email || !newUser.role) {
+      setMessage("Pilih anggota, pastikan email tersedia, lalu tentukan peran CMS.")
+      return
+    }
 
+    setIsSubmitting(true)
+    setMessage("")
     try {
       const response = await fetch("/api/admin/users", {
         method: "POST",
@@ -154,14 +159,16 @@ export default function UserManagement() {
         body: JSON.stringify(newUser),
       })
 
-      if (!response.ok) return
-
       const data = await response.json()
-      setUsers([data.user, ...users])
+      if (!response.ok) throw new Error(data.error || "Pengguna gagal dibuat.")
+      setUsers((currentUsers) => [data.user, ...currentUsers])
       setNewUser({ memberId: "", name: "", email: "", role: "" })
       setIsAddUserOpen(false)
-    } catch {
-      // The form stays open so the user can retry.
+      setMessage(`Akun ${data.user.name} berhasil dibuat. Kode klaim: ${data.user.claimCode}`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Pengguna gagal dibuat.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -171,11 +178,12 @@ export default function UserManagement() {
 
     try {
       const response = await fetch(`/api/admin/users?id=${id}`, { method: "DELETE" })
-      if (!response.ok) {
-        setUsers(previousUsers)
-      }
-    } catch {
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Pengguna gagal dinonaktifkan.")
+      setMessage("Pengguna berhasil dinonaktifkan.")
+    } catch (error) {
       setUsers(previousUsers)
+      setMessage(error instanceof Error ? error.message : "Pengguna gagal dinonaktifkan.")
     }
   }
 
@@ -197,21 +205,17 @@ export default function UserManagement() {
         body: JSON.stringify({ id, status: nextStatus }),
       })
 
-      if (!response.ok) {
-        setUsers(previousUsers)
-        return
-      }
-
       const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Status pengguna gagal diubah.")
       setUsers((currentUsers) => currentUsers.map((user) => (user.id === id ? data.user : user)))
-    } catch {
+      setMessage("Status pengguna berhasil diperbarui.")
+    } catch (error) {
       setUsers(previousUsers)
+      setMessage(error instanceof Error ? error.message : "Status pengguna gagal diubah.")
     }
   }
 
   const handleResetPassword = async (id: string) => {
-    const previousUsers = users
-
     try {
       const response = await fetch("/api/admin/users", {
         method: "PATCH",
@@ -219,12 +223,12 @@ export default function UserManagement() {
         body: JSON.stringify({ id, action: "reset_password" }),
       })
 
-      if (!response.ok) return
-
       const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Password pengguna gagal direset.")
       setUsers((currentUsers) => currentUsers.map((user) => (user.id === id ? data.user : user)))
-    } catch {
-      setUsers(previousUsers)
+      setMessage(`Password direset. Kode klaim baru: ${data.user.claimCode}`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Password pengguna gagal direset.")
     }
   }
 
@@ -246,21 +250,21 @@ export default function UserManagement() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengelolaan Pengguna</h1>
           <p className="text-muted-foreground">
-            Manage admin users and their access permissions.
+            Kelola akun CMS dan hak akses setiap pengurus.
           </p>
         </div>
         <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Add User
+              Tambah Pengguna
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Tambah Pengguna CMS</DialogTitle>
               <DialogDescription>
-                Buat akun unclaimed. User akan mengklaim akun memakai claim code.
+                Buat akun yang akan diklaim pengguna menggunakan kode klaim.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -288,7 +292,7 @@ export default function UserManagement() {
                   id="name"
                   value={newUser.name}
                   onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                  placeholder="Enter full name"
+                  placeholder="Nama lengkap anggota"
                   readOnly={Boolean(newUser.memberId)}
                 />
               </div>
@@ -310,7 +314,7 @@ export default function UserManagement() {
                   onValueChange={(value) => setNewUser({ ...newUser, role: value as User["role"] })}
                 >
                   <SelectTrigger id="role">
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue placeholder="Pilih peran" />
                   </SelectTrigger>
                   <SelectContent>
                     {roleOptions.map((role) => (
@@ -328,14 +332,23 @@ export default function UserManagement() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddUserOpen(false)}>
-                Cancel
+              <Button variant="outline" onClick={() => setIsAddUserOpen(false)} disabled={isSubmitting}>
+                Batal
               </Button>
-              <Button onClick={handleAddUser}>Buat Kode Klaim</Button>
+              <Button onClick={handleAddUser} disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Buat Kode Klaim
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
+      {message && (
+        <div className="rounded-lg border bg-card px-4 py-3 text-sm">
+          {message}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -394,7 +407,7 @@ export default function UserManagement() {
               <CardDescription className="mt-2">{group.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">Permissions:</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Hak akses:</p>
               <div className="flex flex-wrap gap-1">
                 {getPermissions(userRoles.find((role) => getRoleGroup(role) === key) ?? "staff").map((perm) => (
                   <Badge key={perm} variant="secondary" className="text-xs">
@@ -416,7 +429,7 @@ export default function UserManagement() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search users..."
+                  placeholder="Cari pengguna..."
                   className="w-full pl-9 sm:w-64"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -453,6 +466,21 @@ export default function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-28 text-center text-muted-foreground">
+                      <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+                      Memuat data pengguna...
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && filteredUsers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-28 text-center text-muted-foreground">
+                      {users.length === 0 ? "Belum ada akun CMS." : "Tidak ada pengguna yang sesuai pencarian."}
+                    </TableCell>
+                  </TableRow>
+                )}
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
@@ -475,7 +503,7 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={user.status === "active" ? "default" : "secondary"}>
-                        {user.status}
+                        {statusLabels[user.status]}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
@@ -491,13 +519,9 @@ export default function UserManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
                             <Shield className="mr-2 h-4 w-4" />
-                            {user.status === "active" ? "Deactivate" : "Activate"}
+                            {user.status === "active" ? "Nonaktifkan" : "Aktifkan"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleResetPassword(user.id)}
@@ -512,7 +536,7 @@ export default function UserManagement() {
                             disabled={user.role === "administrator" && users.filter(u => u.role === "administrator").length === 1}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            Nonaktifkan
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
