@@ -469,8 +469,10 @@ export default function ArticleManagementPage() {
     <div className="space-y-6">
       <Dialog open={Boolean(previewArticle)} onOpenChange={(open) => !open && setPreviewArticle(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>{previewArticle?.title ?? "Preview Artikel"}</DialogTitle>
+          <DialogHeader className="pr-10">
+            <DialogTitle className="break-words leading-snug">
+              {previewArticle?.title ?? "Pratinjau Artikel"}
+            </DialogTitle>
             <DialogDescription>
               {previewArticle
                 ? `${previewArticle.categoryLabel ?? previewArticle.category} / ${previewArticle.author} / ${previewArticle.readTime}`
