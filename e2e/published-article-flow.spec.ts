@@ -21,6 +21,8 @@ test.describe("published article flow", () => {
   test.skip(!adminEmail || !adminPassword, "Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD to run this flow.")
 
   test("logs in, publishes an article, and renders it publicly", async ({ page }) => {
+    test.setTimeout(120_000)
+
     const suffix = Date.now()
     const title = `E2E Published Article ${suffix}`
     let createdArticleId: string | null = null
@@ -29,7 +31,17 @@ test.describe("published article flow", () => {
     await expect(page.locator("form[data-client-ready='true']")).toBeVisible()
     await page.getByLabel("Email").fill(adminEmail!)
     await page.getByLabel("Password").fill(adminPassword!)
+    const loginResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/api/auth/login",
+    )
     await page.getByLabel("Password").press("Enter")
+    const loginResponse = await loginResponsePromise
+    expect(loginResponse.ok()).toBe(true)
+
+    const sessionResponse = await page.request.get("/api/auth/me")
+    expect(sessionResponse.ok(), await sessionResponse.text()).toBe(true)
     await expect(page).toHaveURL(/\/x-panel\/?$/)
 
     const createResponse = await page.request.post("/api/admin/articles", {

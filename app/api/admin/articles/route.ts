@@ -1,8 +1,9 @@
-import { and, desc, eq, isNull } from "drizzle-orm"
+import { and, count, desc, eq, isNull } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { articleCategories, articles, auditLogs, users } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
+import { can } from "@/lib/auth"
 import {
   getArticleReadTime,
   hasArticleTextContent,
@@ -94,11 +95,24 @@ async function resolveCategoryId(category: unknown) {
   return created.id
 }
 
-export async function GET() {
-  const guard = await requireApiPermission("article.read_all")
+export async function GET(request: NextRequest) {
+  const guard = await requireApiPermission("article.edit_own")
   if (guard.response) return guard.response
 
   const db = getDb()
+  const canReadAll = can(guard.user, "article.read_all")
+  const page = Math.max(1, Number.parseInt(request.nextUrl.searchParams.get("page") ?? "1", 10) || 1)
+  const pageSize = Math.min(
+    100,
+    Math.max(10, Number.parseInt(request.nextUrl.searchParams.get("limit") ?? "50", 10) || 50),
+  )
+  const whereClause = canReadAll
+    ? isNull(articles.deletedAt)
+    : and(isNull(articles.deletedAt), eq(articles.authorId, guard.user!.id))
+  const [{ value: total }] = await db
+    .select({ value: count() })
+    .from(articles)
+    .where(whereClause)
   const rows = await db
     .select({
       id: articles.id,
@@ -122,10 +136,20 @@ export async function GET() {
     .from(articles)
     .leftJoin(articleCategories, eq(articles.categoryId, articleCategories.id))
     .leftJoin(users, eq(articles.authorId, users.id))
-    .where(isNull(articles.deletedAt))
+    .where(whereClause)
     .orderBy(desc(articles.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
 
-  return NextResponse.json({ articles: rows.map(serializeArticle) })
+  return NextResponse.json({
+    articles: rows.map(serializeArticle),
+    pagination: {
+      page,
+      pageSize,
+      total: Number(total),
+      hasMore: page * pageSize < Number(total),
+    },
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -154,6 +178,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (existingArticle) {
+    if (!can(guard.user, "article.edit_all") && existingArticle.authorId !== guard.user?.id) {
+      return NextResponse.json({ error: "Article with this title already exists" }, { status: 409 })
+    }
+
     const [updated] = await db
       .update(articles)
       .set({
@@ -193,6 +221,7 @@ export async function POST(request: NextRequest) {
       content,
       categoryId,
       status: "draft",
+      authorId: guard.user?.id ?? null,
       authorName: String(payload.author ?? "Tim Media"),
       thumbnailUrl: payload.thumbnailUrl || payload.image || null,
       thumbnailAlt: payload.thumbnailAlt || title,
@@ -220,7 +249,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const guard = await requireApiPermission("article.edit_all")
+  const guard = await requireApiPermission("article.edit_own")
   if (guard.response) return guard.response
 
   const payload = await request.json()
@@ -236,6 +265,10 @@ export async function PUT(request: NextRequest) {
 
   if (!existing || existing.deletedAt) {
     return NextResponse.json({ error: "Article not found" }, { status: 404 })
+  }
+
+  if (!can(guard.user, "article.edit_all") && existing.authorId !== guard.user?.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
   if (existing.status !== "draft" && existing.status !== "rejected") {
@@ -331,6 +364,14 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Article not found" }, { status: 404 })
   }
 
+  if (
+    action === "submit" &&
+    !can(guard.user, "article.read_all") &&
+    article.authorId !== guard.user?.id
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   if (!canTransitionArticle(article.status, action)) {
     return NextResponse.json(
       { error: `Cannot ${action} article from ${article.status} status` },
@@ -363,8 +404,30 @@ export async function PATCH(request: NextRequest) {
       publishedAt: action === "approve" ? now : action === "restore" ? null : article.publishedAt,
       updatedAt: now,
     })
-    .where(eq(articles.id, id))
+    .where(
+      and(
+        eq(articles.id, id),
+        eq(articles.status, article.status),
+        isNull(articles.deletedAt),
+      ),
+    )
     .returning()
+
+  if (!updated) {
+    return NextResponse.json({ error: "Article status changed. Refresh and try again." }, { status: 409 })
+  }
+
+  await db.insert(auditLogs).values({
+    actorId: guard.user?.id ?? null,
+    action: `article.${action}`,
+    entityType: "article",
+    entityId: id,
+    metadata: {
+      previousStatus: article.status,
+      newStatus: nextStatus,
+    },
+    createdAt: now,
+  })
 
   const [category] = updated.categoryId
     ? await db.select().from(articleCategories).where(eq(articleCategories.id, updated.categoryId)).limit(1)

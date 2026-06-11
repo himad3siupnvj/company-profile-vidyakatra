@@ -22,6 +22,18 @@ describe("article content utilities", () => {
     expect(normalizeArticleDocument(null, "fallback")).toEqual(createFallbackArticleDocument("fallback"))
   })
 
+  it("rejects malformed blocks instead of passing unsafe content to renderers", () => {
+    expect(
+      normalizeArticleDocument(
+        {
+          type: "doc",
+          content: [{ id: "broken", type: "paragraph", text: null }],
+        },
+        "fallback",
+      ),
+    ).toEqual(createFallbackArticleDocument("fallback"))
+  })
+
   it("keeps valid article documents unchanged", () => {
     const document: ArticleDocument = {
       type: "doc",

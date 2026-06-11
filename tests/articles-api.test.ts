@@ -28,7 +28,7 @@ describe("articles API", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.requireApiPermission.mockResolvedValue({
-      user: { id: "user-1" },
+      user: { id: "user-1", role: "administrator" },
       response: null,
     })
   })
@@ -59,6 +59,38 @@ describe("articles API", () => {
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({ error: "Valid id and title are required" })
     expect(mocks.getDb).not.toHaveBeenCalled()
+  })
+
+  it("prevents contributors from editing another author's draft", async () => {
+    mocks.requireApiPermission.mockResolvedValue({
+      user: { id: "user-1", role: "staff" },
+      response: null,
+    })
+    const limit = vi.fn().mockResolvedValue([
+      {
+        id: "article-1",
+        authorId: "user-2",
+        status: "draft",
+        deletedAt: null,
+      },
+    ])
+    const select = vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({ limit })),
+      })),
+    }))
+    const update = vi.fn()
+    mocks.getDb.mockReturnValue({ select, update })
+
+    const response = await PUT(
+      jsonRequest("PUT", {
+        id: "article-1",
+        title: "Draft milik orang lain",
+      }),
+    )
+
+    expect(response.status).toBe(403)
+    expect(update).not.toHaveBeenCalled()
   })
 
   it("soft deletes articles through update, not hard delete", async () => {
@@ -105,7 +137,8 @@ describe("articles API", () => {
     const where = vi.fn(() => ({ returning }))
     const set = vi.fn((payload: Record<string, unknown>) => ({ where }))
     const update = vi.fn(() => ({ set }))
-    const insert = vi.fn()
+    const values = vi.fn().mockResolvedValue(undefined)
+    const insert = vi.fn(() => ({ values }))
     mocks.getDb.mockReturnValue({ select, update, insert })
 
     const response = await PATCH(jsonRequest("PATCH", { id: "article-1", action: "approve" }))
@@ -115,6 +148,40 @@ describe("articles API", () => {
     expect(body.article.status).toBe("published")
     expect(update).toHaveBeenCalledTimes(1)
     expect(set.mock.calls[0][0]).toMatchObject({ status: "published", reviewerId: "user-1" })
+    expect(insert).toHaveBeenCalledTimes(1)
+    expect(values.mock.calls[0][0]).toMatchObject({
+      action: "article.approve",
+      entityId: "article-1",
+      metadata: {
+        previousStatus: "submitted",
+        newStatus: "published",
+      },
+    })
+  })
+
+  it("returns a conflict when another request already changed the article status", async () => {
+    const article = {
+      id: "article-1",
+      title: "Draft Berita",
+      content: { type: "doc", content: [{ id: "p1", type: "paragraph", text: "Isi berita" }] },
+      status: "submitted",
+      authorId: "user-2",
+      deletedAt: null,
+    }
+    const limit = vi.fn().mockResolvedValue([article])
+    const select = vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn(() => ({ limit })) })) }))
+    const returning = vi.fn().mockResolvedValue([])
+    const update = vi.fn(() => ({
+      set: vi.fn(() => ({
+        where: vi.fn(() => ({ returning })),
+      })),
+    }))
+    const insert = vi.fn()
+    mocks.getDb.mockReturnValue({ select, update, insert })
+
+    const response = await PATCH(jsonRequest("PATCH", { id: "article-1", action: "approve" }))
+
+    expect(response.status).toBe(409)
     expect(insert).not.toHaveBeenCalled()
   })
 })

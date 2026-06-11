@@ -49,9 +49,12 @@ import { ArticleDocumentRenderer } from "@/components/public/article-document-re
 import { getArticleReadTime } from "@/lib/article-content"
 import { optimizeImageForUpload, type ImageProcessingStage } from "@/lib/client-image-processing"
 import {
+  articleWorkflowPermissions,
   getArticleWorkflowActions,
   type ArticleWorkflowAction,
 } from "@/lib/article-workflow"
+import { useAdminUser } from "@/components/admin/admin-user-context"
+import { hasPermission } from "@/lib/permissions"
 
 interface Article {
   id: string
@@ -97,7 +100,10 @@ const workflowActionIcons = {
 } satisfies Record<ArticleWorkflowAction, typeof Send>
 
 export default function ArticleManagementPage() {
+  const { currentUser } = useAdminUser()
   const [articles, setArticles] = useState<Article[]>([])
+  const [nextArticlePage, setNextArticlePage] = useState<number | null>(null)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isLoadingArticles, setIsLoadingArticles] = useState(true)
@@ -135,7 +141,7 @@ export default function ArticleManagementPage() {
       const timeoutId = window.setTimeout(() => controller.abort(), articlesRequestTimeoutMs)
 
       try {
-        const response = await fetch("/api/admin/articles", {
+        const response = await fetch("/api/admin/articles?page=1&limit=50", {
           cache: "no-store",
           signal: controller.signal,
         })
@@ -147,6 +153,7 @@ export default function ArticleManagementPage() {
         }
 
         setArticles(data.articles)
+        setNextArticlePage(data.pagination?.hasMore ? 2 : null)
       } catch (error) {
         setErrorMessage(
           error instanceof DOMException && error.name === "AbortError"
@@ -161,6 +168,34 @@ export default function ArticleManagementPage() {
 
     loadArticles()
   }, [])
+
+  const handleLoadMoreArticles = async () => {
+    if (!nextArticlePage || isLoadingMore) return
+
+    setIsLoadingMore(true)
+
+    try {
+      const response = await fetch(`/api/admin/articles?page=${nextArticlePage}&limit=50`, {
+        cache: "no-store",
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setErrorMessage(data?.error ?? "Artikel berikutnya gagal dimuat.")
+        return
+      }
+
+      setArticles((current) => {
+        const existingIds = new Set(current.map((article) => article.id))
+        return [...current, ...data.articles.filter((article: Article) => !existingIds.has(article.id))]
+      })
+      setNextArticlePage(data.pagination?.hasMore ? nextArticlePage + 1 : null)
+    } catch {
+      setErrorMessage("Artikel berikutnya gagal dimuat. Coba lagi sebentar.")
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   const filteredArticles = articles.filter((article) => {
     const matchesSearch =
@@ -766,7 +801,14 @@ export default function ArticleManagementPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {getArticleWorkflowActions(article.status).map((action) => {
+                          {getArticleWorkflowActions(article.status)
+                            .filter((action) =>
+                              Boolean(
+                                currentUser &&
+                                hasPermission(currentUser.role, articleWorkflowPermissions[action]),
+                              ),
+                            )
+                            .map((action) => {
                             const Icon = workflowActionIcons[action]
 
                             return (
@@ -779,7 +821,7 @@ export default function ArticleManagementPage() {
                                 {workflowActionLabels[action]}
                               </DropdownMenuItem>
                             )
-                          })}
+                            })}
                           <DropdownMenuItem onClick={() => setPreviewArticle(article)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View
@@ -791,13 +833,15 @@ export default function ArticleManagementPage() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => handleDeleteArticle(article.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          {currentUser && hasPermission(currentUser.role, "article.delete") && (
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDeleteArticle(article.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -817,6 +861,14 @@ export default function ArticleManagementPage() {
               </TableBody>
             </Table>
           </div>
+          {nextArticlePage && (
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" onClick={handleLoadMoreArticles} disabled={isLoadingMore}>
+                {isLoadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoadingMore ? "Loading..." : "Load More Articles"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

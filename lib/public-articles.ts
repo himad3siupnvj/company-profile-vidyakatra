@@ -23,10 +23,15 @@ function getDocumentParagraphs(document: ReturnType<typeof normalizeArticleDocum
     .filter(Boolean)
 }
 
-async function getPublishedArticleRows() {
+async function getPublishedArticleRows(slug?: string) {
   const db = getDb()
+  const filters = [
+    eq(articles.status, "published"),
+    isNull(articles.deletedAt),
+    ...(slug ? [eq(articles.slug, slug)] : []),
+  ]
 
-  return db
+  const query = db
     .select({
       id: articles.id,
       slug: articles.slug,
@@ -44,8 +49,10 @@ async function getPublishedArticleRows() {
     })
     .from(articles)
     .leftJoin(articleCategories, eq(articles.categoryId, articleCategories.id))
-    .where(and(eq(articles.status, "published"), isNull(articles.deletedAt)))
+    .where(and(...filters))
     .orderBy(desc(articles.publishedAt), desc(articles.createdAt))
+
+  return slug ? query.limit(1) : query
 }
 
 function serializePublicArticle(row: Awaited<ReturnType<typeof getPublishedArticleRows>>[number]): PublicNews {
@@ -85,6 +92,20 @@ const getCachedPublicNews = unstable_cache(
   { revalidate: 300, tags: [publicCacheTags.articles] },
 )
 
+const getCachedPublicNewsBySlug = unstable_cache(
+  async (slug: string) => {
+    try {
+      const rows = await getPublishedArticleRows(slug)
+
+      return rows[0] ? serializePublicArticle(rows[0]) : undefined
+    } catch {
+      return newsData.find((item) => item.slug === slug)
+    }
+  },
+  ["public-news-by-slug"],
+  { revalidate: 300, tags: [publicCacheTags.articles] },
+)
+
 export async function getPublicNews() {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
     return getPublicNewsFromStore()
@@ -94,7 +115,15 @@ export async function getPublicNews() {
 }
 
 export async function getPublicNewsBySlug(slug: string) {
-  const news = await getPublicNews()
+  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+    try {
+      const rows = await getPublishedArticleRows(slug)
 
-  return news.find((item) => item.slug === slug)
+      return rows[0] ? serializePublicArticle(rows[0]) : undefined
+    } catch {
+      return newsData.find((item) => item.slug === slug)
+    }
+  }
+
+  return getCachedPublicNewsBySlug(slug)
 }

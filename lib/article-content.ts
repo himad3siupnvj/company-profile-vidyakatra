@@ -42,7 +42,36 @@ export function isArticleDocument(value: unknown): value is ArticleDocument {
 
   const candidate = value as { type?: unknown; content?: unknown }
 
-  return candidate.type === "doc" && Array.isArray(candidate.content)
+  return (
+    candidate.type === "doc" &&
+    Array.isArray(candidate.content) &&
+    candidate.content.every((block) => {
+      if (!block || typeof block !== "object") return false
+
+      const item = block as Record<string, unknown>
+
+      if (typeof item.id !== "string" || !item.id.trim() || typeof item.type !== "string") {
+        return false
+      }
+
+      if (item.type === "image") {
+        return (
+          typeof item.url === "string" &&
+          typeof item.alt === "string" &&
+          typeof item.caption === "string"
+        )
+      }
+
+      if (item.type === "heading") {
+        return (item.level === 1 || item.level === 2) && typeof item.text === "string"
+      }
+
+      return (
+        (item.type === "paragraph" || item.type === "quote" || item.type === "list") &&
+        typeof item.text === "string"
+      )
+    })
+  )
 }
 
 export function normalizeArticleDocument(value: unknown, fallbackText = ""): ArticleDocument {

@@ -1,8 +1,9 @@
-import { count, eq } from "drizzle-orm"
+import { and, eq, isNull } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
-import { articleCategories, articles, users } from "@/db/schema"
+import { articleCategories, articles, auditLogs, users } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
+import { can } from "@/lib/auth"
 import { hasArticleTextContent, normalizeArticleDocument } from "@/lib/article-content"
 import {
   articleWorkflowPermissions,
@@ -74,6 +75,14 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Article not found" }, { status: 404 })
   }
 
+  if (
+    action === "submit" &&
+    !can(guard.user, "article.read_all") &&
+    article.authorId !== guard.user?.id
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   if (!canTransitionArticle(article.status, action)) {
     return NextResponse.json({ error: `Cannot ${action} article from ${article.status} status` }, { status: 409 })
   }
@@ -90,7 +99,6 @@ export async function PATCH(request: NextRequest) {
 
   const now = new Date()
   const nextStatus = getNextArticleStatus(action)
-  const [{ value: beforeCount }] = await db.select({ value: count() }).from(articles)
   const [updated] = await db
     .update(articles)
     .set({
@@ -100,14 +108,30 @@ export async function PATCH(request: NextRequest) {
       publishedAt: action === "approve" ? now : action === "restore" ? null : article.publishedAt,
       updatedAt: now,
     })
-    .where(eq(articles.id, id))
+    .where(
+      and(
+        eq(articles.id, id),
+        eq(articles.status, article.status),
+        isNull(articles.deletedAt),
+      ),
+    )
     .returning()
 
-  const [{ value: afterCount }] = await db.select({ value: count() }).from(articles)
-
-  if (afterCount !== beforeCount) {
-    return NextResponse.json({ error: "Status update must not create article rows" }, { status: 500 })
+  if (!updated) {
+    return NextResponse.json({ error: "Article status changed. Refresh and try again." }, { status: 409 })
   }
+
+  await db.insert(auditLogs).values({
+    actorId: guard.user?.id ?? null,
+    action: `article.${action}`,
+    entityType: "article",
+    entityId: id,
+    metadata: {
+      previousStatus: article.status,
+      newStatus: nextStatus,
+    },
+    createdAt: now,
+  })
 
   const [category] = updated.categoryId
     ? await db.select().from(articleCategories).where(eq(articleCategories.id, updated.categoryId)).limit(1)

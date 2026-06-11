@@ -477,7 +477,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: message }, { status: 400 })
     }
 
-    const validation = validateUploadFile(file, "article-source")
+    const validation = await validateUploadFile(file, "article-source")
 
     if (!validation.ok) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
@@ -507,6 +507,7 @@ export async function POST(request: NextRequest) {
         content: draft.content,
         categoryId,
         status: "draft",
+        authorId: guard.user?.id ?? null,
         authorName: draft.author,
         readTime: getArticleReadTime(draft.content),
         thumbnailUrl: firstImage?.url ?? null,
