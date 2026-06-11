@@ -5,12 +5,14 @@ import logoKabinet from "@/assets/logoKabinet.png"
 import { Clock, Instagram, Mail, MapPin, Music2, Youtube, Linkedin } from "lucide-react"
 import { publicEmailAddress, publicEmailComposeHref } from "@/lib/contact-links"
 import { cn } from "@/lib/utils"
+import { officialSocialLinks } from "@/lib/social-links"
+import type { PublicSocialMedia } from "@/lib/public-site-settings"
 
 const quickLinks = [
   { href: "/", label: "Beranda" },
   { href: "/profil", label: "Profil" },
   { href: "/berita", label: "Berita Acara" },
-  { href: "/kontak", label: "Collaborate" },
+  { href: "/kontak", label: "Kolaborasi" },
 ]
 
 const organizationLinks = [
@@ -18,13 +20,6 @@ const organizationLinks = [
   { href: "/profil#struktur", label: "Struktur Organisasi" },
   { href: "/profil#sejarah", label: "Sejarah" },
   { href: "/profil#divisi", label: "Divisi" },
-]
-
-const socialLinks = [
-  { href: "https://www.instagram.com/himad3si_upnvj?igsh=cDEzaTl3Y3dnbm0=", icon: Instagram, label: "Instagram" },
-  { href: "https://youtube.com/@himad3siupnvj?si=8PEq4uJAALyE4cHJ", icon: Youtube, label: "YouTube" },
-  { href: "https://www.linkedin.com/company/hima-d3si-upnvj-himpunan-mahasiswa-d3-sistem-informasi-upnvj/", icon: Linkedin, label: "LinkedIn" },
-  { href: "https://www.tiktok.com/@himad3si_upnvj?_r=1&_t=ZS-96bDCzDu1o1", icon: Music2, label: "TikTok" },
 ]
 
 function LogoBadge({
@@ -56,7 +51,14 @@ function LogoBadge({
   )
 }
 
-export function Footer() {
+export function Footer({ socialMedia }: { socialMedia: PublicSocialMedia }) {
+  const socialLinks = [
+    { href: socialMedia.instagram, label: officialSocialLinks.instagram.label, icon: Instagram },
+    { href: socialMedia.youtube, label: officialSocialLinks.youtube.label, icon: Youtube },
+    { href: socialMedia.linkedin, label: officialSocialLinks.linkedin.label, icon: Linkedin },
+    { href: socialMedia.tiktok, label: officialSocialLinks.tiktok.label, icon: Music2 },
+  ]
+
   return (
     <footer className="border-t border-border/50 bg-card">
       <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 md:px-6 lg:pb-12 lg:pt-10">

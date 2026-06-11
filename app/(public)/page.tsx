@@ -4,7 +4,6 @@ import kabinetImage from "@/assets/kabinet.jpg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { publicEmailComposeHref } from "@/lib/contact-links";
 import { getPublicNews } from "@/lib/public-articles";
 import {
   Zap,
@@ -12,13 +11,7 @@ import {
   Calendar,
   Trophy,
   ArrowRight,
-  Megaphone,
-  Instagram,
-  Linkedin,
-  Music2,
-  Sparkles,
   Play,
-  Youtube,
   User,
   Clock,
 } from "lucide-react";
@@ -30,45 +23,6 @@ const stats = [
   { label: "Program Kerja", value: "25+", icon: Calendar },
   { label: "Prestasi", value: "50+", icon: Trophy },
   { label: "Tahun Berdiri", value: "2023  ", icon: Zap },
-];
-
-const socialMedia = [
-  {
-    icon: Instagram,
-    name: "Instagram",
-    handle: "@himad3si_upnvj",
-    value: "2.5K+",
-    caption: "akun terjangkau",
-    url: "https://instagram.com/himad3si_upnvj",
-    className: "border-pink-500/30 bg-pink-500/10 text-pink-300",
-  },
-  {
-    icon: Youtube,
-    name: "YouTube",
-    handle: "HIMA D3SI UPNVJ",
-    value: "50+",
-    caption: "konten kegiatan",
-    url: "https://youtube.com/@himad3siupnvj?si=AxW5-zV-xXaZjR6n",
-    className: "border-red-500/30 bg-red-500/10 text-red-300",
-  },
-  {
-    icon: Linkedin,
-    name: "LinkedIn",
-    handle: "HIMA D3SI UPNVJ",
-    value: "20+",
-    caption: "jejaring profesional",
-    url: "https://linkedin.com",
-    className: "border-blue-500/30 bg-blue-500/10 text-blue-300",
-  },
-  {
-    icon: Music2,
-    name: "TikTok",
-    handle: "@himad3si",
-    value: "600K+",
-    caption: "views each year",
-    url: "https://tiktok.com",
-    className: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200",
-  },
 ];
 
 function getCategoryLabel(category: string) {
@@ -101,10 +55,6 @@ export default async function HomePage() {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-transparent" />
             <div className="absolute inset-x-0 top-6 flex flex-col items-center px-6 text-center md:top-8 md:px-8">
-              <Badge className="mb-5 border-primary/40 bg-primary/15 px-4 py-1.5 text-sm text-yellow-400 shadow-[0_0_24px_rgba(250,204,21,0.18)] backdrop-blur">
-                <Sparkles className="mr-1.5 h-3 w-3" />
-                Kabinet Vidyakatra
-              </Badge>
               <h2 className="max-w-5xl text-balance text-2xl font-bold leading-tight text-white/90 drop-shadow-[0_4px_18px_rgba(0,0,0,0.7)] sm:text-3xl md:text-5xl">
                 Himpunan Mahasiswa D3 Sistem Informasi
               </h2>
@@ -124,10 +74,10 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div className="max-w-xl">
-              <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-                <Play className="mr-1.5 h-3 w-3" />
-                Company Profile
-              </Badge>
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-primary">
+                <Play className="h-4 w-4" />
+                Video profil
+              </div>
               <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
                 Kenali Kabinet Vidyakatra Lebih Dekat
               </h2>
@@ -158,11 +108,11 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="group text-center">
-                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 transition-all duration-300 group-hover:border-primary/40 group-hover:glow-primary-sm">
+              <div key={stat.label} className="text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <stat.icon className="h-6 w-6 text-primary" />
                 </div>
-                <div className="text-3xl font-bold text-gradient">
+                <div className="text-3xl font-bold text-primary">
                   {stat.value}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -174,71 +124,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Social Media Overview */}
-      <section className="relative overflow-hidden py-16 md:py-20">
-        <div className="absolute left-16 top-1/4 h-80 w-80 rounded-full bg-primary/10 blur-[140px]" />
-        <div className="absolute bottom-1/4 right-16 h-96 w-96 rounded-full bg-secondary/10 blur-[160px]" />
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
-          <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="max-w-xl">
-              <Badge className="mb-5 border-primary/30 bg-primary/10 text-primary">
-                <Megaphone className="mr-1.5 h-3 w-3" />
-                Social Media Overview
-              </Badge>
-              <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl text-balance">
-                Social Media <span className="text-gradient">Overview</span>
-              </h2>
-              <p className="mt-6 text-lg leading-relaxed text-[#b8b8b8]">
-                Memuat kanal resmi HIMA D3 Sistem Informasi UPN "Veteran" Jakarta untuk membangun jangkauan, meningkatkan interaksi, dan bertumbuh bersama mahasiswa.
-              </p>
-              <a href={publicEmailComposeHref} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex">
-                <Button className="gap-2 bg-gradient-brand px-6 text-primary-foreground shadow-[0_14px_40px_rgba(250,204,21,0.22)] transition-all duration-300 hover:-translate-y-1 hover:opacity-95">
-                  Let&apos;s Collaborate!
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </a>
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              {socialMedia.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group min-h-52 rounded-2xl bg-white/[0.04] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.3)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.06] hover:shadow-[0_24px_80px_rgba(250,204,21,0.12)]"
-                >
-                  <div className="flex h-full flex-col">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-11 w-11 items-center justify-center rounded-xl border ${social.className}`}>
-                        <social.icon className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <div className="text-xl font-bold text-white">{social.name}</div>
-                        <div className="text-xs text-[#b8b8b8]">{social.handle}</div>
-                      </div>
-                    </div>
-                    <div className="mt-auto pt-8 text-center">
-                      <div className="text-5xl font-black tracking-tight text-white">{social.value}</div>
-                      <div className="mt-2 text-lg font-medium leading-tight text-[#b8b8b8]">{social.caption}</div>
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* News Section */}
       <section className="py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-                <Zap className="mr-1.5 h-3 w-3" />
-                Berita Acara Terbaru
-              </Badge>
+              <p className="mb-2 text-sm font-medium text-primary">Berita terbaru</p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
                 Kegiatan & Berita Acara
               </h2>
@@ -256,7 +147,7 @@ export default async function HomePage() {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {latestNews.map((news) => (
               <Link key={news.id} href={`/berita/${news.slug}`} className="min-w-0">
-                <Card className="group h-full gap-0 overflow-hidden border-border/50 bg-card/80 p-0 backdrop-blur transition-all duration-300 hover:border-primary/50 hover:glow-primary-sm">
+                <Card className="group h-full gap-0 overflow-hidden border-border/50 bg-card p-0 transition-colors hover:border-primary/50">
                   <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                     <Image
                       src={news.image}
@@ -301,10 +192,6 @@ export default async function HomePage() {
 
       {/* CTA Section */}
       <section className="relative overflow-hidden border-t border-border/50 py-16 md:py-20">
-        {/* Background elements */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.2)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[150px]" />
-
         <div className="relative mx-auto max-w-7xl px-4 md:px-6">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-balance">
@@ -318,7 +205,7 @@ export default async function HomePage() {
               <Link href="/profil">
                 <Button
                   size="lg"
-                  className="gap-2 bg-gradient-brand text-primary-foreground hover:opacity-90 transition-all duration-300 hover:glow-primary"
+                  className="gap-2 bg-gradient-brand text-primary-foreground transition-colors hover:opacity-90"
                 >
                   Lihat Profil Kabinet
                   <ArrowRight className="h-4 w-4" />

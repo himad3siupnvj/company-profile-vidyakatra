@@ -3,6 +3,9 @@ import { getDb } from "@/db"
 import { siteSettings } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
+import { officialSocialUrls } from "@/lib/social-links"
+import { revalidateTag } from "next/cache"
+import { publicCacheTags } from "@/lib/cache-tags"
 
 export const runtime = "nodejs"
 
@@ -14,10 +17,7 @@ const defaultSettings = {
     address: "Jl. R.S. Fatmawati No.1, Pondok Labu\nKec. Cilandak, Kota Jakarta Selatan\nDKI Jakarta 12450",
   },
   socialMedia: {
-    instagram: "https://www.instagram.com/himad3si_upnvj?igsh=cDEzaTl3Y3dnbm0=",
-    youtube: "https://youtube.com/@himad3siupnvj?si=8PEq4uJAALyE4cHJ",
-    linkedin: "https://www.linkedin.com/company/hima-d3si-upnvj-himpunan-mahasiswa-d3-sistem-informasi-upnvj/",
-    tiktok: "https://www.tiktok.com/@himad3si_upnvj?_r=1&_t=ZS-96bDCzDu1o1",
+    ...officialSocialUrls,
   },
   footerSettings: {
     showSocialMedia: true,
@@ -31,7 +31,7 @@ const defaultSettings = {
     { id: 2, label: "Profil", url: "/profil", enabled: true },
     { id: 3, label: "Struktur Organisasi", url: "/profil#struktur", enabled: true },
     { id: 4, label: "Berita Acara", url: "/berita", enabled: true },
-    { id: 5, label: "Collaborate", url: "/kontak", enabled: true },
+    { id: 5, label: "Kolaborasi", url: "/kontak", enabled: true },
   ],
   siteSettings: {
     siteName: "HIMA D3 Sistem Informasi UPNVJ",
@@ -86,6 +86,8 @@ export async function POST(request: NextRequest) {
       keys: Object.keys(payload).filter((key) => key in defaultSettings),
     },
   })
+
+  revalidateTag(publicCacheTags.settings, "max")
 
   return NextResponse.json({ ok: true })
 }

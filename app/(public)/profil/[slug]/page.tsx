@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, BriefcaseBusiness, CheckCircle2, Users } from "lucide-react"
+import { ArrowLeft, CheckCircle2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,11 +31,8 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-border/50 py-12 md:py-16">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.24)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.24)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        <div className="absolute left-1/4 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]" />
-
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
+      <section className="border-b border-border/50 bg-card/30 py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
           <Button asChild variant="ghost" className="mb-8 gap-2 pl-0 text-muted-foreground hover:text-primary">
             <Link href="/profil#divisi">
               <ArrowLeft className="h-4 w-4" />
@@ -45,9 +42,7 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
 
           <div className="grid gap-8 lg:grid-cols-[1fr_18rem] lg:items-center">
             <div>
-              <Badge className="mb-4 bg-primary/10 text-primary">
-                {unit.type}
-              </Badge>
+              <p className="mb-3 text-sm font-medium text-primary">{unit.type}</p>
               <h1 className="text-4xl font-bold tracking-tight text-balance md:text-5xl">
                 {unit.name}
               </h1>
@@ -63,7 +58,7 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
               </div>
             </div>
 
-            <div className="mx-auto flex aspect-square w-56 items-center justify-center rounded-3xl border border-primary/20 bg-primary/5 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
+            <div className="mx-auto flex aspect-square w-56 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 p-8">
               <Image
                 src={unit.logo}
                 alt={`Logo ${unit.name}`}
@@ -81,11 +76,8 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
-              <Badge className="mb-3 bg-primary/10 text-primary">
-                <Users className="mr-1.5 h-3 w-3" />
-                Anggota
-              </Badge>
-              <h2 className="text-3xl font-bold tracking-tight">Member {unit.name}</h2>
+              <p className="mb-3 text-sm font-medium text-primary">Anggota</p>
+              <h2 className="text-3xl font-bold tracking-tight">Anggota {unit.name}</h2>
             </div>
           </div>
 
@@ -96,11 +88,8 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
       <section className="border-y border-border/50 bg-card/30 py-14 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-8">
-            <Badge className="mb-3 bg-primary/10 text-primary">
-              <BriefcaseBusiness className="mr-1.5 h-3 w-3" />
-              Program Kerja
-            </Badge>
-            <h2 className="text-3xl font-bold tracking-tight">Proker {unit.name}</h2>
+            <p className="mb-3 text-sm font-medium text-primary">Program kerja</p>
+            <h2 className="text-3xl font-bold tracking-tight">Program kerja {unit.name}</h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
               Rangkaian program kerja yang menjadi fokus {unit.type.toLowerCase()} selama periode Kabinet Vidyakatra.
             </p>

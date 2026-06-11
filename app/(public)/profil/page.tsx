@@ -12,9 +12,7 @@ import { getProfileContent } from "@/lib/profile-content"
 import type { ProfileLeader } from "@/lib/profile-content-data"
 import { getPublicWorkUnits } from "@/lib/public-profile"
 import {
-  Cpu,
   Eye,
-  Rocket,
   Target,
   Users,
 } from "lucide-react"
@@ -42,7 +40,7 @@ function LeaderPhotoCard({ person, reversed }: LeaderProfileProps) {
   return (
     <div
       className={cn(
-        "group relative mx-auto w-full max-w-60 overflow-hidden rounded-2xl bg-white/[0.035] p-2 shadow-[0_18px_60px_rgba(0,0,0,0.28)] ring-1 ring-white/[0.06] backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.05] hover:shadow-[0_22px_70px_rgba(250,204,21,0.12)] md:max-w-64",
+        "group relative mx-auto w-full max-w-60 overflow-hidden rounded-xl border border-border/60 bg-card p-2 transition-colors hover:border-primary/40 md:max-w-64",
         reversed && "md:order-2"
       )}
     >
@@ -139,17 +137,12 @@ export default async function ProfilPage() {
 
   return (
     <>
-      <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden py-16 md:py-20">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        <div className="absolute left-1/4 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute right-1/4 bottom-0 h-64 w-64 rounded-full bg-secondary/10 blur-[100px]" />
-
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Cpu className="mr-1.5 h-3 w-3" />
+      <section className="border-b border-border/50 bg-card/30 py-20 md:py-28">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-primary">
               {profileContent.intro.eyebrow}
-            </Badge>
+            </p>
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl text-balance">
               {profileContent.intro.title}
             </h1>
@@ -160,24 +153,16 @@ export default async function ProfilPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden py-16 md:py-20">
-        <div className="absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full bg-yellow-400/10 blur-[120px]" />
-        <div className="absolute bottom-10 right-0 h-64 w-64 rounded-full bg-orange-500/10 blur-[130px]" />
-
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
+      <section className="py-16 md:py-20">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="grid items-stretch gap-5 lg:grid-cols-[0.82fr_1.18fr]">
-            <div className="relative h-full overflow-hidden rounded-2xl bg-white/[0.03] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl md:p-6">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(250,204,21,0.16),transparent_42%)]" />
+            <div className="relative h-full overflow-hidden rounded-xl border border-border/60 bg-card p-5 md:p-6">
               <div className="relative flex h-full min-h-[25rem] flex-col">
-                <Badge className="w-fit border-white/10 bg-white/[0.04] text-yellow-400 shadow-[0_0_24px_rgba(250,204,21,0.16)]">
-                  <Rocket className="mr-1.5 h-3 w-3" />
-                  Tentang Kabinet
-                </Badge>
+                <p className="text-sm font-medium text-primary">Tentang kabinet</p>
 
                 <div className="flex flex-1 items-center justify-center py-5">
                   <div className="relative">
-                    <div className="absolute inset-4 rounded-full bg-yellow-400/20 blur-3xl" />
-                    <div className="relative flex h-56 w-56 items-center justify-center rounded-2xl bg-black/30 p-7 shadow-[0_0_70px_rgba(250,204,21,0.16)] ring-1 ring-white/[0.06] md:h-64 md:w-64">
+                    <div className="relative flex h-56 w-56 items-center justify-center rounded-xl border border-border/60 bg-background p-7 md:h-64 md:w-64">
                       <Image
                         src={logoKabinet}
                         alt="Logo Kabinet Vidyakatra"
@@ -191,7 +176,7 @@ export default async function ProfilPage() {
 
                 <a
                   href="#struktur"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-5 py-2.5 text-sm font-bold text-black shadow-[0_12px_36px_rgba(250,204,21,0.22)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(250,204,21,0.3)]"
+                  className="group inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   Lihat Struktur Kabinet
                   <Users className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
@@ -199,8 +184,7 @@ export default async function ProfilPage() {
               </div>
             </div>
 
-            <div className="relative flex h-full items-center overflow-hidden rounded-2xl bg-white/[0.03] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl md:p-6">
-              <div className="absolute right-0 top-0 h-48 w-48 bg-yellow-400/10 blur-[90px]" />
+            <div className="relative flex h-full items-center overflow-hidden rounded-xl border border-border/60 bg-card p-5 md:p-6">
               <div className="relative w-full space-y-5">
                 <div className="max-w-3xl space-y-3">
                   <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl">
@@ -212,13 +196,13 @@ export default async function ProfilPage() {
                   <p className="max-w-2xl text-sm leading-relaxed text-[#b5b5b5] md:text-base">
                     {profileContent.intro.description}
                   </p>
-                  <p className="inline-flex rounded-xl bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-400 shadow-[0_0_24px_rgba(250,204,21,0.12)]">
-                    Lead the Change with Smart Systems!
+                  <p className="inline-flex rounded-md border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+                    Memimpin perubahan melalui sistem yang cerdas.
                   </p>
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-2">
-                  <div className="group rounded-2xl bg-white/[0.035] p-4 shadow-[0_16px_50px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_56px_rgba(250,204,21,0.12)]">
+                  <div className="rounded-xl border border-border/50 bg-background/40 p-4">
                     <p className="text-sm font-semibold text-yellow-400">Makna Etimologis</p>
                     <h3 className="mt-1 text-xl font-bold text-white">Kesatuan dalam Ilmu</h3>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -236,7 +220,7 @@ export default async function ProfilPage() {
                     </p>
                   </div>
 
-                  <div className="group rounded-2xl bg-white/[0.035] p-4 shadow-[0_16px_50px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_56px_rgba(250,204,21,0.12)]">
+                  <div className="rounded-xl border border-border/50 bg-background/40 p-4">
                     <p className="text-sm font-semibold text-yellow-400">Makna Filosofis</p>
                     <h3 className="mt-1 text-xl font-bold text-white text-balance">
                       {profileContent.philosophy.title}
@@ -256,9 +240,9 @@ export default async function ProfilPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-2">
             {profileContent.vision.enabled && (
-            <Card className="border-primary/20 bg-primary/5 backdrop-blur transition-all duration-300 hover:border-primary/40 hover:glow-primary-sm">
+            <Card className="border-primary/20 bg-primary/5 transition-colors hover:border-primary/40">
               <CardContent className="p-8">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-brand">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
                   <Eye className="h-7 w-7 text-primary-foreground" />
                 </div>
                 <h2 className="mb-4 text-2xl font-bold">{profileContent.vision.title}</h2>
@@ -269,7 +253,7 @@ export default async function ProfilPage() {
             </Card>
             )}
 
-            <Card className="border-secondary/20 bg-secondary/5 backdrop-blur transition-all duration-300 hover:border-secondary/40 hover:glow-secondary">
+            <Card className="border-secondary/20 bg-secondary/5 transition-colors hover:border-secondary/40">
               <CardContent className="p-8">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
                   <Target className="h-7 w-7 text-secondary-foreground" />
@@ -294,10 +278,7 @@ export default async function ProfilPage() {
       <section id="struktur" className="border-y border-border/50 bg-card/30 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-12 text-center">
-            <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Users className="mr-1.5 h-3 w-3" />
-              Struktur Kabinet
-            </Badge>
+            <p className="mb-3 text-sm font-medium text-primary">Struktur kabinet</p>
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Pengurus Inti</h2>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
               Ketua, wakil ketua, koordinator, sekretaris, dan bendahara yang mengawal arah gerak serta tata kelola kabinet.
@@ -322,10 +303,10 @@ export default async function ProfilPage() {
           <div className="mt-12 space-y-6">
             <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
               {coreTeams.slice(0, 2).map((unit) => (
-              <Card key={unit.name} className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
+              <Card key={unit.name} className="group border-border/50 bg-card transition-colors hover:border-primary/40">
                 <CardContent className="p-6">
                   <div className="mb-5 flex items-start justify-between gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-1.5">
                       <Image
                         src={unit.logo}
                         alt={`Logo ${unit.name}`}
@@ -354,10 +335,10 @@ export default async function ProfilPage() {
 
             <div className="mx-auto grid max-w-md gap-6">
               {coreTeams.slice(2).map((unit) => (
-                <Card key={unit.name} className="group border-border/50 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:glow-primary-sm">
+                <Card key={unit.name} className="group border-border/50 bg-card transition-colors hover:border-primary/40">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-start justify-between gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-1.5">
                         <Image
                           src={unit.logo}
                           alt={`Logo ${unit.name}`}
@@ -390,10 +371,7 @@ export default async function ProfilPage() {
       <section id="divisi" className="py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-12 text-center">
-            <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Users className="mr-1.5 h-3 w-3" />
-              Unit Kerja Kabinet
-            </Badge>
+            <p className="mb-3 text-sm font-medium text-primary">Unit kerja kabinet</p>
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               Departemen & Biro
             </h2>
@@ -404,10 +382,10 @@ export default async function ProfilPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {workUnits.map((unit) => (
               <Link key={unit.name} href={`/profil/${unit.slug}`} className="group">
-                <Card className="h-full border-border/50 bg-card/80 backdrop-blur transition-all duration-300 group-hover:border-primary/30 group-hover:glow-primary-sm">
+                <Card className="h-full border-border/50 bg-card transition-colors group-hover:border-primary/40">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-start justify-between gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 p-1.5 transition-all duration-300 group-hover:scale-105 group-hover:glow-primary-sm">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-1.5">
                         <Image
                           src={unit.logo}
                           alt={`Logo ${unit.name}`}

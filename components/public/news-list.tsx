@@ -4,11 +4,10 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Clock, Search, User, Zap } from "lucide-react"
+import { Clock, Search, User } from "lucide-react"
 import type { PublicNews } from "@/lib/public-content"
 
 const categories = [
@@ -38,22 +37,15 @@ export function NewsList({ newsItems }: NewsListProps) {
 
   return (
     <>
-      <section className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden py-16 md:py-20">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        <div className="absolute left-1/4 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-secondary/10 blur-[100px]" />
-
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4 border-primary/30 bg-primary/10 text-primary">
-              <Zap className="mr-1.5 h-3 w-3" />
-              Berita Acara & Kegiatan
-            </Badge>
+      <section className="border-b border-border/50 bg-card/30 py-20 md:py-28">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-primary">Publikasi</p>
             <h1 className="text-4xl font-bold tracking-tight text-balance md:text-5xl">
-              Berita Acara <span className="text-gradient">HIMA D3 SI</span>
+              Berita dan kegiatan HIMA D3 SI
             </h1>
             <p className="mt-6 text-lg text-muted-foreground">
-              Ikuti dokumentasi kegiatan, prestasi, dan pengumuman terbaru dari kami
+              Dokumentasi kegiatan, prestasi, dan pengumuman terbaru dari organisasi.
             </p>
           </div>
         </div>
@@ -89,7 +81,7 @@ export function NewsList({ newsItems }: NewsListProps) {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredNews.map((news) => (
               <Link key={news.id} href={`/berita/${news.slug}`} className="group">
-                <Card className="h-full gap-0 overflow-hidden border-border/50 bg-card/80 p-0 backdrop-blur transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:glow-primary-sm">
+                <Card className="h-full gap-0 overflow-hidden border-border/50 bg-card p-0 transition-colors group-hover:border-primary/40">
                   <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                     <Image
                       src={news.image}
@@ -132,17 +124,6 @@ export function NewsList({ newsItems }: NewsListProps) {
             </div>
           )}
 
-          {filteredNews.length > 0 && (
-            <div className="mt-12 text-center">
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-border transition-all duration-300 hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
-              >
-                Muat Lebih Banyak
-              </Button>
-            </div>
-          )}
         </div>
       </section>
     </>

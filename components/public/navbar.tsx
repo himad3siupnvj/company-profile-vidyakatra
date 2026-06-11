@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { publicEmailComposeHref } from "@/lib/contact-links";
+import { officialSocialLinks } from "@/lib/social-links";
+import type { PublicSocialMedia } from "@/lib/public-site-settings";
 import logoHima from "@/assets/hima.png";
 import logoKabinet from "@/assets/logoKabinet.png";
 
@@ -25,34 +27,6 @@ const navItems = [
   { href: "/", label: "Beranda" },
   { href: "/profil", label: "Profil" },
   { href: "/berita", label: "Berita Acara" },
-];
-
-const collaborateLinks = [
-  {
-    href: "https://instagram.com/himad3si_its",
-    label: "Instagram",
-    icon: Instagram,
-  },
-  {
-    href: "https://youtube.com/@himad3siupnvj?si=8PEq4uJAALyE4cHJ",
-    label: "YouTube",
-    icon: Youtube,
-  },
-  {
-    href: "https://linkedin.com/company/hima-d3si-upnvj-himpunan-mahasiswa-d3-sistem-informasi-upnvj/",
-    label: "LinkedIn",
-    icon: Linkedin,
-  },
-  {
-    href: "https://tiktok.com/@himad3si_upnvj?_r=1&_t=ZS-96bDCzDu1o1",
-    label: "TikTok",
-    icon: Music2,
-  },
-  {
-    href: publicEmailComposeHref,
-    label: "Email",
-    icon: Mail,
-  },
 ];
 
 function getLinkTarget(href: string) {
@@ -92,10 +66,17 @@ function LogoBadge({
   );
 }
 
-export function Navbar() {
+export function Navbar({ socialMedia }: { socialMedia: PublicSocialMedia }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isCollaborateOpen, setIsCollaborateOpen] = useState(false);
+  const collaborateLinks = [
+    { href: socialMedia.instagram, label: officialSocialLinks.instagram.label, icon: Instagram },
+    { href: socialMedia.youtube, label: officialSocialLinks.youtube.label, icon: Youtube },
+    { href: socialMedia.linkedin, label: officialSocialLinks.linkedin.label, icon: Linkedin },
+    { href: socialMedia.tiktok, label: officialSocialLinks.tiktok.label, icon: Music2 },
+    { href: publicEmailComposeHref, label: "Email", icon: Mail },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/45 backdrop-blur-xl supports-[backdrop-filter]:bg-background/25">
@@ -191,7 +172,7 @@ export function Navbar() {
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon" className="hover:bg-muted">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
+                <span className="sr-only">Buka menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -199,7 +180,7 @@ export function Navbar() {
               className="w-[300px] border-l border-white/10 bg-background p-0"
             >
               <SheetHeader className="sr-only">
-                <SheetTitle>Public navigation</SheetTitle>
+                <SheetTitle>Navigasi publik</SheetTitle>
               </SheetHeader>
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-white/10 p-4">

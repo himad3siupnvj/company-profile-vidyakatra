@@ -56,7 +56,7 @@ export function MemberCarousel({ members }: MemberCarouselProps) {
             key={`${member.name}-${index}`}
             className="basis-[72%] pl-3 min-[480px]:basis-[48%] sm:basis-[14rem] sm:pl-4"
           >
-            <Card className="group h-full gap-0 overflow-hidden border-border/50 bg-card/80 py-0 backdrop-blur transition-colors hover:border-primary/30">
+            <Card className="group h-full gap-0 overflow-hidden border-border/50 bg-card py-0 transition-colors hover:border-primary/40">
               <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
                 <Image
                   src={member.image}
