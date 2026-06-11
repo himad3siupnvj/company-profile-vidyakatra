@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -67,6 +68,13 @@ export const periods = pgTable("periods", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
+});
+
+export const requestRateLimits = pgTable("request_rate_limits", {
+  bucketKey: text("bucket_key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ─── Members ──────────────────────────────────────────────────────────────────
@@ -253,7 +261,11 @@ export const articles = pgTable(
       onDelete: "set null",
     }),
   },
-  (table) => [uniqueIndex("articles_slug_idx").on(table.slug)],
+  (table) => [
+    uniqueIndex("articles_slug_idx").on(table.slug),
+    index("articles_public_feed_idx").on(table.status, table.deletedAt, table.publishedAt),
+    index("articles_author_idx").on(table.authorId, table.deletedAt, table.updatedAt),
+  ],
 );
 
 // ─── Assets ───────────────────────────────────────────────────────────────────

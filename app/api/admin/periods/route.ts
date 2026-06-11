@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm"
+import { asc, eq, ne, sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { periods } from "@/db/schema"
@@ -25,15 +25,6 @@ function serializePeriod(row: typeof periods.$inferSelect) {
   }
 }
 
-async function archiveOtherActivePeriods(activePeriodId: string) {
-  const db = getDb()
-  await db
-    .update(periods)
-    .set({ status: "archived", updatedAt: new Date() })
-    .where(eq(periods.status, "active"))
-  await db.update(periods).set({ status: "active", updatedAt: new Date() }).where(eq(periods.id, activePeriodId))
-}
-
 export async function GET() {
   const guard = await requireApiPermission("period.manage")
   if (guard.response) return guard.response
@@ -58,21 +49,29 @@ export async function POST(request: NextRequest) {
 
   const now = new Date()
   const db = getDb()
-  const [created] = await db
-    .insert(periods)
-    .values({
-      name,
-      status,
-      startDate: payload.startDate || null,
-      endDate: payload.endDate || null,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning()
+  const created = await db.transaction(async (tx) => {
+    if (status === "active") {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('cms-active-period'))`)
+      await tx
+        .update(periods)
+        .set({ status: "archived", updatedAt: now })
+        .where(eq(periods.status, "active"))
+    }
 
-  if (status === "active") {
-    await archiveOtherActivePeriods(created.id)
-  }
+    const [row] = await tx
+      .insert(periods)
+      .values({
+        name,
+        status,
+        startDate: payload.startDate || null,
+        endDate: payload.endDate || null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+
+    return row
+  })
 
   await writeAuditLog({
     actorId: guard.user?.id,
@@ -99,24 +98,34 @@ export async function PUT(request: NextRequest) {
   }
 
   const db = getDb()
-  const [updated] = await db
-    .update(periods)
-    .set({
-      name,
-      status,
-      startDate: payload.startDate || null,
-      endDate: payload.endDate || null,
-      updatedAt: new Date(),
-    })
-    .where(eq(periods.id, id))
-    .returning()
+  const updated = await db.transaction(async (tx) => {
+    const now = new Date()
+
+    if (status === "active") {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('cms-active-period'))`)
+      await tx
+        .update(periods)
+        .set({ status: "archived", updatedAt: now })
+        .where(ne(periods.id, id))
+    }
+
+    const [row] = await tx
+      .update(periods)
+      .set({
+        name,
+        status,
+        startDate: payload.startDate || null,
+        endDate: payload.endDate || null,
+        updatedAt: now,
+      })
+      .where(eq(periods.id, id))
+      .returning()
+
+    return row
+  })
 
   if (!updated) {
     return NextResponse.json({ error: "Period not found" }, { status: 404 })
-  }
-
-  if (status === "active") {
-    await archiveOtherActivePeriods(id)
   }
 
   await writeAuditLog({

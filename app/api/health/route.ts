@@ -27,12 +27,21 @@ export function GET() {
     isProduction && (!siteUrl || siteUrl.includes("localhost")) && "NEXT_PUBLIC_SITE_URL must be the production URL",
   ].filter(Boolean)
 
-  return NextResponse.json({
+  const response = {
     ok: configurationIssues.length === 0,
     service: "vidyakatra-cms",
-    databaseConfigured,
-    authConfigured,
-    storageConfigured,
-    configurationIssues,
+    ...(isProduction
+      ? {}
+      : {
+          databaseConfigured,
+          authConfigured,
+          storageConfigured,
+          configurationIssues,
+        }),
+  }
+
+  return NextResponse.json(response, {
+    status: response.ok ? 200 : 503,
+    headers: { "Cache-Control": "no-store" },
   })
 }

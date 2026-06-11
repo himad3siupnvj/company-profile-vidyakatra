@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const email = String(payload.email ?? "").trim().toLowerCase()
     const password = String(payload.password ?? "")
 
-    const rateLimitResponse = enforceRateLimit(request, `auth-login:${email || "unknown"}`, 10, 60_000)
+    const rateLimitResponse = await enforceRateLimit(request, `auth-login:${email || "unknown"}`, 10, 60_000)
     if (rateLimitResponse) return rateLimitResponse
 
     if (!email || !password) {

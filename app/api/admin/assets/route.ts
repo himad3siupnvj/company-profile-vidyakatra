@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Valid file and purpose are required" }, { status: 400 })
   }
 
-  const validation = validateUploadFile(file, purpose)
+  const validation = await validateUploadFile(file, purpose)
 
   if (!validation.ok) {
     return NextResponse.json({ error: validation.error }, { status: 400 })

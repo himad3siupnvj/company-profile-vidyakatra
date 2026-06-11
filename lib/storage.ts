@@ -24,7 +24,44 @@ type DefaultStoragePathContext = {
   kind: string
 }
 
-export function validateUploadFile(file: File, purpose: UploadPurpose) {
+function startsWith(bytes: Uint8Array, signature: number[]) {
+  return signature.every((byte, index) => bytes[index] === byte)
+}
+
+async function hasValidFileSignature(file: File, purpose: UploadPurpose) {
+  const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer())
+
+  if (purpose === "article-image") {
+    if (file.type === "image/jpeg") return startsWith(bytes, [0xff, 0xd8, 0xff])
+    if (file.type === "image/png") return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    if (file.type === "image/gif") {
+      return startsWith(bytes, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) ||
+        startsWith(bytes, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61])
+    }
+    if (file.type === "image/webp") {
+      return startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) &&
+        String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+    }
+  }
+
+  if (purpose === "article-source") {
+    if (file.type === "application/pdf") {
+      return startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])
+    }
+
+    if (file.type === "application/msword") {
+      return startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
+    }
+
+    return startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]) ||
+      startsWith(bytes, [0x50, 0x4b, 0x05, 0x06]) ||
+      startsWith(bytes, [0x50, 0x4b, 0x07, 0x08])
+  }
+
+  return false
+}
+
+export async function validateUploadFile(file: File, purpose: UploadPurpose) {
   if (purpose === "article-image") {
     if (!allowedImageTypes.has(file.type)) {
       return { ok: false as const, error: "File gambar harus JPEG, PNG, WebP, atau GIF." }
@@ -43,6 +80,10 @@ export function validateUploadFile(file: File, purpose: UploadPurpose) {
     if (file.size > sourceMaxBytes) {
       return { ok: false as const, error: "Ukuran source berita acara maksimal 10 MB." }
     }
+  }
+
+  if (!(await hasValidFileSignature(file, purpose))) {
+    return { ok: false as const, error: "Isi file tidak sesuai dengan format yang dipilih." }
   }
 
   return { ok: true as const }

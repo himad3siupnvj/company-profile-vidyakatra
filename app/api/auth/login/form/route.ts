@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   const nextPath = String(formData.get("next") ?? "")
   const redirectPath = nextPath.startsWith("/x-panel") && nextPath !== "/x-panel/login" ? nextPath : "/x-panel"
 
-  const rateLimitResponse = enforceRateLimit(request, `auth-login-form:${email || "unknown"}`, 10, 60_000)
+  const rateLimitResponse = await enforceRateLimit(request, `auth-login-form:${email || "unknown"}`, 10, 60_000)
   if (rateLimitResponse) {
     return NextResponse.redirect(new URL("/x-panel/login?error=rate-limit", request.url))
   }

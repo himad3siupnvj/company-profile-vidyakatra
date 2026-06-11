@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto"
-import { desc, eq } from "drizzle-orm"
+import { desc, eq, sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
 import { members, users } from "@/db/schema"
@@ -27,15 +27,24 @@ function serializeUser(row: typeof users.$inferSelect) {
   }
 }
 
-async function hasAnotherAdministrator(currentUserId: string) {
-  const db = getDb()
-  const administratorRows = await db
-    .select({ id: users.id, role: users.role, status: users.status })
-    .from(users)
+class LastAdministratorError extends Error {}
 
-  return administratorRows.some(
-    (user) => user.id !== currentUserId && user.role === "administrator" && user.status === "active",
-  )
+async function assertAnotherAdministrator(
+  tx: Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0],
+  currentUserId: string,
+) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext('cms-active-administrator'))`)
+  const rows = await tx.execute(sql`
+    select count(*)::int as count
+    from users
+    where id <> ${currentUserId}
+      and role = 'administrator'
+      and status = 'active'
+  `)
+
+  if (Number(rows[0]?.count ?? 0) < 1) {
+    throw new LastAdministratorError("At least one administrator must stay active")
+  }
 }
 
 export async function GET() {
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date()
-  const claimCode = randomBytes(4).toString("hex").toUpperCase()
+  const claimCode = randomBytes(8).toString("hex").toUpperCase()
 
   try {
     const [created] = await db
@@ -126,22 +135,35 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (action === "reset_password") {
-    if (existing.role === "administrator" && !(await hasAnotherAdministrator(id))) {
-      return NextResponse.json({ error: "At least one administrator must stay active" }, { status: 400 })
-    }
+    const claimCode = randomBytes(8).toString("hex").toUpperCase()
+    let updated: typeof users.$inferSelect
 
-    const claimCode = randomBytes(4).toString("hex").toUpperCase()
-    const [updated] = await db
-      .update(users)
-      .set({
-        passwordHash: null,
-        claimCode,
-        status: "unclaimed",
-        claimedAt: null,
-        updatedAt: new Date(),
+    try {
+      updated = await db.transaction(async (tx) => {
+        if (existing.role === "administrator") {
+          await assertAnotherAdministrator(tx, id)
+        }
+
+        const [row] = await tx
+          .update(users)
+          .set({
+            passwordHash: null,
+            claimCode,
+            status: "unclaimed",
+            claimedAt: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, id))
+          .returning()
+
+        return row
       })
-      .where(eq(users.id, id))
-      .returning()
+    } catch (error) {
+      if (error instanceof LastAdministratorError) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+      throw error
+    }
 
     await writeAuditLog({
       actorId: guard.user?.id,
@@ -158,19 +180,32 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Valid id and status are required" }, { status: 400 })
   }
 
-  if (existing.role === "administrator" && status === "inactive" && !(await hasAnotherAdministrator(id))) {
-    return NextResponse.json({ error: "At least one administrator must stay active" }, { status: 400 })
-  }
-
   if (status === "active" && !existing.passwordHash) {
     return NextResponse.json({ error: "Unclaimed users must claim their account before activation" }, { status: 400 })
   }
 
-  const [updated] = await db
-    .update(users)
-    .set({ status, updatedAt: new Date() })
-    .where(eq(users.id, id))
-    .returning()
+  let updated: typeof users.$inferSelect
+
+  try {
+    updated = await db.transaction(async (tx) => {
+      if (existing.role === "administrator" && status === "inactive") {
+        await assertAnotherAdministrator(tx, id)
+      }
+
+      const [row] = await tx
+        .update(users)
+        .set({ status, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning()
+
+      return row
+    })
+  } catch (error) {
+    if (error instanceof LastAdministratorError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    throw error
+  }
 
   await writeAuditLog({
     actorId: guard.user?.id,
@@ -200,11 +235,20 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 })
   }
 
-  if (existing.role === "administrator" && !(await hasAnotherAdministrator(id))) {
-    return NextResponse.json({ error: "At least one administrator must stay active" }, { status: 400 })
-  }
+  try {
+    await db.transaction(async (tx) => {
+      if (existing.role === "administrator") {
+        await assertAnotherAdministrator(tx, id)
+      }
 
-  await db.update(users).set({ status: "inactive", updatedAt: new Date() }).where(eq(users.id, id))
+      await tx.update(users).set({ status: "inactive", updatedAt: new Date() }).where(eq(users.id, id))
+    })
+  } catch (error) {
+    if (error instanceof LastAdministratorError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    throw error
+  }
   await writeAuditLog({
     actorId: guard.user?.id,
     action: "user.disable",
