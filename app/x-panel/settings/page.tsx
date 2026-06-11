@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Archive, Download, Save, Globe, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Music2 } from "lucide-react"
 import { officialSocialUrls, type SocialMediaUrls } from "@/lib/social-links"
+import { validatePublicSettings } from "@/lib/settings-validation"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
@@ -32,7 +33,6 @@ export default function SettingsPage() {
     showSocialMedia: true,
     showContactInfo: true,
     showQuickLinks: true,
-    showNewsletter: false,
     copyrightText: "© 2026 HIMA D3 Sistem Informasi UPNVJ. Kabinet Vidyakatra.",
   })
 
@@ -64,7 +64,11 @@ export default function SettingsPage() {
       setIsLoading(true)
       try {
         const response = await fetch("/api/admin/settings")
-        if (!response.ok) return
+        if (!response.ok) {
+          const data = await response.json()
+          setMessage(data.error || "Pengaturan gagal dimuat.")
+          return
+        }
 
         const data = await response.json()
         setContactInfo(data.contactInfo)
@@ -73,7 +77,7 @@ export default function SettingsPage() {
         setQuickLinks(data.quickLinks)
         setSiteSettings(data.siteSettings)
       } catch {
-        // Keep local fallback data when the backend is unavailable.
+        setMessage("Pengaturan gagal dimuat. Periksa koneksi lalu muat ulang halaman.")
       } finally {
         setIsLoading(false)
       }
@@ -83,6 +87,17 @@ export default function SettingsPage() {
   }, [])
 
   const saveSettings = async () => {
+    const validationError = validatePublicSettings({
+      contactInfo,
+      socialMedia,
+      footerSettings,
+      quickLinks,
+      siteSettings,
+    })
+    if (validationError) {
+      setMessage(validationError)
+      return
+    }
     setIsSaving(true)
     setMessage("")
 
@@ -98,7 +113,8 @@ export default function SettingsPage() {
           siteSettings,
         }),
       })
-      setMessage(response.ok ? "Pengaturan berhasil disimpan." : "Pengaturan gagal disimpan.")
+      const data = await response.json()
+      setMessage(response.ok ? "Pengaturan berhasil disimpan." : data.error || "Pengaturan gagal disimpan.")
     } catch {
       setMessage("Pengaturan gagal disimpan.")
     } finally {
@@ -418,16 +434,6 @@ export default function SettingsPage() {
                   <Switch
                     checked={footerSettings.showQuickLinks}
                     onCheckedChange={(checked) => setFooterSettings({ ...footerSettings, showQuickLinks: checked })}
-                  />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div>
-                    <Label>Tampilkan Buletin</Label>
-                    <p className="text-xs text-muted-foreground">Tampilkan formulir langganan buletin.</p>
-                  </div>
-                  <Switch
-                    checked={footerSettings.showNewsletter}
-                    onCheckedChange={(checked) => setFooterSettings({ ...footerSettings, showNewsletter: checked })}
                   />
                 </div>
               </div>

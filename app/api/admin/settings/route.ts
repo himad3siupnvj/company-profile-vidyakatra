@@ -7,6 +7,7 @@ import { officialSocialUrls } from "@/lib/social-links"
 import { revalidateTag } from "next/cache"
 import { publicCacheTags } from "@/lib/cache-tags"
 import { defaultHomeContent } from "@/lib/home-content"
+import { validateHomeContent, validatePublicSettings } from "@/lib/settings-validation"
 
 export const runtime = "nodejs"
 
@@ -25,7 +26,6 @@ const defaultSettings = {
     showSocialMedia: true,
     showContactInfo: true,
     showQuickLinks: true,
-    showNewsletter: false,
     copyrightText: "© 2026 HIMA D3 Sistem Informasi UPNVJ. Kabinet Vidyakatra.",
   },
   quickLinks: [
@@ -73,6 +73,26 @@ export async function POST(request: NextRequest) {
   if (guard.response) return guard.response
 
   const payload = await request.json()
+  if (payload.homeContent) {
+    const error = validateHomeContent(payload.homeContent)
+    if (error) return NextResponse.json({ error }, { status: 400 })
+  }
+  if (
+    payload.contactInfo ||
+    payload.socialMedia ||
+    payload.footerSettings ||
+    payload.quickLinks ||
+    payload.siteSettings
+  ) {
+    const error = validatePublicSettings({
+      contactInfo: payload.contactInfo ?? defaultSettings.contactInfo,
+      socialMedia: payload.socialMedia ?? defaultSettings.socialMedia,
+      footerSettings: payload.footerSettings ?? defaultSettings.footerSettings,
+      quickLinks: payload.quickLinks ?? defaultSettings.quickLinks,
+      siteSettings: payload.siteSettings ?? defaultSettings.siteSettings,
+    })
+    if (error) return NextResponse.json({ error }, { status: 400 })
+  }
   const db = getDb()
   const now = new Date()
 

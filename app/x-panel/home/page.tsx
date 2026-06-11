@@ -14,6 +14,7 @@ import {
   defaultHomeContent,
   type PublicHomeContent,
 } from "@/lib/home-content"
+import { validateHomeContent } from "@/lib/settings-validation"
 
 type HomeStats = {
   activeMembers: number
@@ -54,6 +55,11 @@ export default function HomePageManagement() {
   }, [])
 
   async function saveChanges() {
+    const validationError = validateHomeContent(content)
+    if (validationError) {
+      setMessage(validationError)
+      return
+    }
     setIsSaving(true)
     setMessage("")
     try {
@@ -62,7 +68,8 @@ export default function HomePageManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ homeContent: content }),
       })
-      setMessage(response.ok ? "Perubahan Beranda berhasil disimpan." : "Gagal menyimpan perubahan.")
+      const data = await response.json()
+      setMessage(response.ok ? "Perubahan Beranda berhasil disimpan." : data.error || "Gagal menyimpan perubahan.")
     } catch {
       setMessage("Gagal menyimpan perubahan.")
     } finally {
