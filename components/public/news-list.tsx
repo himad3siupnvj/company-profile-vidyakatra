@@ -39,12 +39,12 @@ export function NewsList({ newsItems }: NewsListProps) {
     <>
       <section className="border-b border-border/50 bg-card/30 py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="max-w-3xl">
+          <div className="mx-auto max-w-3xl text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-primary">Publikasi</p>
             <h1 className="text-4xl font-bold tracking-tight text-balance md:text-5xl">
               Berita dan kegiatan HIMA D3 SI
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground">
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
               Dokumentasi kegiatan, prestasi, dan pengumuman terbaru dari organisasi.
             </p>
           </div>
