@@ -2,15 +2,14 @@ import Image, { type StaticImageData } from "next/image"
 import Link from "next/link"
 import ketuaLead from "@/assets/lead/Sakhaa_BPH_Final.jpg"
 import wakilLead from "@/assets/lead/Latanza_BPH.jpg"
-import koorDeptLogo from "@/assets/organ/koor dept.png"
 import logoKabinet from "@/assets/logoKabinet.png"
-import sekbenLogo from "@/assets/organ/sekben.png"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { getProfileContent } from "@/lib/profile-content"
 import type { ProfileLeader } from "@/lib/profile-content-data"
 import { getPublicWorkUnits } from "@/lib/public-profile"
+import { coreTeams } from "@/lib/public-core-team"
 import {
   Eye,
   Target,
@@ -24,6 +23,7 @@ type CabinetLeadPerson = {
   position: string
   description: string
   image: StaticImageData
+  slug: string
 }
 
 const leaderImages: Record<ProfileLeader["imageKey"], StaticImageData> = {
@@ -72,6 +72,12 @@ function LeaderBio({ person, reversed }: LeaderProfileProps) {
       <p className="mx-auto mt-5 max-w-2xl text-justify text-sm leading-7 text-muted-foreground md:mx-0">
         {person.description}
       </p>
+      <Link
+        href={`/profil/pengurus-inti/${person.slug}`}
+        className="mt-5 inline-flex text-sm font-semibold text-primary hover:underline"
+      >
+        Lihat detail
+      </Link>
     </div>
   )
 }
@@ -102,30 +108,6 @@ const etymology = [
     term: "Ekatra",
     script: "एकत्र",
     meaning: "Bersatu, bersama, dalam satu tujuan.",
-  },
-]
-
-const coreTeams = [
-  {
-    type: "Pengurus Inti",
-    name: "Sekretaris",
-    description: "Mengelola administrasi, surat-menyurat, notulensi, dan kerapian dokumen organisasi.",
-    logo: sekbenLogo,
-    programs: ["Surat Menyurat", "Notulensi", "Arsip Kabinet"],
-  },
-  {
-    type: "Pengurus Inti",
-    name: "Bendahara",
-    description: "Mengatur pencatatan keuangan, perencanaan anggaran, dan transparansi kebutuhan dana kegiatan.",
-    logo: sekbenLogo,
-    programs: ["Anggaran", "Laporan Keuangan", "Kas Kegiatan"],
-  },
-  {
-    type: "Pengurus Inti",
-    name: "Koordinator",
-    description: "Menjaga sinkronisasi antarbidang, mengawal ritme program kerja, dan memastikan koordinasi kabinet berjalan efektif.",
-    logo: koorDeptLogo,
-    programs: ["Koordinasi Bidang", "Monitoring Program", "Evaluasi Kerja"],
   },
 ]
 
@@ -294,6 +276,7 @@ export default async function ProfilPage() {
                   position: leader.position,
                   description: leader.description,
                   image: leaderImages[leader.imageKey],
+                  slug: leader.imageKey === "ketuaLead" ? "ketua-umum" : "wakil-ketua",
                 }}
                 reversed={index % 2 === 1}
               />
@@ -303,7 +286,8 @@ export default async function ProfilPage() {
           <div className="mt-12 space-y-6">
             <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
               {coreTeams.slice(0, 2).map((unit) => (
-              <Card key={unit.name} className="group border-border/50 bg-card transition-colors hover:border-primary/40">
+              <Link key={unit.name} href={`/profil/pengurus-inti/${unit.slug}`} className="group">
+              <Card className="h-full border-border/50 bg-card transition-colors group-hover:border-primary/40">
                 <CardContent className="p-6">
                   <div className="mb-5 flex items-start justify-between gap-4">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-1.5">
@@ -330,12 +314,14 @@ export default async function ProfilPage() {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
               ))}
             </div>
 
             <div className="mx-auto grid max-w-md gap-6">
               {coreTeams.slice(2).map((unit) => (
-                <Card key={unit.name} className="group border-border/50 bg-card transition-colors hover:border-primary/40">
+                <Link key={unit.name} href={`/profil/pengurus-inti/${unit.slug}`} className="group">
+                <Card className="h-full border-border/50 bg-card transition-colors group-hover:border-primary/40">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-start justify-between gap-4">
                       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-1.5">
@@ -362,6 +348,7 @@ export default async function ProfilPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </Link>
               ))}
             </div>
           </div>
