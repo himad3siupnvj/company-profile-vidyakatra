@@ -306,7 +306,7 @@ export default function OrganizationManagement() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Organization Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengelolaan Organisasi</h1>
           <p className="text-muted-foreground">
             Kelola pengurus, departemen, biro, dan struktur organisasi Kabinet Vidyakatra.
           </p>
@@ -325,7 +325,7 @@ export default function OrganizationManagement() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Add New Member</DialogTitle>
+                <DialogTitle>Tambah Anggota</DialogTitle>
                 <DialogDescription>Add a new member to the organization.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -345,7 +345,7 @@ export default function OrganizationManagement() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name">Nama Lengkap</Label>
                   <Input
                     id="name"
                     value={newMember.name}
@@ -355,7 +355,7 @@ export default function OrganizationManagement() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="position">Position</Label>
+                    <Label htmlFor="position">Jabatan</Label>
                     <Input
                       id="position"
                       value={newMember.position}
@@ -366,7 +366,7 @@ export default function OrganizationManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="member-unit">Department / Bureau</Label>
+                    <Label htmlFor="member-unit">Departemen / Biro</Label>
                     <Select
                       value={newMember.department}
                       onValueChange={(value) => setNewMember({ ...newMember, department: value })}
@@ -399,7 +399,7 @@ export default function OrganizationManagement() {
                 <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleAddMember}>Add Member</Button>
+                <Button onClick={handleAddMember}>Tambah Anggota</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -419,7 +419,7 @@ export default function OrganizationManagement() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Members</p>
+              <p className="text-sm text-muted-foreground">Total Anggota</p>
               <p className="text-2xl font-bold">{members.length}</p>
             </div>
           </CardContent>
@@ -430,7 +430,7 @@ export default function OrganizationManagement() {
               <Building2 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Departments</p>
+              <p className="text-sm text-muted-foreground">Departemen</p>
               <p className="text-2xl font-bold">{departmentCount}</p>
             </div>
           </CardContent>
@@ -441,7 +441,7 @@ export default function OrganizationManagement() {
               <Building2 className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Bureaus</p>
+              <p className="text-sm text-muted-foreground">Biro</p>
               <p className="text-2xl font-bold">{bureauCount}</p>
             </div>
           </CardContent>
@@ -452,7 +452,7 @@ export default function OrganizationManagement() {
               <Network className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Active Members</p>
+              <p className="text-sm text-muted-foreground">Anggota Aktif</p>
               <p className="text-2xl font-bold">
                 {members.filter((member) => member.status === "active").length}
               </p>
@@ -463,21 +463,21 @@ export default function OrganizationManagement() {
 
       <Tabs defaultValue="members" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="units">Departments & Bureaus</TabsTrigger>
-          <TabsTrigger value="structure">Org Structure</TabsTrigger>
+          <TabsTrigger value="members">Anggota</TabsTrigger>
+          <TabsTrigger value="units">Departemen & Biro</TabsTrigger>
+          <TabsTrigger value="structure">Struktur Organisasi</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <CardTitle>All Members</CardTitle>
+                <CardTitle>Semua Anggota</CardTitle>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Search members..."
+                      placeholder="Cari anggota..."
                       className="w-full pl-9 sm:w-64"
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
@@ -485,10 +485,10 @@ export default function OrganizationManagement() {
                   </div>
                   <Select value={filterUnit} onValueChange={setFilterUnit}>
                     <SelectTrigger className="w-full sm:w-52">
-                      <SelectValue placeholder="All units" />
+                      <SelectValue placeholder="Semua unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All units</SelectItem>
+                      <SelectItem value="all">Semua unit</SelectItem>
                       {units.map((unit) => (
                         <SelectItem key={unit.id} value={unit.name}>
                           {unit.name}
@@ -504,10 +504,10 @@ export default function OrganizationManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Member</TableHead>
-                      <TableHead>Position</TableHead>
-                      <TableHead>Department / Bureau</TableHead>
-                      <TableHead>Contact</TableHead>
+                      <TableHead>Anggota</TableHead>
+                      <TableHead>Jabatan</TableHead>
+                      <TableHead>Departemen / Biro</TableHead>
+                      <TableHead>Kontak</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-12" />
                     </TableRow>
@@ -572,7 +572,7 @@ export default function OrganizationManagement() {
                     {!isLoading && filteredMembers.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                          No members found.
+                          Anggota tidak ditemukan.
                         </TableCell>
                       </TableRow>
                     )}
@@ -586,7 +586,7 @@ export default function OrganizationManagement() {
         <TabsContent value="units" className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold">Departments & Bureaus</h2>
+              <h2 className="text-lg font-semibold">Departemen & Biro</h2>
               <p className="text-sm text-muted-foreground">
                 Unit yang tampil di profil publik dan pilihan data anggota.
               </p>
@@ -609,7 +609,7 @@ export default function OrganizationManagement() {
                           <Badge variant="outline">
                             {unit.type === "bureau" ? "Bureau" : "Department"}
                           </Badge>
-                          <Badge variant="secondary">{unit.memberCount} members</Badge>
+                          <Badge variant="secondary">{unit.memberCount} anggota</Badge>
                         </div>
                         <CardTitle className="text-base">{unit.name}</CardTitle>
                         <CardDescription className="mt-1 line-clamp-2 min-h-10">
@@ -640,7 +640,7 @@ export default function OrganizationManagement() {
                     </div>
                   </CardHeader>
                   <CardContent className="border-t pt-4">
-                    <p className="text-xs font-medium uppercase text-muted-foreground">Unit Head</p>
+                    <p className="text-xs font-medium uppercase text-muted-foreground">Kepala Unit</p>
                     <div className="mt-2 flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="text-xs">
@@ -658,9 +658,9 @@ export default function OrganizationManagement() {
           ) : (
             <div className="flex min-h-64 flex-col items-center justify-center rounded-md border border-dashed px-6 text-center">
               <Building2 className="mb-4 h-10 w-10 text-muted-foreground" />
-              <h3 className="font-semibold">No departments or bureaus yet</h3>
+              <h3 className="font-semibold">Belum ada departemen atau biro</h3>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Add the first unit so members can be assigned and the organization chart can be built.
+                Tambahkan unit pertama agar anggota dapat ditempatkan dan bagan organisasi bisa dibuat.
               </p>
               <Button className="mt-4 gap-2" onClick={openCreateUnit}>
                 <Plus className="h-4 w-4" />
@@ -673,7 +673,7 @@ export default function OrganizationManagement() {
         <TabsContent value="structure">
           <Card>
             <CardHeader>
-              <CardTitle>Organization Chart</CardTitle>
+              <CardTitle>Bagan Organisasi</CardTitle>
               <CardDescription>
                 Struktur ini otomatis mengikuti jabatan anggota dan unit organisasi.
               </CardDescription>
@@ -682,9 +682,9 @@ export default function OrganizationManagement() {
               {members.length === 0 && units.length === 0 ? (
                 <div className="flex min-h-64 flex-col items-center justify-center text-center">
                   <Network className="mb-4 h-10 w-10 text-muted-foreground" />
-                  <h3 className="font-semibold">Organization chart is empty</h3>
+                  <h3 className="font-semibold">Bagan organisasi masih kosong</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Add departments, bureaus, and members to generate the chart.
+                    Tambahkan departemen, biro, dan anggota untuk membuat bagan organisasi.
                   </p>
                 </div>
               ) : (
@@ -706,9 +706,9 @@ export default function OrganizationManagement() {
                           </div>
                         )}
                       </div>
-                      <p className="mt-2 font-semibold">Executive Board</p>
+                      <p className="mt-2 font-semibold">Pengurus Inti</p>
                       <p className="text-xs text-muted-foreground">
-                        {leadership.length} leadership members
+                        {leadership.length} anggota pimpinan
                       </p>
                     </div>
 
@@ -745,7 +745,7 @@ export default function OrganizationManagement() {
                                     {unitHead?.name ?? "Not assigned"}
                                   </p>
                                   <p className="truncate text-[11px] text-muted-foreground">
-                                    {unitHead?.position ?? `${unit.memberCount} members`}
+                                    {unitHead?.position ?? `${unit.memberCount} anggota`}
                                   </p>
                                 </div>
                               </div>
@@ -772,7 +772,7 @@ export default function OrganizationManagement() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="unit-name">Unit Name</Label>
+              <Label htmlFor="unit-name">Nama Unit</Label>
               <Input
                 id="unit-name"
                 value={unitForm.name}
@@ -781,7 +781,7 @@ export default function OrganizationManagement() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="unit-type">Unit Type</Label>
+              <Label htmlFor="unit-type">Jenis Unit</Label>
               <Select
                 value={unitForm.type}
                 onValueChange={(value: "department" | "bureau") =>
@@ -792,13 +792,13 @@ export default function OrganizationManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="department">Department</SelectItem>
-                  <SelectItem value="bureau">Bureau</SelectItem>
+                  <SelectItem value="department">Departemen</SelectItem>
+                  <SelectItem value="bureau">Biro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="unit-description">Description</Label>
+              <Label htmlFor="unit-description">Deskripsi</Label>
               <Textarea
                 id="unit-description"
                 rows={4}
@@ -810,7 +810,7 @@ export default function OrganizationManagement() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Chart Color</Label>
+              <Label>Warna Bagan</Label>
               <div className="flex flex-wrap gap-2">
                 {unitColors.map((color) => (
                   <button

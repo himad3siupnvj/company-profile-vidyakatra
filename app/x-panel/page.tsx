@@ -3,15 +3,12 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  AlertCircle,
   ArrowRight,
   Building2,
-  CheckCircle2,
   Eye,
   FileText,
   Newspaper,
   Share2,
-  Sparkles,
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 import { RecentActivity } from "@/components/admin/recent-activity"
@@ -25,12 +22,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAdminUser } from "@/components/admin/admin-user-context"
 import { hasPermission } from "@/lib/permissions"
 import type { RecentActivityItem } from "@/components/admin/recent-activity"
-
-const socialChannels = [
-  { name: "Instagram", handle: "@himad3si_upnvj", reach: "2.5K+", status: "Aktif" },
-  { name: "YouTube", handle: "HIMA D3 SI UPNVJ", reach: "320+", status: "Perlu konten" },
-  { name: "LinkedIn", handle: "HIMA D3SI UPNVJ", reach: "180+", status: "Aktif" },
-]
 
 const dashboardRequestTimeoutMs = 8000
 
@@ -178,12 +169,8 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="mb-2 flex items-center gap-2">
-            <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary">
-              <Sparkles className="h-3.5 w-3.5" />
-              Admin Dashboard
-            </Badge>
-            <Badge variant="outline" className="border-white/10">
+          <div className="mb-2">
+            <Badge variant="outline">
               <LiveDateTime />
             </Badge>
           </div>
@@ -196,7 +183,7 @@ export default function AdminDashboard() {
           <Button asChild variant="outline" className="gap-2 border-white/10 bg-white/[0.03]">
             <Link href="/">
               <Eye className="h-4 w-4" />
-              Preview Site
+              Lihat Situs
             </Link>
           </Button>
           {canCreateArticle && <Button asChild className="gap-2">
@@ -241,7 +228,7 @@ export default function AdminDashboard() {
               icon={Share2}
             />}
             <StatsCard
-              title="Total Views"
+              title="Total Dilihat"
               value={(summary?.stats.articles.views ?? 0).toLocaleString()}
               change={`${summary?.stats.articles.byStatus.submitted ?? 0} menunggu review`}
               changeType={(summary?.stats.articles.byStatus.submitted ?? 0) > 0 ? "neutral" : "positive"}
@@ -347,30 +334,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {canManageSettings && <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">Kanal Digital</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          {socialChannels.map((channel) => (
-            <div key={channel.name} className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="font-medium">{channel.name}</p>
-                {channel.status === "Aktif" ? (
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{channel.handle}</p>
-              <div className="mt-4 flex items-end justify-between">
-                <p className="text-2xl font-bold">{channel.reach}</p>
-                <StatusBadge status={channel.status} />
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>}
     </div>
   )
 }

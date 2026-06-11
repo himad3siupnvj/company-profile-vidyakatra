@@ -247,7 +247,7 @@ export default function UserManagement() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">User Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengelolaan Pengguna</h1>
           <p className="text-muted-foreground">
             Manage admin users and their access permissions.
           </p>
@@ -261,14 +261,14 @@ export default function UserManagement() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New CMS User</DialogTitle>
+              <DialogTitle>Tambah Pengguna CMS</DialogTitle>
               <DialogDescription>
                 Buat akun unclaimed. User akan mengklaim akun memakai claim code.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="member">Linked Member</Label>
+                <Label htmlFor="member">Anggota Terkait</Label>
                 <Select value={newUser.memberId} onValueChange={handleSelectMember}>
                   <SelectTrigger id="member">
                     <SelectValue placeholder="Pilih member organisasi" />
@@ -286,7 +286,7 @@ export default function UserManagement() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Nama Lengkap</Label>
                 <Input
                   id="name"
                   value={newUser.name}
@@ -296,7 +296,7 @@ export default function UserManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">Alamat Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -307,7 +307,7 @@ export default function UserManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">Peran</Label>
                 <Select
                   value={newUser.role}
                   onValueChange={(value) => setNewUser({ ...newUser, role: value as User["role"] })}
@@ -334,7 +334,7 @@ export default function UserManagement() {
               <Button variant="outline" onClick={() => setIsAddUserOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddUser}>Create Claim Code</Button>
+              <Button onClick={handleAddUser}>Buat Kode Klaim</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -348,7 +348,7 @@ export default function UserManagement() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Users</p>
+              <p className="text-sm text-muted-foreground">Total Pengguna</p>
               <p className="text-xl font-bold">{users.length}</p>
             </div>
           </CardContent>
@@ -381,7 +381,7 @@ export default function UserManagement() {
               <Key className="h-5 w-5 text-green-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Active Users</p>
+              <p className="text-sm text-muted-foreground">Pengguna Aktif</p>
               <p className="text-xl font-bold">{users.filter(u => u.status === "active").length}</p>
             </div>
           </CardContent>
@@ -414,7 +414,7 @@ export default function UserManagement() {
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle>All Users</CardTitle>
+            <CardTitle>Semua Pengguna</CardTitle>
             <div className="flex flex-col gap-2 sm:flex-row">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -427,10 +427,10 @@ export default function UserManagement() {
               </div>
               <Select value={filterRole} onValueChange={setFilterRole}>
                 <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder="Semua peran" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="all">Semua peran</SelectItem>
                   {roleOptions.map((role) => (
                     <SelectItem key={role.value} value={role.value}>
                       {role.label}
@@ -446,12 +446,12 @@ export default function UserManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Pengguna</TableHead>
+                  <TableHead>Peran</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Claim Code</TableHead>
-                  <TableHead>Last Login</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Kode Klaim</TableHead>
+                  <TableHead>Login Terakhir</TableHead>
+                  <TableHead>Dibuat</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>

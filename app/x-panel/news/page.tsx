@@ -100,11 +100,11 @@ const articleCategories = [
 const articlesRequestTimeoutMs = 8000
 
 const workflowActionLabels: Record<ArticleWorkflowAction, string> = {
-  submit: "Submit for Review",
-  approve: "Approve & Publish",
-  reject: "Reject",
-  archive: "Archive",
-  restore: "Restore Draft",
+  submit: "Ajukan untuk Ditinjau",
+  approve: "Setujui & Terbitkan",
+  reject: "Tolak",
+  archive: "Arsipkan",
+  restore: "Pulihkan ke Draf",
 }
 
 const workflowActionIcons = {
@@ -500,7 +500,7 @@ export default function ArticleManagementPage() {
       <Dialog open={Boolean(historyArticle)} onOpenChange={(open) => !open && setHistoryArticle(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Version History</DialogTitle>
+            <DialogTitle>Riwayat Versi</DialogTitle>
             <DialogDescription>
               Snapshot sebelum perubahan besar atau publikasi untuk {historyArticle?.title}.
             </DialogDescription>
@@ -546,7 +546,7 @@ export default function ArticleManagementPage() {
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Article Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengelolaan Artikel</h1>
           <p className="text-muted-foreground">
             Tulis, simpan draft, dan ajukan berita acara melalui workflow approval.
           </p>
@@ -560,7 +560,7 @@ export default function ArticleManagementPage() {
               <FileText className="h-5 w-5 text-green-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Published</p>
+              <p className="text-sm text-muted-foreground">Terbit</p>
               {isLoadingArticles ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{articles.filter((article) => article.status === "published").length}</p>}
             </div>
           </CardContent>
@@ -571,7 +571,7 @@ export default function ArticleManagementPage() {
               <Send className="h-5 w-5 text-blue-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Submitted</p>
+              <p className="text-sm text-muted-foreground">Diajukan</p>
               {isLoadingArticles ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{articles.filter((article) => article.status === "submitted").length}</p>}
             </div>
           </CardContent>
@@ -582,7 +582,7 @@ export default function ArticleManagementPage() {
               <Edit className="h-5 w-5 text-yellow-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Drafts</p>
+              <p className="text-sm text-muted-foreground">Draf</p>
               {isLoadingArticles ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{articles.filter((article) => article.status === "draft").length}</p>}
             </div>
           </CardContent>
@@ -593,7 +593,7 @@ export default function ArticleManagementPage() {
               <Eye className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Views</p>
+              <p className="text-sm text-muted-foreground">Total Dilihat</p>
               {isLoadingArticles ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold">{articles.reduce((acc, article) => acc + article.views, 0).toLocaleString()}</p>}
             </div>
           </CardContent>
@@ -602,7 +602,7 @@ export default function ArticleManagementPage() {
 
       <Card>
         <CardHeader className="flex flex-col gap-4 pb-4 lg:flex-row lg:items-center lg:justify-between">
-          <CardTitle>All Articles</CardTitle>
+          <CardTitle>Semua Artikel</CardTitle>
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -615,16 +615,16 @@ export default function ArticleManagementPage() {
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="All Status" />
+                <SelectValue placeholder="Semua status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="submitted">Submitted</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
+                <SelectItem value="all">Semua status</SelectItem>
+                <SelectItem value="draft">Draf</SelectItem>
+                <SelectItem value="submitted">Diajukan</SelectItem>
+                <SelectItem value="approved">Disetujui</SelectItem>
+                <SelectItem value="rejected">Ditolak</SelectItem>
+                <SelectItem value="published">Terbit</SelectItem>
+                <SelectItem value="archived">Diarsipkan</SelectItem>
               </SelectContent>
             </Select>
             <Dialog open={isCreateArticleOpen} onOpenChange={handleDialogOpenChange}>
@@ -707,7 +707,7 @@ export default function ArticleManagementPage() {
                         <Upload className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">Source Berita Acara</h3>
+                        <h3 className="font-semibold">Sumber Berita Acara</h3>
                         <p className="text-sm text-muted-foreground">Upload sumber berita acara, lalu generate draft dari PDF atau DOCX.</p>
                       </div>
                     </div>
@@ -742,7 +742,7 @@ export default function ArticleManagementPage() {
                           ) : (
                             <div className="text-center">
                               <ImagePlus className="mx-auto h-7 w-7 text-muted-foreground" />
-                              <p className="mt-1 text-xs text-muted-foreground">Preview card</p>
+                              <p className="mt-1 text-xs text-muted-foreground">Pratinjau kartu</p>
                             </div>
                           )}
                         </div>
@@ -772,7 +772,7 @@ export default function ArticleManagementPage() {
                       </div>
                       <div className="flex items-center justify-between rounded-lg border bg-background/50 p-3">
                         <div>
-                          <Label>Jadikan Featured</Label>
+                          <Label>Jadikan Unggulan</Label>
                           <p className="text-xs text-muted-foreground">Artikel bisa ditarik ke area unggulan/latest news.</p>
                         </div>
                         <Switch
@@ -794,7 +794,7 @@ export default function ArticleManagementPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="article-author">Author</Label>
+                      <Label htmlFor="article-author">Penulis</Label>
                       <Input
                         id="article-author"
                         value={newArticle.author}
@@ -840,12 +840,12 @@ export default function ArticleManagementPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Article</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Author</TableHead>
+                  <TableHead>Artikel</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Penulis</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Views</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Dilihat</TableHead>
+                  <TableHead>Tanggal</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>

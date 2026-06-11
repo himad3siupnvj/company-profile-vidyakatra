@@ -93,7 +93,7 @@ export default function AuthHealthPage() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Auth Operations
           </Badge>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Auth Health</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Kesehatan Autentikasi</h1>
           <p className="max-w-2xl text-muted-foreground">
             Cek kesiapan konfigurasi login, claim account, storage, dan koneksi database untuk operasional CMS.
           </p>
@@ -114,7 +114,7 @@ export default function AuthHealthPage() {
         <Card>
           <CardContent className="flex items-center justify-between gap-4 p-5">
             <div>
-              <p className="text-sm text-muted-foreground">Overall</p>
+              <p className="text-sm text-muted-foreground">Keseluruhan</p>
               <p className="mt-1 text-2xl font-bold">{health?.ok ? "Ready" : "Check"}</p>
             </div>
             <StatusBadge ok={Boolean(health?.ok)} />
@@ -132,7 +132,7 @@ export default function AuthHealthPage() {
         <Card>
           <CardContent className="flex items-center justify-between gap-4 p-5">
             <div>
-              <p className="text-sm text-muted-foreground">CMS Users</p>
+              <p className="text-sm text-muted-foreground">Pengguna CMS</p>
               <p className="mt-1 text-2xl font-bold">{health?.users.total ?? "-"}</p>
             </div>
             <Users className="h-5 w-5 text-primary" />
@@ -145,7 +145,7 @@ export default function AuthHealthPage() {
           <CardHeader>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <CardTitle>Environment</CardTitle>
+                <CardTitle>Lingkungan</CardTitle>
                 <CardDescription>Nilai secret tidak ditampilkan, hanya status configured.</CardDescription>
               </div>
               <StatusBadge ok={Boolean(health && missingEnv.length === 0)} />
@@ -168,7 +168,7 @@ export default function AuthHealthPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Database Ping</CardTitle>
+              <CardTitle>Koneksi Database</CardTitle>
               <CardDescription>Last check: {formatDate(health?.checkedAt ?? null)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -177,7 +177,7 @@ export default function AuthHealthPage() {
                 <StatusBadge ok={Boolean(health?.database.ok)} />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-white/10 p-3">
-                <span className="text-sm text-muted-foreground">Server time</span>
+                <span className="text-sm text-muted-foreground">Waktu server</span>
                 <span className="text-sm font-medium">{formatDate(health?.database.serverTime ?? null)}</span>
               </div>
               {health?.database.error && (
@@ -190,20 +190,20 @@ export default function AuthHealthPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>User Access</CardTitle>
+              <CardTitle>Akses Pengguna</CardTitle>
               <CardDescription>Ringkasan status akun CMS.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               <div className="flex items-center justify-between rounded-lg border border-white/10 p-3">
-                <span className="text-sm text-muted-foreground">Active</span>
+                <span className="text-sm text-muted-foreground">Aktif</span>
                 <span className="font-semibold">{health?.users.byStatus.active ?? "-"}</span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-white/10 p-3">
-                <span className="text-sm text-muted-foreground">Unclaimed</span>
+                <span className="text-sm text-muted-foreground">Belum diklaim</span>
                 <span className="font-semibold">{health?.users.byStatus.unclaimed ?? "-"}</span>
               </div>
               <div className="flex items-center justify-between rounded-lg border border-white/10 p-3">
-                <span className="text-sm text-muted-foreground">Inactive</span>
+                <span className="text-sm text-muted-foreground">Tidak aktif</span>
                 <span className="font-semibold">{health?.users.byStatus.inactive ?? "-"}</span>
               </div>
             </CardContent>

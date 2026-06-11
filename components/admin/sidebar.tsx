@@ -194,7 +194,7 @@ export function AdminSidebar({ collapsed, onCollapsedChange }: AdminSidebarProps
             ) : (
               <>
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                <span>Collapse</span>
+                <span>Ciutkan</span>
               </>
             )}
           </Button>

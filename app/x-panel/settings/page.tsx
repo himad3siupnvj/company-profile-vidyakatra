@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Archive, Download, Save, Globe, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Music2 } from "lucide-react"
+import { officialSocialUrls, type SocialMediaUrls } from "@/lib/social-links"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
@@ -22,11 +23,8 @@ export default function SettingsPage() {
     address: "Jl. R.S. Fatmawati No.1, Pondok Labu\nKec. Cilandak, Kota Jakarta Selatan\nDKI Jakarta 12450",
   })
 
-  const [socialMedia, setSocialMedia] = useState({
-    instagram: "https://www.instagram.com/himad3si_upnvj?igsh=cDEzaTl3Y3dnbm0=",
-    youtube: "https://youtube.com/@himad3siupnvj?si=8PEq4uJAALyE4cHJ",
-    linkedin: "https://www.linkedin.com/company/hima-d3si-upnvj-himpunan-mahasiswa-d3-sistem-informasi-upnvj/",
-    tiktok: "https://www.tiktok.com/@himad3si_upnvj?_r=1&_t=ZS-96bDCzDu1o1",
+  const [socialMedia, setSocialMedia] = useState<SocialMediaUrls>({
+    ...officialSocialUrls,
   })
 
   const [footerSettings, setFooterSettings] = useState({
@@ -42,7 +40,7 @@ export default function SettingsPage() {
     { id: 2, label: "Profil", url: "/profil", enabled: true },
     { id: 3, label: "Struktur Organisasi", url: "/profil#struktur", enabled: true },
     { id: 4, label: "Berita Acara", url: "/berita", enabled: true },
-    { id: 5, label: "Collaborate", url: "/kontak", enabled: true },
+    { id: 5, label: "Kolaborasi", url: "/kontak", enabled: true },
   ])
 
   const [siteSettings, setSiteSettings] = useState({
@@ -124,7 +122,7 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengaturan Website</h1>
           <p className="text-muted-foreground">
-            Kelola informasi publik, social media overview, dan footer sesuai tampilan terbaru.
+            Kelola informasi publik, kanal media sosial, dan footer situs.
           </p>
         </div>
         <Button className="w-full gap-2 sm:w-auto" onClick={saveSettings} disabled={isSaving}>
@@ -149,7 +147,7 @@ export default function SettingsPage() {
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:w-auto">
           <TabsTrigger value="general">Umum</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>
-          <TabsTrigger value="social" className="h-9 whitespace-normal text-center leading-tight">Social Media</TabsTrigger>
+          <TabsTrigger value="social" className="h-9 whitespace-normal text-center leading-tight">Media Sosial</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
         </TabsList>
 
@@ -184,7 +182,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
-                  <Label>Maintenance Mode</Label>
+                  <Label>Mode Pemeliharaan</Label>
                   <p className="text-sm text-muted-foreground">
                     When enabled, visitors will see a maintenance page.
                   </p>
@@ -208,7 +206,7 @@ export default function SettingsPage() {
               </div>
               <div className="rounded-lg border p-4">
                 <div className="mb-4">
-                  <Label>Export Data CMS</Label>
+                  <Label>Ekspor Data CMS</Label>
                   <p className="text-sm text-muted-foreground">
                     Download data penting untuk arsip internal.
                   </p>
@@ -308,9 +306,9 @@ export default function SettingsPage() {
         <TabsContent value="social" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Social Media Overview</CardTitle>
+              <CardTitle>Kanal Media Sosial</CardTitle>
               <CardDescription>
-                Kanal resmi yang dipakai di section collaborate dan footer.
+                Kanal resmi yang ditampilkan pada halaman Kontak, navigasi, dan footer.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -385,8 +383,8 @@ export default function SettingsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div>
-                    <Label>Show Social Media</Label>
-                    <p className="text-xs text-muted-foreground">Display social media icons</p>
+                    <Label>Tampilkan Media Sosial</Label>
+                    <p className="text-xs text-muted-foreground">Tampilkan ikon media sosial pada footer.</p>
                   </div>
                   <Switch
                     checked={footerSettings.showSocialMedia}
@@ -395,8 +393,8 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div>
-                    <Label>Show Contact Info</Label>
-                    <p className="text-xs text-muted-foreground">Display contact information</p>
+                    <Label>Tampilkan Informasi Kontak</Label>
+                    <p className="text-xs text-muted-foreground">Tampilkan informasi kontak pada footer.</p>
                   </div>
                   <Switch
                     checked={footerSettings.showContactInfo}
@@ -405,8 +403,8 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div>
-                    <Label>Show Quick Links</Label>
-                    <p className="text-xs text-muted-foreground">Display navigation links</p>
+                    <Label>Tampilkan Tautan Cepat</Label>
+                    <p className="text-xs text-muted-foreground">Tampilkan tautan navigasi pada footer.</p>
                   </div>
                   <Switch
                     checked={footerSettings.showQuickLinks}
@@ -415,8 +413,8 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div>
-                    <Label>Show Newsletter</Label>
-                    <p className="text-xs text-muted-foreground">Display newsletter signup</p>
+                    <Label>Tampilkan Buletin</Label>
+                    <p className="text-xs text-muted-foreground">Tampilkan formulir langganan buletin.</p>
                   </div>
                   <Switch
                     checked={footerSettings.showNewsletter}
@@ -425,7 +423,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="copyright">Copyright Text</Label>
+                <Label htmlFor="copyright">Teks Hak Cipta</Label>
                 <Input
                   id="copyright"
                   value={footerSettings.copyrightText}
@@ -437,7 +435,7 @@ export default function SettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Quick Links</CardTitle>
+              <CardTitle>Tautan Cepat</CardTitle>
               <CardDescription>
                 Manage footer navigation links.
               </CardDescription>

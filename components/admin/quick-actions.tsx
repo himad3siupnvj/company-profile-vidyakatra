@@ -33,7 +33,7 @@ export function QuickActions() {
           <Link key={action.title} href={action.href} className="min-w-0">
             <Button
               variant="outline"
-              className="h-auto w-full min-w-0 justify-start gap-3 whitespace-normal border-white/10 bg-white/[0.02] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.05] hover:shadow-[0_12px_30px_rgba(250,204,21,0.08)] sm:gap-4 sm:p-4"
+              className="h-auto w-full min-w-0 justify-start gap-3 whitespace-normal p-3 text-left transition-colors hover:border-primary/30 sm:gap-4 sm:p-4"
             >
               <div className="shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
                 <Icon className="h-4 w-4" />

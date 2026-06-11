@@ -197,7 +197,7 @@ export function NotionArticleEditor({
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Type className="h-4 w-4" />
-          <span>Article body</span>
+          <span>Isi artikel</span>
         </div>
         <div className="flex rounded-md bg-muted p-0.5">
           <Button
@@ -303,7 +303,7 @@ export function NotionArticleEditor({
               {block.type === "image" ? (
                 <div className="my-4 space-y-2 rounded-lg border border-dashed bg-muted/20 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-muted-foreground">Image block</p>
+                    <p className="text-sm font-medium text-muted-foreground">Blok gambar</p>
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"
@@ -340,7 +340,7 @@ export function NotionArticleEditor({
                     </div>
                     <div className="flex min-w-0 flex-col justify-between gap-3">
                       <div>
-                        <p className="text-sm font-medium">Upload image</p>
+                        <p className="text-sm font-medium">Unggah gambar</p>
                         <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, atau GIF. Maks 1 MB.</p>
                       </div>
                       <Button type="button" variant="outline" size="sm" className="relative w-full gap-2 sm:w-fit" disabled={uploadingBlockId === block.id}>

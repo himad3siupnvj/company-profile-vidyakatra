@@ -76,7 +76,7 @@ export default function HomePageManagement() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Home Page Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengelolaan Beranda</h1>
           <p className="text-muted-foreground">
             Manage the content displayed on your website&apos;s home page.
           </p>
@@ -96,17 +96,17 @@ export default function HomePageManagement() {
       {/* Tabs */}
       <Tabs defaultValue="hero" className="space-y-6">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:w-auto">
-          <TabsTrigger value="hero" className="h-9 whitespace-normal text-center leading-tight">Hero Section</TabsTrigger>
-          <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="achievements" className="h-9 whitespace-normal text-center leading-tight">Achievements</TabsTrigger>
-          <TabsTrigger value="cta" className="h-9 whitespace-normal text-center leading-tight">CTA Section</TabsTrigger>
+          <TabsTrigger value="hero" className="h-9 whitespace-normal text-center leading-tight">Bagian Utama</TabsTrigger>
+          <TabsTrigger value="about">Tentang</TabsTrigger>
+          <TabsTrigger value="achievements" className="h-9 whitespace-normal text-center leading-tight">Pencapaian</TabsTrigger>
+          <TabsTrigger value="cta" className="h-9 whitespace-normal text-center leading-tight">Ajakan</TabsTrigger>
         </TabsList>
 
         {/* Hero Section */}
         <TabsContent value="hero" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Hero Section</CardTitle>
+              <CardTitle>Bagian Utama</CardTitle>
               <CardDescription>
                 Configure the main banner that appears at the top of your home page.
               </CardDescription>
@@ -114,7 +114,7 @@ export default function HomePageManagement() {
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="hero-title">Main Title</Label>
+                  <Label htmlFor="hero-title">Judul Utama</Label>
                   <Input
                     id="hero-title"
                     value={heroData.title}
@@ -122,7 +122,7 @@ export default function HomePageManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="hero-subtitle">Subtitle</Label>
+                  <Label htmlFor="hero-subtitle">Subjudul</Label>
                   <Input
                     id="hero-subtitle"
                     value={heroData.subtitle}
@@ -131,7 +131,7 @@ export default function HomePageManagement() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hero-description">Description</Label>
+                <Label htmlFor="hero-description">Deskripsi</Label>
                 <Textarea
                   id="hero-description"
                   value={heroData.description}
@@ -141,7 +141,7 @@ export default function HomePageManagement() {
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="cta-text">CTA Button Text</Label>
+                  <Label htmlFor="cta-text">Teks Tombol Ajakan</Label>
                   <Input
                     id="cta-text"
                     value={heroData.ctaText}
@@ -149,7 +149,7 @@ export default function HomePageManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cta-link">CTA Button Link</Label>
+                  <Label htmlFor="cta-link">Tautan Tombol Ajakan</Label>
                   <Input
                     id="cta-link"
                     value={heroData.ctaLink}
@@ -158,12 +158,12 @@ export default function HomePageManagement() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Background Image</Label>
+                <Label>Gambar Latar</Label>
                 <div className="flex items-center gap-4">
                   <div className="flex h-32 w-48 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50">
                     <div className="text-center">
                       <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-1 text-xs text-muted-foreground">Upload image</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Unggah gambar</p>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -183,14 +183,14 @@ export default function HomePageManagement() {
         <TabsContent value="about" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>About Section</CardTitle>
+              <CardTitle>Bagian Tentang</CardTitle>
               <CardDescription>
                 Edit the about section that describes your organization.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="about-title">Section Title</Label>
+                <Label htmlFor="about-title">Judul Bagian</Label>
                 <Input
                   id="about-title"
                   value={aboutData.title}
@@ -198,7 +198,7 @@ export default function HomePageManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="about-description">Description</Label>
+                <Label htmlFor="about-description">Deskripsi</Label>
                 <Textarea
                   id="about-description"
                   value={aboutData.description}
@@ -207,12 +207,12 @@ export default function HomePageManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Section Image</Label>
+                <Label>Gambar Bagian</Label>
                 <div className="flex items-center gap-4">
                   <div className="flex h-32 w-48 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50">
                     <div className="text-center">
                       <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-1 text-xs text-muted-foreground">Upload image</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Unggah gambar</p>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -233,7 +233,7 @@ export default function HomePageManagement() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Achievement Cards</CardTitle>
+                <CardTitle>Kartu Pencapaian</CardTitle>
                 <CardDescription>
                   Manage the achievement statistics displayed on the home page.
                 </CardDescription>
@@ -254,7 +254,7 @@ export default function HomePageManagement() {
                   </button>
                   <div className="grid flex-1 gap-4 md:grid-cols-4">
                     <div className="space-y-2">
-                      <Label>Value/Number</Label>
+                      <Label>Nilai/Angka</Label>
                       <Input
                         value={achievement.title}
                         onChange={(e) => updateAchievement(achievement.id, "title", e.target.value)}
@@ -262,7 +262,7 @@ export default function HomePageManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Description</Label>
+                      <Label>Deskripsi</Label>
                       <Input
                         value={achievement.description}
                         onChange={(e) => updateAchievement(achievement.id, "description", e.target.value)}
@@ -285,9 +285,9 @@ export default function HomePageManagement() {
                         />
                         <Label className="text-sm">
                           {achievement.enabled ? (
-                            <Badge>Active</Badge>
+                            <Badge>Aktif</Badge>
                           ) : (
-                            <Badge variant="secondary">Hidden</Badge>
+                            <Badge variant="secondary">Disembunyikan</Badge>
                           )}
                         </Label>
                       </div>
@@ -312,13 +312,13 @@ export default function HomePageManagement() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Call to Action Section</CardTitle>
+                <CardTitle>Bagian Ajakan</CardTitle>
                 <CardDescription>
                   Configure the CTA section at the bottom of the home page.
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="cta-enabled" className="text-sm">Enable Section</Label>
+                <Label htmlFor="cta-enabled" className="text-sm">Aktifkan Bagian</Label>
                 <Switch
                   id="cta-enabled"
                   checked={ctaSection.enabled}
@@ -328,7 +328,7 @@ export default function HomePageManagement() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="cta-title">Section Title</Label>
+                <Label htmlFor="cta-title">Judul Bagian</Label>
                 <Input
                   id="cta-title"
                   value={ctaSection.title}
@@ -336,7 +336,7 @@ export default function HomePageManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cta-description">Description</Label>
+                <Label htmlFor="cta-description">Deskripsi</Label>
                 <Textarea
                   id="cta-description"
                   value={ctaSection.description}
@@ -346,7 +346,7 @@ export default function HomePageManagement() {
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="cta-button-text">Button Text</Label>
+                  <Label htmlFor="cta-button-text">Teks Tombol</Label>
                   <Input
                     id="cta-button-text"
                     value={ctaSection.buttonText}
@@ -354,7 +354,7 @@ export default function HomePageManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cta-button-link">Button Link</Label>
+                  <Label htmlFor="cta-button-link">Tautan Tombol</Label>
                   <Input
                     id="cta-button-link"
                     value={ctaSection.buttonLink}

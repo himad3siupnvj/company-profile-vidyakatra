@@ -114,7 +114,7 @@ export default function CabinetsManagement() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Cabinets</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Kabinet</h1>
           <p className="text-muted-foreground">
             Kelola intro kabinet, filosofi, visi, misi, values, dan pengurus inti untuk halaman /profil.
           </p>
@@ -138,27 +138,27 @@ export default function CabinetsManagement() {
 
       <Tabs defaultValue="intro" className="space-y-6">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-6">
-          <TabsTrigger value="intro">Intro</TabsTrigger>
-          <TabsTrigger value="philosophy">Philosophy</TabsTrigger>
-          <TabsTrigger value="vision">Vision</TabsTrigger>
-          <TabsTrigger value="mission">Mission</TabsTrigger>
-          <TabsTrigger value="values">Values</TabsTrigger>
-          <TabsTrigger value="leaders">Leaders</TabsTrigger>
+          <TabsTrigger value="intro">Pengantar</TabsTrigger>
+          <TabsTrigger value="philosophy">Filosofi</TabsTrigger>
+          <TabsTrigger value="vision">Visi</TabsTrigger>
+          <TabsTrigger value="mission">Misi</TabsTrigger>
+          <TabsTrigger value="values">Nilai</TabsTrigger>
+          <TabsTrigger value="leaders">Pimpinan</TabsTrigger>
         </TabsList>
 
         <TabsContent value="intro">
           <Card>
             <CardHeader>
-              <CardTitle>Profil Page Intro</CardTitle>
+              <CardTitle>Pengantar Halaman Profil</CardTitle>
               <CardDescription>Konten hero dan narasi pembuka kabinet di halaman /profil.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Eyebrow</Label>
+                <Label>Label Pendek</Label>
                 <Input value={profileContent.intro.eyebrow} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, eyebrow: event.target.value } })} />
               </div>
               <div className="space-y-2">
-                <Label>Page Title</Label>
+                <Label>Judul Halaman</Label>
                 <Input value={profileContent.intro.title} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, title: event.target.value } })} />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -166,7 +166,7 @@ export default function CabinetsManagement() {
                 <Input value={profileContent.intro.subtitle} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, subtitle: event.target.value } })} />
               </div>
               <div className="space-y-2">
-                <Label>Cabinet Name</Label>
+                <Label>Nama Kabinet</Label>
                 <Input value={profileContent.intro.cabinetName} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, cabinetName: event.target.value } })} />
               </div>
               <div className="space-y-2">
@@ -174,7 +174,7 @@ export default function CabinetsManagement() {
                 <Input value={profileContent.intro.tagline} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, tagline: event.target.value } })} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Description</Label>
+                <Label>Deskripsi</Label>
                 <Textarea rows={5} value={profileContent.intro.description} onChange={(event) => setProfileContent({ ...profileContent, intro: { ...profileContent.intro, description: event.target.value } })} />
               </div>
             </CardContent>
@@ -185,21 +185,21 @@ export default function CabinetsManagement() {
           <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Organization Philosophy</CardTitle>
+                <CardTitle>Filosofi Organisasi</CardTitle>
                 <CardDescription>Makna filosofis yang tampil di bagian tentang kabinet.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="philosophy-enabled" className="text-sm">Enable</Label>
+                <Label htmlFor="philosophy-enabled" className="text-sm">Aktifkan</Label>
                 <Switch id="philosophy-enabled" checked={profileContent.philosophy.enabled} onCheckedChange={(enabled) => setProfileContent({ ...profileContent, philosophy: { ...profileContent.philosophy, enabled } })} />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Section Title</Label>
+                <Label>Judul Bagian</Label>
                 <Input value={profileContent.philosophy.title} onChange={(event) => setProfileContent({ ...profileContent, philosophy: { ...profileContent.philosophy, title: event.target.value } })} />
               </div>
               <div className="space-y-2">
-                <Label>Description</Label>
+                <Label>Deskripsi</Label>
                 <Textarea rows={7} value={profileContent.philosophy.description} onChange={(event) => setProfileContent({ ...profileContent, philosophy: { ...profileContent.philosophy, description: event.target.value } })} />
               </div>
             </CardContent>
@@ -210,21 +210,21 @@ export default function CabinetsManagement() {
           <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Vision</CardTitle>
+                <CardTitle>Visi</CardTitle>
                 <CardDescription>Visi organisasi yang tampil di section Visi & Misi.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="vision-enabled" className="text-sm">Enable</Label>
+                <Label htmlFor="vision-enabled" className="text-sm">Aktifkan</Label>
                 <Switch id="vision-enabled" checked={profileContent.vision.enabled} onCheckedChange={(enabled) => setProfileContent({ ...profileContent, vision: { ...profileContent.vision, enabled } })} />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Title</Label>
+                <Label>Judul</Label>
                 <Input value={profileContent.vision.title} onChange={(event) => setProfileContent({ ...profileContent, vision: { ...profileContent.vision, title: event.target.value } })} />
               </div>
               <div className="space-y-2">
-                <Label>Vision Statement</Label>
+                <Label>Pernyataan Visi</Label>
                 <Textarea rows={6} value={profileContent.vision.description} onChange={(event) => setProfileContent({ ...profileContent, vision: { ...profileContent.vision, description: event.target.value } })} />
               </div>
             </CardContent>
@@ -235,7 +235,7 @@ export default function CabinetsManagement() {
           <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Missions</CardTitle>
+                <CardTitle>Misi</CardTitle>
                 <CardDescription>Misi organisasi yang tampil sebagai daftar bernomor.</CardDescription>
               </div>
               <Button
@@ -268,7 +268,7 @@ export default function CabinetsManagement() {
           <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Core Values</CardTitle>
+                <CardTitle>Nilai Utama</CardTitle>
                 <CardDescription>Nilai inti kabinet untuk profil publik dan narasi internal.</CardDescription>
               </div>
               <Button
@@ -347,8 +347,8 @@ export default function CabinetsManagement() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ketuaLead">Ketua photo</SelectItem>
-                        <SelectItem value="wakilLead">Wakil photo</SelectItem>
+                        <SelectItem value="ketuaLead">Foto ketua</SelectItem>
+                        <SelectItem value="wakilLead">Foto wakil</SelectItem>
                       </SelectContent>
                     </Select>
                     <Switch checked={leader.enabled} onCheckedChange={(enabled) => updateLeader(leader.id, { enabled })} />
