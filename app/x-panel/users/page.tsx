@@ -36,9 +36,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Plus, Search, MoreHorizontal, Edit, Trash2, Shield, UserCog, Users, Key } from "lucide-react"
 import { getPermissions, getRoleGroup, roleLabels, type UserRole, userRoles } from "@/lib/permissions"
+import { getFirstNameInitial } from "@/lib/name-initials"
 
 interface User {
   id: string
@@ -225,10 +226,6 @@ export default function UserManagement() {
     } catch {
       setUsers(previousUsers)
     }
-  }
-
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
   }
 
   const handleSelectMember = (memberId: string) => {
@@ -461,9 +458,8 @@ export default function UserManagement() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar} />
                           <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
-                            {getInitials(user.name)}
+                            {getFirstNameInitial(user.name)}
                           </AvatarFallback>
                         </Avatar>
                         <div>

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { getFirstNameInitial } from "@/lib/name-initials"
 
 export type RecentActivityItem = {
   id: string
@@ -31,9 +32,8 @@ export function RecentActivity({ activities }: { activities: RecentActivityItem[
         {activities.length ? activities.map((activity) => (
           <div key={activity.id} className="flex min-w-0 items-start gap-3 sm:gap-4">
             <Avatar className="h-9 w-9 shrink-0">
-              <AvatarImage src="" />
               <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
-                {activity.avatar}
+                {getFirstNameInitial(activity.user)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1 space-y-1">

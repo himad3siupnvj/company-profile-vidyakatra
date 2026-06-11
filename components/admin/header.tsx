@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ExternalLink, Menu, LogOut, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,18 +21,10 @@ import {
 } from "@/components/ui/sheet"
 import { AdminSidebarMobile } from "./sidebar-mobile"
 import { useAdminUser } from "@/components/admin/admin-user-context"
+import { getFirstNameInitial } from "@/lib/name-initials"
 
 interface AdminHeaderProps {
   sidebarCollapsed?: boolean
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
 }
 
 export function AdminHeader({ sidebarCollapsed: _sidebarCollapsed }: AdminHeaderProps) {
@@ -70,7 +62,7 @@ export function AdminHeader({ sidebarCollapsed: _sidebarCollapsed }: AdminHeader
         <Button asChild variant="outline" size="sm" className="hidden gap-2 border-white/10 bg-white/[0.03] hover:bg-white/[0.06] md:inline-flex">
           <Link href="/" target="_blank">
             <ExternalLink className="h-4 w-4" />
-            Lihat Site
+            Lihat Situs
           </Link>
         </Button>
 
@@ -79,9 +71,8 @@ export function AdminHeader({ sidebarCollapsed: _sidebarCollapsed }: AdminHeader
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex min-w-0 items-center gap-2 px-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-user.jpg" alt={currentUser?.name ?? "Admin"} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  {getInitials(currentUser?.name ?? "Admin")}
+                  {getFirstNameInitial(currentUser?.name ?? "Admin")}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden flex-col items-start md:flex">
