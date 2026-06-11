@@ -77,6 +77,11 @@ Role UX note: admin navigation, quick actions, dashboard shortcuts, and client r
 
 ## Backlog: Quality & Finishing
 
+- [x] Add article version snapshots before major edits and publication, with admin history UI.
+- [x] Restrict database-backed public content to the active organization period.
+- [x] Add public read APIs for articles, featured articles, members, units, and divisions.
+- [x] Add migration consistency checks and a production deployment runbook.
+- [x] Add CSV and ZIP export utility tests.
 - [x] Polish the article modal/editor UX, especially image blocks and Notion-like controls.
 - [x] Polish public berita acara detail layout into a cleaner press-release style template.
 - [x] Improve PDF/DOCX generated article structure: title detection, paragraph cleanup, page marker removal, and berita acara formatting.
