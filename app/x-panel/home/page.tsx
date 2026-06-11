@@ -1,371 +1,276 @@
 "use client"
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
+import { Eye, ImagePlus, Loader2, Save, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Save, Plus, Trash2, GripVertical, ImagePlus, Eye } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { optimizeImageForUpload } from "@/lib/client-image-processing"
+import {
+  defaultHomeContent,
+  type PublicHomeContent,
+} from "@/lib/home-content"
 
-interface Achievement {
-  id: number
-  title: string
-  description: string
-  icon: string
-  enabled: boolean
+type HomeStats = {
+  activeMembers: number
+  activeUnits: number
+  publishedArticles: number
+  activePeriod: string
 }
 
 export default function HomePageManagement() {
-  const [heroData, setHeroData] = useState({
-    title: "HIMA D3 Sistem Informasi",
-    subtitle: "Himpunan Mahasiswa D3 Sistem Informasi",
-    description: "Wadah aspirasi dan pengembangan potensi mahasiswa D3 Sistem Informasi untuk menjadi pribadi yang unggul dan berdaya saing.",
-    ctaText: "Bergabung Sekarang",
-    ctaLink: "/join",
-    backgroundImage: "/hero-bg.jpg",
-  })
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [content, setContent] = useState<PublicHomeContent>(defaultHomeContent)
+  const [stats, setStats] = useState<HomeStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [message, setMessage] = useState("")
 
-  const [aboutData, setAboutData] = useState({
-    title: "Tentang Kami",
-    description: "HIMA D3 Sistem Informasi adalah organisasi kemahasiswaan yang berfokus pada pengembangan softskill dan hardskill mahasiswa dalam bidang teknologi informasi.",
-    image: "/about-image.jpg",
-  })
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [settingsResponse, statsResponse] = await Promise.all([
+          fetch("/api/admin/settings"),
+          fetch("/api/admin/home-stats"),
+        ])
+        if (settingsResponse.ok) {
+          const settings = await settingsResponse.json()
+          if (settings.homeContent) setContent(settings.homeContent)
+        }
+        if (statsResponse.ok) {
+          const data = await statsResponse.json()
+          setStats(data)
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadData()
+  }, [])
 
-  const [achievements, setAchievements] = useState<Achievement[]>([
-    { id: 1, title: "500+", description: "Alumni Sukses", icon: "users", enabled: true },
-    { id: 2, title: "25+", description: "Program Kerja", icon: "clipboard", enabled: true },
-    { id: 3, title: "20+", description: "Penghargaan", icon: "trophy", enabled: true },
-    { id: 4, title: "8", description: "Departemen Aktif", icon: "building", enabled: true },
-  ])
-
-  const [ctaSection, setCtaSection] = useState({
-    title: "Siap Bergabung?",
-    description: "Jadilah bagian dari keluarga besar HIMA D3 Sistem Informasi dan kembangkan potensimu bersama kami.",
-    buttonText: "Daftar Sekarang",
-    buttonLink: "/register",
-    enabled: true,
-  })
-
-  const addAchievement = () => {
-    const newId = Math.max(...achievements.map(a => a.id), 0) + 1
-    setAchievements([...achievements, {
-      id: newId,
-      title: "",
-      description: "",
-      icon: "star",
-      enabled: true,
-    }])
+  async function saveChanges() {
+    setIsSaving(true)
+    setMessage("")
+    try {
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ homeContent: content }),
+      })
+      setMessage(response.ok ? "Perubahan Beranda berhasil disimpan." : "Gagal menyimpan perubahan.")
+    } catch {
+      setMessage("Gagal menyimpan perubahan.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const removeAchievement = (id: number) => {
-    setAchievements(achievements.filter(a => a.id !== id))
+  async function uploadHeroImage(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setMessage("Pilih file gambar yang valid.")
+      return
+    }
+    setIsUploading(true)
+    setMessage("")
+    try {
+      const optimizedFile = await optimizeImageForUpload(file, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        quality: 0.8,
+      })
+      const formData = new FormData()
+      formData.append("file", optimizedFile)
+      formData.append("purpose", "article-image")
+      formData.append("section", "home")
+      formData.append("category", "homepage")
+      formData.append("kind", "hero")
+      formData.append("year", new Date().getFullYear().toString())
+
+      const response = await fetch("/api/admin/assets", { method: "POST", body: formData })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Unggah gambar gagal.")
+
+      setContent((current) => ({
+        ...current,
+        hero: { ...current.hero, backgroundImage: data.asset.url },
+      }))
+      setMessage("Gambar berhasil diunggah. Simpan perubahan untuk menerbitkannya.")
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unggah gambar gagal.")
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
   }
 
-  const updateAchievement = (id: number, field: keyof Achievement, value: string | boolean) => {
-    setAchievements(achievements.map(a => 
-      a.id === id ? { ...a, [field]: value } : a
-    ))
+  if (isLoading) {
+    return (
+      <div className="flex min-h-64 items-center justify-center text-muted-foreground">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Memuat pengaturan Beranda...
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengelolaan Beranda</h1>
-          <p className="text-muted-foreground">
-            Manage the content displayed on your website&apos;s home page.
-          </p>
+          <p className="text-muted-foreground">Kelola konten utama yang tampil pada halaman Beranda.</p>
         </div>
-        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
-          <Button variant="outline" className="gap-2">
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => window.open("/", "_blank", "noopener,noreferrer")}>
             <Eye className="h-4 w-4" />
-            Preview
+            Pratinjau
           </Button>
-          <Button className="gap-2">
-            <Save className="h-4 w-4" />
-            Save Changes
+          <Button className="gap-2" onClick={saveChanges} disabled={isSaving || isUploading}>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Simpan
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="hero" className="space-y-6">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:w-auto">
-          <TabsTrigger value="hero" className="h-9 whitespace-normal text-center leading-tight">Bagian Utama</TabsTrigger>
-          <TabsTrigger value="about">Tentang</TabsTrigger>
-          <TabsTrigger value="achievements" className="h-9 whitespace-normal text-center leading-tight">Pencapaian</TabsTrigger>
-          <TabsTrigger value="cta" className="h-9 whitespace-normal text-center leading-tight">Ajakan</TabsTrigger>
-        </TabsList>
+      {message && <p className="rounded-lg border bg-card px-4 py-3 text-sm">{message}</p>}
 
-        {/* Hero Section */}
-        <TabsContent value="hero" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bagian Utama</CardTitle>
-              <CardDescription>
-                Configure the main banner that appears at the top of your home page.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="hero-title">Judul Utama</Label>
-                  <Input
-                    id="hero-title"
-                    value={heroData.title}
-                    onChange={(e) => setHeroData({ ...heroData, title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hero-subtitle">Subjudul</Label>
-                  <Input
-                    id="hero-subtitle"
-                    value={heroData.subtitle}
-                    onChange={(e) => setHeroData({ ...heroData, subtitle: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="hero-description">Deskripsi</Label>
-                <Textarea
-                  id="hero-description"
-                  value={heroData.description}
-                  onChange={(e) => setHeroData({ ...heroData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="cta-text">Teks Tombol Ajakan</Label>
-                  <Input
-                    id="cta-text"
-                    value={heroData.ctaText}
-                    onChange={(e) => setHeroData({ ...heroData, ctaText: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cta-link">Tautan Tombol Ajakan</Label>
-                  <Input
-                    id="cta-link"
-                    value={heroData.ctaLink}
-                    onChange={(e) => setHeroData({ ...heroData, ctaLink: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Gambar Latar</Label>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-32 w-48 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50">
-                    <div className="text-center">
-                      <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-1 text-xs text-muted-foreground">Unggah gambar</p>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Current: hero-bg.jpg</p>
-                    <p className="text-xs text-muted-foreground">Recommended: 1920x1080px, max 2MB</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      Change Image
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Banner Utama</CardTitle>
+          <CardDescription>Judul dan foto kabinet pada bagian teratas Beranda.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="hero-title">Judul</Label>
+              <Input id="hero-title" value={content.hero.title} onChange={(event) => setContent({ ...content, hero: { ...content.hero, title: event.target.value } })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hero-subtitle">Subjudul</Label>
+              <Input id="hero-subtitle" value={content.hero.subtitle} onChange={(event) => setContent({ ...content, hero: { ...content.hero, subtitle: event.target.value } })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hero-year">Tahun</Label>
+              <Input id="hero-year" value={content.hero.year} onChange={(event) => setContent({ ...content, hero: { ...content.hero, year: event.target.value } })} />
+            </div>
+          </div>
 
-        {/* About Section */}
-        <TabsContent value="about" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bagian Tentang</CardTitle>
-              <CardDescription>
-                Edit the about section that describes your organization.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="about-title">Judul Bagian</Label>
-                <Input
-                  id="about-title"
-                  value={aboutData.title}
-                  onChange={(e) => setAboutData({ ...aboutData, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="about-description">Deskripsi</Label>
-                <Textarea
-                  id="about-description"
-                  value={aboutData.description}
-                  onChange={(e) => setAboutData({ ...aboutData, description: e.target.value })}
-                  rows={5}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Gambar Bagian</Label>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-32 w-48 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50">
-                    <div className="text-center">
-                      <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-1 text-xs text-muted-foreground">Unggah gambar</p>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Current: about-image.jpg</p>
-                    <p className="text-xs text-muted-foreground">Recommended: 800x600px</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      Change Image
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <div className="space-y-2">
+            <Label>Gambar Banner</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) void uploadHeroImage(file)
+              }}
+            />
+            <button
+              type="button"
+              className="relative flex aspect-[21/9] w-full max-w-3xl items-center justify-center overflow-hidden rounded-xl border border-dashed bg-muted/40 text-muted-foreground transition-colors hover:border-primary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {content.hero.backgroundImage ? (
+                <Image src={content.hero.backgroundImage} alt="Pratinjau banner Beranda" fill className="object-cover" unoptimized />
+              ) : (
+                <span className="flex flex-col items-center gap-2">
+                  <ImagePlus className="h-8 w-8" />
+                  Klik untuk memilih gambar
+                </span>
+              )}
+              {isUploading && (
+                <span className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Mengunggah...
+                </span>
+              )}
+            </button>
+            <Button type="button" variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+              <Upload className="h-4 w-4" />
+              Ubah Gambar
+            </Button>
+            <p className="text-xs text-muted-foreground">Format JPG, PNG, atau WebP. Gambar otomatis dioptimalkan ke ukuran maksimal 1920 x 1080 piksel.</p>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Achievements Section */}
-        <TabsContent value="achievements" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Kartu Pencapaian</CardTitle>
-                <CardDescription>
-                  Manage the achievement statistics displayed on the home page.
-                </CardDescription>
-              </div>
-              <Button onClick={addAchievement} size="sm" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Card
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {achievements.map((achievement) => (
-                <div
-                  key={achievement.id}
-                  className="flex items-start gap-4 rounded-lg border p-4"
-                >
-                  <button className="mt-2 cursor-grab text-muted-foreground hover:text-foreground">
-                    <GripVertical className="h-5 w-5" />
-                  </button>
-                  <div className="grid flex-1 gap-4 md:grid-cols-4">
-                    <div className="space-y-2">
-                      <Label>Nilai/Angka</Label>
-                      <Input
-                        value={achievement.title}
-                        onChange={(e) => updateAchievement(achievement.id, "title", e.target.value)}
-                        placeholder="e.g., 500+"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Deskripsi</Label>
-                      <Input
-                        value={achievement.description}
-                        onChange={(e) => updateAchievement(achievement.id, "description", e.target.value)}
-                        placeholder="e.g., Alumni Sukses"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Icon</Label>
-                      <Input
-                        value={achievement.icon}
-                        onChange={(e) => updateAchievement(achievement.id, "icon", e.target.value)}
-                        placeholder="e.g., users"
-                      />
-                    </div>
-                    <div className="flex items-end gap-4">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={achievement.enabled}
-                          onCheckedChange={(checked) => updateAchievement(achievement.id, "enabled", checked)}
-                        />
-                        <Label className="text-sm">
-                          {achievement.enabled ? (
-                            <Badge>Aktif</Badge>
-                          ) : (
-                            <Badge variant="secondary">Disembunyikan</Badge>
-                          )}
-                        </Label>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeAchievement(achievement.id)}
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Video Profil</CardTitle>
+          <CardDescription>Gunakan URL embed YouTube agar video dapat ditampilkan langsung.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="video-title">Judul</Label>
+            <Input id="video-title" value={content.video.title} onChange={(event) => setContent({ ...content, video: { ...content.video, title: event.target.value } })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="video-description">Deskripsi</Label>
+            <Textarea id="video-description" value={content.video.description} onChange={(event) => setContent({ ...content, video: { ...content.video, description: event.target.value } })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="video-url">URL Embed</Label>
+            <Input id="video-url" value={content.video.url} onChange={(event) => setContent({ ...content, video: { ...content.video, url: event.target.value } })} />
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* CTA Section */}
-        <TabsContent value="cta" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Bagian Ajakan</CardTitle>
-                <CardDescription>
-                  Configure the CTA section at the bottom of the home page.
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="cta-enabled" className="text-sm">Aktifkan Bagian</Label>
-                <Switch
-                  id="cta-enabled"
-                  checked={ctaSection.enabled}
-                  onCheckedChange={(checked) => setCtaSection({ ...ctaSection, enabled: checked })}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="cta-title">Judul Bagian</Label>
-                <Input
-                  id="cta-title"
-                  value={ctaSection.title}
-                  onChange={(e) => setCtaSection({ ...ctaSection, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cta-description">Deskripsi</Label>
-                <Textarea
-                  id="cta-description"
-                  value={ctaSection.description}
-                  onChange={(e) => setCtaSection({ ...ctaSection, description: e.target.value })}
-                  rows={2}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="cta-button-text">Teks Tombol</Label>
-                  <Input
-                    id="cta-button-text"
-                    value={ctaSection.buttonText}
-                    onChange={(e) => setCtaSection({ ...ctaSection, buttonText: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cta-button-link">Tautan Tombol</Label>
-                  <Input
-                    id="cta-button-link"
-                    value={ctaSection.buttonLink}
-                    onChange={(e) => setCtaSection({ ...ctaSection, buttonLink: e.target.value })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <CardTitle>Statistik Otomatis</CardTitle>
+          <CardDescription>Angka berikut dihitung langsung dari data CMS dan tidak perlu diedit manual.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ["Anggota Aktif", stats?.activeMembers ?? 0],
+            ["Unit Kerja Aktif", stats?.activeUnits ?? 0],
+            ["Berita Terbit", stats?.publishedArticles ?? 0],
+            ["Periode Aktif", stats?.activePeriod ?? "-"],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-lg border p-4">
+              <p className="text-2xl font-bold">{value}</p>
+              <p className="text-sm text-muted-foreground">{label}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>Ajakan</CardTitle>
+            <CardDescription>Bagian penutup Beranda yang mengarah ke halaman lain.</CardDescription>
+          </div>
+          <Switch checked={content.cta.enabled} onCheckedChange={(enabled) => setContent({ ...content, cta: { ...content.cta, enabled } })} />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="cta-title">Judul</Label>
+            <Input id="cta-title" value={content.cta.title} onChange={(event) => setContent({ ...content, cta: { ...content.cta, title: event.target.value } })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cta-description">Deskripsi</Label>
+            <Textarea id="cta-description" value={content.cta.description} onChange={(event) => setContent({ ...content, cta: { ...content.cta, description: event.target.value } })} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="cta-button">Teks Tombol</Label>
+              <Input id="cta-button" value={content.cta.buttonText} onChange={(event) => setContent({ ...content, cta: { ...content.cta, buttonText: event.target.value } })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cta-link">Tautan Tombol</Label>
+              <Input id="cta-link" value={content.cta.buttonLink} onChange={(event) => setContent({ ...content, cta: { ...content.cta, buttonLink: event.target.value } })} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

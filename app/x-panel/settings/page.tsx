@@ -18,9 +18,10 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("")
   const [contactInfo, setContactInfo] = useState({
     email: "himpunand3si@gmail.com",
-    phone: "+62 812 3456 7890",
-    whatsapp: "+62 812 3456 7890",
+    phone: "",
+    whatsapp: "",
     address: "Jl. R.S. Fatmawati No.1, Pondok Labu\nKec. Cilandak, Kota Jakarta Selatan\nDKI Jakarta 12450",
+    officeHours: "Senin - Jumat, 08.00 - 19.00 WIB",
   })
 
   const [socialMedia, setSocialMedia] = useState<SocialMediaUrls>({
@@ -297,6 +298,14 @@ export default function SettingsPage() {
                     rows={3}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="office-hours">Jam Layanan</Label>
+                <Input
+                  id="office-hours"
+                  value={contactInfo.officeHours}
+                  onChange={(e) => setContactInfo({ ...contactInfo, officeHours: e.target.value })}
+                />
               </div>
             </CardContent>
           </Card>

@@ -8,15 +8,15 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { socialMedia } = await getPublicSiteSettings()
+  const settings = await getPublicSiteSettings()
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar socialMedia={socialMedia} />
+      <Navbar socialMedia={settings.socialMedia} />
       <main className="flex-1">
         <ScrollReveal>{children}</ScrollReveal>
       </main>
-      <Footer socialMedia={socialMedia} />
+      <Footer settings={settings} />
     </div>
   )
 }

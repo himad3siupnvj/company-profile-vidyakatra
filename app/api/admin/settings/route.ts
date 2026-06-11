@@ -6,15 +6,17 @@ import { writeAuditLog } from "@/lib/audit"
 import { officialSocialUrls } from "@/lib/social-links"
 import { revalidateTag } from "next/cache"
 import { publicCacheTags } from "@/lib/cache-tags"
+import { defaultHomeContent } from "@/lib/home-content"
 
 export const runtime = "nodejs"
 
 const defaultSettings = {
   contactInfo: {
     email: "himpunand3si@gmail.com",
-    phone: "+62 812 3456 7890",
-    whatsapp: "+62 812 3456 7890",
+    phone: "",
+    whatsapp: "",
     address: "Jl. R.S. Fatmawati No.1, Pondok Labu\nKec. Cilandak, Kota Jakarta Selatan\nDKI Jakarta 12450",
+    officeHours: "Senin - Jumat, 08.00 - 19.00 WIB",
   },
   socialMedia: {
     ...officialSocialUrls,
@@ -39,6 +41,7 @@ const defaultSettings = {
     maintenanceMode: false,
     analyticsEnabled: true,
   },
+  homeContent: defaultHomeContent,
 }
 
 export async function GET() {
@@ -50,7 +53,16 @@ export async function GET() {
   const settings = { ...defaultSettings } as Record<string, unknown>
 
   for (const row of rows) {
-    settings[row.key] = row.value
+    const fallback = defaultSettings[row.key as keyof typeof defaultSettings]
+    settings[row.key] =
+      fallback &&
+      typeof fallback === "object" &&
+      !Array.isArray(fallback) &&
+      row.value &&
+      typeof row.value === "object" &&
+      !Array.isArray(row.value)
+        ? { ...fallback, ...row.value }
+        : row.value
   }
 
   return NextResponse.json(settings)

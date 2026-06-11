@@ -3,17 +3,9 @@ import Image from "next/image"
 import logoHima from "@/assets/hima.png"
 import logoKabinet from "@/assets/logoKabinet.png"
 import { Clock, Instagram, Mail, MapPin, Music2, Youtube, Linkedin } from "lucide-react"
-import { publicEmailAddress, publicEmailComposeHref } from "@/lib/contact-links"
 import { cn } from "@/lib/utils"
 import { officialSocialLinks } from "@/lib/social-links"
-import type { PublicSocialMedia } from "@/lib/public-site-settings"
-
-const quickLinks = [
-  { href: "/", label: "Beranda" },
-  { href: "/profil", label: "Profil" },
-  { href: "/berita", label: "Berita Acara" },
-  { href: "/kontak", label: "Kolaborasi" },
-]
+import type { getPublicSiteSettings } from "@/lib/public-site-settings"
 
 const organizationLinks = [
   { href: "/profil#visi-misi", label: "Visi & Misi" },
@@ -51,7 +43,11 @@ function LogoBadge({
   )
 }
 
-export function Footer({ socialMedia }: { socialMedia: PublicSocialMedia }) {
+type PublicSettings = Awaited<ReturnType<typeof getPublicSiteSettings>>
+
+export function Footer({ settings }: { settings: PublicSettings }) {
+  const { socialMedia, contactInfo, footerSettings } = settings
+  const quickLinks = settings.quickLinks.filter((link) => link.enabled)
   const socialLinks = [
     { href: socialMedia.instagram, label: officialSocialLinks.instagram.label, icon: Instagram },
     { href: socialMedia.youtube, label: officialSocialLinks.youtube.label, icon: Youtube },
@@ -83,7 +79,7 @@ export function Footer({ socialMedia }: { socialMedia: PublicSocialMedia }) {
             <p className="max-w-[19rem] text-sm leading-relaxed text-[#b8b8b8]">
               Himpunan Mahasiswa D3 Sistem Informasi UPNVJ, wadah pengembangan potensi dan kreativitas mahasiswa dalam bidang teknologi informasi.
             </p>
-            <div className="flex gap-2">
+            {footerSettings.showSocialMedia && <div className="flex gap-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
@@ -96,17 +92,17 @@ export function Footer({ socialMedia }: { socialMedia: PublicSocialMedia }) {
                   <social.icon className="h-4 w-4" />
                 </a>
               ))}
-            </div>
+            </div>}
           </div>
 
           {/* Quick Links */}
-          <div className="space-y-4">
+          {footerSettings.showQuickLinks && <div className="space-y-4">
             <h3 className="font-semibold text-foreground">Navigasi</h3>
             <ul className="space-y-2">
               {quickLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.id}>
                   <Link
-                    href={link.href}
+                    href={link.url}
                     className="text-sm text-[#b8b8b8] transition-colors duration-300 hover:text-primary"
                   >
                     {link.label}
@@ -114,7 +110,7 @@ export function Footer({ socialMedia }: { socialMedia: PublicSocialMedia }) {
                 </li>
               ))}
             </ul>
-          </div>
+          </div>}
 
           {/* Organization */}
           <div className="space-y-4">
@@ -134,31 +130,31 @@ export function Footer({ socialMedia }: { socialMedia: PublicSocialMedia }) {
           </div>
 
           {/* Contact */}
-          <div className="space-y-4">
+          {footerSettings.showContactInfo && <div className="space-y-4">
             <h3 className="font-semibold text-foreground">Kontak</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-[#b8b8b8]">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Jl. R.S. Fatmawati No.1, Pondok Labu, Kec. Cilandak, Kota Jakarta Selatan, DKI Jakarta 12450</span>
+                <span className="whitespace-pre-line">{contactInfo.address}</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">
                 <Mail className="h-4 w-4 shrink-0 text-primary" />
-                <a href={publicEmailComposeHref} target="_blank" rel="noopener noreferrer" className="transition-colors duration-300 hover:text-primary">
-                  {publicEmailAddress}
+                <a href={`mailto:${contactInfo.email}`} className="transition-colors duration-300 hover:text-primary">
+                  {contactInfo.email}
                 </a>
               </li>
               <li className="flex items-center gap-3 text-sm text-[#b8b8b8]">
                 <Clock className="h-4 w-4 shrink-0 text-primary" />
-                <span>Senin - Jumat, 08.00 - 19.00 WIB</span>
+                <span>{contactInfo.officeHours}</span>
               </li>
             </ul>
-          </div>
+          </div>}
         </div>
 
         {/* Bottom Bar */}
         <div className="mt-10 flex flex-col gap-2 border-t border-border/50 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="text-sm text-[#b8b8b8]">
-            &copy; {new Date().getFullYear()} HIMA D3 Sistem Informasi UPNVJ. Kabinet Vidyakatra.
+            {footerSettings.copyrightText}
           </p>
         </div>
       </div>

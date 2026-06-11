@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getPublicNews } from "@/lib/public-articles";
+import { getPublicHomeStats } from "@/lib/public-home-stats";
+import { getPublicSiteSettings } from "@/lib/public-site-settings";
 import {
-  Zap,
   Users,
   Calendar,
-  Trophy,
+  Building2,
+  Newspaper,
   ArrowRight,
   Play,
   User,
@@ -17,13 +19,6 @@ import {
 } from "lucide-react";
 
 export const revalidate = 300;
-
-const stats = [
-  { label: "Anggota Aktif", value: "50+", icon: Users },
-  { label: "Program Kerja", value: "25+", icon: Calendar },
-  { label: "Prestasi", value: "50+", icon: Trophy },
-  { label: "Tahun Berdiri", value: "2023  ", icon: Zap },
-];
 
 function getCategoryLabel(category: string) {
   const labels: Record<string, string> = {
@@ -37,7 +32,19 @@ function getCategoryLabel(category: string) {
 }
 
 export default async function HomePage() {
-  const latestNews = (await getPublicNews()).slice(0, 3);
+  const [news, homeStats, settings] = await Promise.all([
+    getPublicNews(),
+    getPublicHomeStats(),
+    getPublicSiteSettings(),
+  ]);
+  const latestNews = news.slice(0, 3);
+  const { homeContent } = settings;
+  const stats = [
+    { label: "Anggota Aktif", value: homeStats.activeMembers, icon: Users },
+    { label: "Unit Kerja Aktif", value: homeStats.activeUnits, icon: Building2 },
+    { label: "Berita Terbit", value: homeStats.publishedArticles, icon: Newspaper },
+    { label: "Periode Aktif", value: homeStats.activePeriod, icon: Calendar },
+  ];
 
   return (
     <>
@@ -46,7 +53,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="relative aspect-[21/9] overflow-hidden rounded-xl border border-border/50 bg-muted">
             <Image
-              src={kabinetImage}
+              src={homeContent.hero.backgroundImage || kabinetImage}
               alt="Foto kabinet HIMA D3 SI"
               fill
               sizes="(min-width: 1280px) 1216px, calc(100vw - 2rem)"
@@ -56,13 +63,13 @@ export default async function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-transparent" />
             <div className="absolute inset-x-0 top-6 flex flex-col items-center px-6 text-center md:top-8 md:px-8">
               <h2 className="max-w-5xl text-balance text-2xl font-bold leading-tight text-white/90 drop-shadow-[0_4px_18px_rgba(0,0,0,0.7)] sm:text-3xl md:text-5xl">
-                Himpunan Mahasiswa D3 Sistem Informasi
+                {homeContent.hero.title}
               </h2>
               <p className="mt-2 text-xl font-semibold text-white/80 drop-shadow-[0_3px_14px_rgba(0,0,0,0.65)] sm:text-2xl md:text-4xl">
-                UPN "Veteran" Jakarta
+                {homeContent.hero.subtitle}
               </p>
               <p className="mt-2 text-xl font-semibold text-white/80 drop-shadow-[0_3px_14px_rgba(0,0,0,0.65)] sm:text-2xl md:text-4xl">
-                2026
+                {homeContent.hero.year}
               </p>
             </div>
           </div>
@@ -79,18 +86,17 @@ export default async function HomePage() {
                 Video profil
               </div>
               <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-                Kenali Kabinet Vidyakatra Lebih Dekat
+                {homeContent.video.title}
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Video singkat tentang arah gerak, budaya kerja, dan ruang
-                kolaborasi HIMA D3 Sistem Informasi UPNVJ.
+                {homeContent.video.description}
               </p>
             </div>
 
             <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-lg">
               <div className="aspect-video">
                 <iframe
-                  src="https://www.youtube.com/embed/WV3rSsxRyb4?si=gA9Nrks6Grfqx0sm"
+                  src={homeContent.video.url}
                   className="h-full w-full"
                   title="Video company profile HIMA D3 Sistem Informasi UPNVJ Kabinet Vidyakatra"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -190,24 +196,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {homeContent.cta.enabled && (
       <section className="relative overflow-hidden border-t border-border/50 py-16 md:py-20">
         <div className="relative mx-auto max-w-7xl px-4 md:px-6">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-balance">
-              Kenali Arah Gerak{" "}
-              <span className="text-gradient">Kabinet Vidyakatra</span>
+              {homeContent.cta.title}
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Lihat profil, nilai, dan struktur kerja kabinet yang menggerakkan HIMA D3 Sistem Informasi.
+              {homeContent.cta.description}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link href="/profil">
+              <Link href={homeContent.cta.buttonLink}>
                 <Button
                   size="lg"
                   className="gap-2 bg-gradient-brand text-primary-foreground transition-colors hover:opacity-90"
                 >
-                  Lihat Profil Kabinet
+                  {homeContent.cta.buttonText}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -215,6 +220,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      )}
     </>
   );
 }

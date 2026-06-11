@@ -7,14 +7,13 @@ import {
   Music2,
   Youtube,
 } from "lucide-react"
-import { publicEmailComposeHref } from "@/lib/contact-links"
 import { officialSocialLinks } from "@/lib/social-links"
 import { getPublicSiteSettings } from "@/lib/public-site-settings"
 
 export const revalidate = 3600
 
 export default async function KontakPage() {
-  const { socialMedia: urls } = await getPublicSiteSettings()
+  const { socialMedia: urls, contactInfo } = await getPublicSiteSettings()
   const socialMedia = [
     { icon: Instagram, name: officialSocialLinks.instagram.label, handle: officialSocialLinks.instagram.handle, url: urls.instagram, className: "border-pink-500/30 bg-pink-500/10 text-pink-300" },
     { icon: Youtube, name: officialSocialLinks.youtube.label, handle: officialSocialLinks.youtube.handle, url: urls.youtube, className: "border-red-500/30 bg-red-500/10 text-red-300" },
@@ -38,7 +37,7 @@ export default async function KontakPage() {
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground md:text-xl">
                 Ikuti kegiatan dan informasi organisasi melalui kanal resmi kami, atau hubungi tim untuk kebutuhan kolaborasi.
               </p>
-              <a href={publicEmailComposeHref} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex">
+              <a href={`mailto:${contactInfo.email}`} className="mt-8 inline-flex">
                 <Button className="gap-2 px-6">
                   Ajukan Kolaborasi
                   <ArrowRight className="h-4 w-4" />
