@@ -1,14 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import {
   ArrowRight,
   Building2,
   Eye,
   FileText,
+  Network,
   Newspaper,
   Share2,
+  Users,
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 import { RecentActivity } from "@/components/admin/recent-activity"
@@ -19,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAdminUser } from "@/components/admin/admin-user-context"
 import { hasPermission } from "@/lib/permissions"
 import type { RecentActivityItem } from "@/components/admin/recent-activity"
@@ -60,6 +64,41 @@ type DashboardSummary = {
   warning?: string
 }
 
+type OrganizationMember = {
+  id: string
+  name: string
+  position: string
+  department: string
+  avatar: string
+}
+
+type OrganizationUnit = {
+  id: string
+  name: string
+  type: "department" | "bureau"
+  imageUrl: string
+  color: string
+  memberCount: number
+}
+
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+function isExecutivePosition(position: string) {
+  return /^(wakil\s+)?ketua(\s+umum)?$/i.test(position.trim())
+}
+
+function isCoreSupportPosition(position: string) {
+  return /koordinator|sekretaris|bendahara/i.test(position)
+}
+
 function StatusBadge({ status }: { status: string }) {
   const normalizedStatus = status.toLowerCase()
   const label = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)
@@ -78,6 +117,9 @@ export default function AdminDashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [isLoadingSummary, setIsLoadingSummary] = useState(true)
   const [summaryError, setSummaryError] = useState("")
+  const [organizationMembers, setOrganizationMembers] = useState<OrganizationMember[]>([])
+  const [organizationUnits, setOrganizationUnits] = useState<OrganizationUnit[]>([])
+  const [isLoadingOrganization, setIsLoadingOrganization] = useState(true)
   const role = currentUser?.role
   const canCreateArticle = Boolean(role && hasPermission(role, "article.create"))
   const canReviewArticles = Boolean(role && hasPermission(role, "article.review"))
@@ -121,6 +163,35 @@ export default function AdminDashboard() {
 
     loadSummary()
   }, [])
+
+  useEffect(() => {
+    if (!canManageOrg) {
+      setIsLoadingOrganization(false)
+      return
+    }
+
+    async function loadOrganization() {
+      try {
+        const response = await fetch("/api/admin/organization", { cache: "no-store" })
+        if (!response.ok) return
+
+        const data = await response.json()
+        setOrganizationMembers(data.members ?? [])
+        setOrganizationUnits(data.organizationalUnits ?? [])
+      } finally {
+        setIsLoadingOrganization(false)
+      }
+    }
+
+    void loadOrganization()
+  }, [canManageOrg])
+
+  const executives = organizationMembers.filter((member) =>
+    isExecutivePosition(member.position),
+  )
+  const coreSupport = organizationMembers.filter((member) =>
+    isCoreSupportPosition(member.position),
+  )
 
   const articleStats = summary?.stats.articles
   const organizationStats = summary?.stats.organization
@@ -237,6 +308,130 @@ export default function AdminDashboard() {
           </>
         )}
       </div>
+
+      {canManageOrg && (
+        <Card>
+          <CardHeader className="flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                <Network className="h-5 w-5 text-primary" />
+                Struktur Organisasi
+              </CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Ringkasan pimpinan, pengurus inti, departemen, dan biro aktif.
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/x-panel/organization?tab=structure">
+                Kelola Struktur
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {isLoadingOrganization ? (
+              <Skeleton className="h-72" />
+            ) : organizationMembers.length === 0 && organizationUnits.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                Struktur organisasi belum memiliki data.
+              </div>
+            ) : (
+              <div className="overflow-x-auto pb-2">
+                <div className="mx-auto flex min-w-[720px] max-w-6xl flex-col items-center px-3">
+                  <div className="rounded-lg border-2 border-primary bg-card px-8 py-4 text-center">
+                    <div className="flex -space-x-2 justify-center">
+                      {executives.map((member) => (
+                        <Avatar key={member.id} className="h-10 w-10 border-2 border-background">
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                            {getInitials(member.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                      {executives.length === 0 && (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                          <Users className="h-5 w-5" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm font-semibold">Ketua & Wakil Ketua</p>
+                  </div>
+
+                  <div className="h-6 w-px bg-border" />
+                  {coreSupport.length > 0 && (
+                    <>
+                      <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
+                        {coreSupport.map((member) => (
+                          <div key={member.id} className="rounded-lg border bg-card p-3 text-center">
+                            <Avatar className="mx-auto h-9 w-9">
+                              <AvatarImage src={member.avatar} />
+                              <AvatarFallback className="text-xs">
+                                {getInitials(member.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="mt-2 truncate text-xs font-semibold">{member.name}</p>
+                            <p className="truncate text-[11px] text-muted-foreground">
+                              {member.position}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="h-6 w-px bg-border" />
+                    </>
+                  )}
+
+                  <div className="h-px w-[calc(100%-12rem)] bg-border" />
+                  <div className="grid w-full grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-3 xl:grid-cols-4">
+                    {organizationUnits.map((unit) => {
+                      const unitMembers = organizationMembers.filter(
+                        (member) => member.department === unit.name,
+                      )
+                      const head =
+                        unitMembers.find((member) =>
+                          /kepala|ketua|koordinator/i.test(member.position),
+                        ) ?? unitMembers[0]
+
+                      return (
+                        <div key={unit.id} className="flex flex-col items-center">
+                          <div className="h-5 w-px bg-border" />
+                          <div className="w-full rounded-lg border bg-card p-3 text-center">
+                            {unit.imageUrl ? (
+                              <Image
+                                src={unit.imageUrl}
+                                alt=""
+                                width={40}
+                                height={40}
+                                className="mx-auto h-10 w-10 object-contain"
+                              />
+                            ) : (
+                              <Building2 className="mx-auto h-8 w-8 text-muted-foreground" />
+                            )}
+                            <div className={`mx-auto mt-2 h-1.5 w-10 rounded-full ${unit.color}`} />
+                            <p className="mt-2 text-xs font-semibold">{unit.name}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {unit.type === "bureau" ? "Biro" : "Departemen"} · {unit.memberCount} anggota
+                            </p>
+                            <div className="mt-3 flex items-center justify-center gap-2 border-t pt-3">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={head?.avatar} />
+                                <AvatarFallback className="text-[9px]">
+                                  {head ? getInitials(head.name) : "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <p className="max-w-28 truncate text-[11px] font-medium">
+                                {head?.name ?? "Belum ditentukan"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Card>

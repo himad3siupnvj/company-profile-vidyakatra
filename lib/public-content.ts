@@ -188,7 +188,7 @@ export type WorkUnit = {
   type: "Departemen" | "Biro"
   name: string
   description: string
-  logo: StaticImageData
+  logo: StaticImageData | string
   programs: string[]
   members: UnitMember[]
   workPrograms: WorkProgram[]

@@ -1,10 +1,11 @@
-import { and, asc, eq, isNull } from "drizzle-orm"
 import { unstable_cache } from "next/cache"
-import { getDb } from "@/db"
-import { members, organizationalUnits, periods } from "@/db/schema"
 import { slugify } from "@/lib/article-content"
 import { publicCacheTags } from "@/lib/cache-tags"
 import { workUnits, type WorkUnit } from "@/lib/public-content"
+import {
+  getPublicMembers,
+  getPublicOrganizationalUnits,
+} from "@/lib/public-directory"
 
 const fallbackBySlug = new Map(workUnits.map((unit) => [unit.slug, unit]))
 const fallbackUnit = workUnits[0]
@@ -12,29 +13,14 @@ const fallbackUnit = workUnits[0]
 export const getPublicWorkUnits = unstable_cache(
   async function getPublicWorkUnits(): Promise<WorkUnit[]> {
     try {
-      const db = getDb()
-      const units = await db
-        .select()
-        .from(organizationalUnits)
-        .innerJoin(periods, eq(organizationalUnits.periodId, periods.id))
-        .where(and(isNull(organizationalUnits.deletedAt), eq(periods.status, "active")))
-        .orderBy(asc(organizationalUnits.sortOrder), asc(organizationalUnits.name))
-      const unitMembers = await db
-        .select({
-          id: members.id,
-          name: members.name,
-          position: members.position,
-          organizationalUnitId: members.organizationalUnitId,
-          avatarUrl: members.avatarUrl,
-        })
-        .from(members)
-        .innerJoin(periods, eq(members.periodId, periods.id))
-        .where(and(isNull(members.deletedAt), eq(periods.status, "active")))
-        .orderBy(asc(members.sortOrder), asc(members.name))
+      const [units, unitMembers] = await Promise.all([
+        getPublicOrganizationalUnits(),
+        getPublicMembers(),
+      ])
 
       if (!units.length) return workUnits
 
-      return units.map(({ organizational_units: unit }) => {
+      return units.map((unit) => {
         const slug = slugify(unit.name)
         const fallback = fallbackBySlug.get(slug) ?? fallbackUnit
         const mappedMembers = unitMembers
@@ -50,7 +36,7 @@ export const getPublicWorkUnits = unstable_cache(
           type: unit.type === "bureau" ? "Biro" : "Departemen",
           name: unit.name,
           description: unit.description ?? fallback.description,
-          logo: fallback.logo,
+          logo: unit.imageUrl || fallback.logo,
           programs: fallback.programs,
           members: mappedMembers.length ? mappedMembers : fallback.members,
           workPrograms: fallback.workPrograms,

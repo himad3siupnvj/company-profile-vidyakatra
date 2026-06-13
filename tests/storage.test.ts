@@ -36,6 +36,19 @@ describe("storage utilities", () => {
     expect(path).toMatch(/^2026\/articles\/kegiatan\/content\/[0-9a-f-]{36}-dokumentasi-01\.jpg$/)
   })
 
+  it("creates profile paths for organization images", () => {
+    const file = new File(["image"], "Medkom.png", { type: "image/png" })
+    const path = createStoragePath(file, "organization-image", {
+      year: 2026,
+      category: "departments",
+      kind: "Media dan Komunikasi",
+    })
+
+    expect(path).toMatch(
+      /^2026\/profile\/departments\/media-dan-komunikasi\/[0-9a-f-]{36}-medkom\.png$/,
+    )
+  })
+
   it("rejects files whose bytes do not match the claimed image type", async () => {
     const file = new File(["not really an image"], "fake.png", { type: "image/png" })
 

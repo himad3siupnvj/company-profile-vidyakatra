@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import Image from "next/image"
 import {
   Building2,
   Edit,
@@ -10,6 +11,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Upload,
   Users,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -50,6 +52,7 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { optimizeImageForUpload } from "@/lib/client-image-processing"
 
 interface Member {
   id: string
@@ -67,6 +70,7 @@ interface OrganizationalUnit {
   name: string
   type: "department" | "bureau"
   description: string
+  imageUrl: string
   head: string
   memberCount: number
   color: string
@@ -110,19 +114,33 @@ function isLeadershipPosition(position: string) {
   return /ketua|wakil|sekretaris|bendahara|koordinator/i.test(position)
 }
 
+function isExecutivePosition(position: string) {
+  return /^(wakil\s+)?ketua(\s+umum)?$/i.test(position.trim())
+}
+
+function isCoreSupportPosition(position: string) {
+  return /koordinator|sekretaris|bendahara/i.test(position)
+}
+
 export default function OrganizationManagement() {
   const [members, setMembers] = useState<Member[]>([])
   const [units, setUnits] = useState<OrganizationalUnit[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filterUnit, setFilterUnit] = useState("all")
+  const [activeTab, setActiveTab] = useState("members")
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
   const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false)
   const [editingUnit, setEditingUnit] = useState<OrganizationalUnit | null>(null)
   const [unitForm, setUnitForm] = useState<UnitForm>(emptyUnitForm)
   const [isSavingUnit, setIsSavingUnit] = useState(false)
   const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null)
+  const [isUploadingUnitImages, setIsUploadingUnitImages] = useState(false)
+  const [isUploadingMemberImages, setIsUploadingMemberImages] = useState(false)
+  const unitImagesInputRef = useRef<HTMLInputElement>(null)
+  const memberImagesInputRef = useRef<HTMLInputElement>(null)
   const [newMember, setNewMember] = useState({
     name: "",
     position: "",
@@ -151,6 +169,8 @@ export default function OrganizationManagement() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get("action") === "add") setIsAddMemberOpen(true)
+    if (params.get("tab") === "structure") setActiveTab("structure")
+    if (params.get("tab") === "units") setActiveTab("units")
     void loadOrganization()
   }, [])
 
@@ -168,10 +188,121 @@ export default function OrganizationManagement() {
     })
   }, [filterUnit, members, searchQuery])
 
-  const leadership = useMemo(
-    () => members.filter((member) => isLeadershipPosition(member.position)),
+  const executives = useMemo(
+    () => members.filter((member) => isExecutivePosition(member.position)),
     [members],
   )
+  const coreSupport = useMemo(
+    () => members.filter((member) => isCoreSupportPosition(member.position)),
+    [members],
+  )
+
+  const handleUnitImagesUpload = async (files: FileList | null) => {
+    if (!files?.length) return
+
+    setIsUploadingUnitImages(true)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    const formData = new FormData()
+    Array.from(files).forEach((file) => formData.append("files", file))
+
+    try {
+      const response = await fetch("/api/admin/organization/images", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Upload gambar unit gagal.")
+
+      const uploaded = data.uploaded ?? []
+      const unmatched = data.unmatched ?? []
+      setUnits((current) =>
+        current.map((unit) => {
+          const result = uploaded.find(
+            (item: { unitId: string; url: string }) => item.unitId === unit.id,
+          )
+          return result ? { ...unit, imageUrl: result.url } : unit
+        }),
+      )
+
+      if (uploaded.length) {
+        setSuccessMessage(`${uploaded.length} gambar unit berhasil dipasang.`)
+      }
+      if (unmatched.length) {
+        setErrorMessage(
+          `Belum terpasang: ${unmatched
+            .map((item: { fileName: string }) => item.fileName)
+            .join(", ")}. Samakan nama file dengan nama unit atau singkatannya.`,
+        )
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Upload gambar unit gagal.",
+      )
+    } finally {
+      setIsUploadingUnitImages(false)
+      if (unitImagesInputRef.current) unitImagesInputRef.current.value = ""
+    }
+  }
+
+  const handleMemberImagesUpload = async (files: FileList | null) => {
+    if (!files?.length) return
+
+    setIsUploadingMemberImages(true)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const formData = new FormData()
+      const optimizedFiles = await Promise.all(
+        Array.from(files).map((file) =>
+          optimizeImageForUpload(file, {
+            maxWidth: 900,
+            maxHeight: 1200,
+            quality: 0.82,
+          }),
+        ),
+      )
+      optimizedFiles.forEach((file) => formData.append("files", file))
+
+      const response = await fetch("/api/admin/organization/member-images", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Upload foto anggota gagal.")
+
+      const uploaded = data.uploaded ?? []
+      const unmatched = data.unmatched ?? []
+      setMembers((current) =>
+        current.map((member) => {
+          const result = uploaded.find(
+            (item: { memberId: string; url: string }) => item.memberId === member.id,
+          )
+          return result ? { ...member, avatar: result.url } : member
+        }),
+      )
+
+      if (uploaded.length) {
+        setSuccessMessage(`${uploaded.length} foto anggota berhasil dipasang.`)
+      }
+      if (unmatched.length) {
+        setErrorMessage(
+          `Belum terpasang: ${unmatched
+            .map((item: { fileName: string }) => item.fileName)
+            .join(", ")}. Gunakan nama lengkap anggota sebagai nama file.`,
+        )
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Upload foto anggota gagal.",
+      )
+    } finally {
+      setIsUploadingMemberImages(false)
+      if (memberImagesInputRef.current) memberImagesInputRef.current.value = ""
+    }
+  }
 
   const handleAddMember = async () => {
     setErrorMessage("")
@@ -312,6 +443,40 @@ export default function OrganizationManagement() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <input
+            ref={unitImagesInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            className="hidden"
+            onChange={(event) => void handleUnitImagesUpload(event.target.files)}
+          />
+          <input
+            ref={memberImagesInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="hidden"
+            onChange={(event) => void handleMemberImagesUpload(event.target.files)}
+          />
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={isUploadingMemberImages || members.length === 0}
+            onClick={() => memberImagesInputRef.current?.click()}
+          >
+            <ImagePlus className="h-4 w-4" />
+            {isUploadingMemberImages ? "Uploading..." : "Upload Foto Anggota"}
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={isUploadingUnitImages || units.length === 0}
+            onClick={() => unitImagesInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {isUploadingUnitImages ? "Uploading..." : "Upload Gambar Unit"}
+          </Button>
           <Button variant="outline" className="gap-2" onClick={openCreateUnit}>
             <Building2 className="h-4 w-4" />
             Add Department
@@ -411,6 +576,11 @@ export default function OrganizationManagement() {
           {errorMessage}
         </div>
       )}
+      {successMessage && (
+        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-600">
+          {successMessage}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -461,7 +631,7 @@ export default function OrganizationManagement() {
         </Card>
       </div>
 
-      <Tabs defaultValue="members" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="members">Anggota</TabsTrigger>
           <TabsTrigger value="units">Departemen & Biro</TabsTrigger>
@@ -588,7 +758,9 @@ export default function OrganizationManagement() {
             <div>
               <h2 className="text-lg font-semibold">Departemen & Biro</h2>
               <p className="text-sm text-muted-foreground">
-                Unit yang tampil di profil publik dan pilihan data anggota.
+                Unit yang tampil di profil publik. Untuk gambar unit, gunakan nama file
+                sesuai nama unit atau singkatannya, misalnya medkom.png, psdm.jpg, atau
+                sosial-politik.webp.
               </p>
             </div>
             <Button size="sm" className="gap-2" onClick={openCreateUnit}>
@@ -601,6 +773,17 @@ export default function OrganizationManagement() {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {units.map((unit) => (
                 <Card key={unit.id} className="overflow-hidden">
+                  {unit.imageUrl && (
+                    <div className="flex h-36 items-center justify-center border-b bg-muted/30 p-5">
+                      <Image
+                        src={unit.imageUrl}
+                        alt={`Gambar ${unit.name}`}
+                        width={240}
+                        height={144}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  )}
                   <div className={`h-1.5 ${unit.color}`} />
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
@@ -690,9 +873,9 @@ export default function OrganizationManagement() {
               ) : (
                 <div className="overflow-x-auto pb-4">
                   <div className="mx-auto flex min-w-[720px] max-w-6xl flex-col items-center px-4">
-                    <div className="rounded-md border-2 border-primary bg-card px-6 py-4 text-center shadow-sm">
+                    <div className="rounded-md border-2 border-primary bg-card px-8 py-4 text-center shadow-sm">
                       <div className="flex -space-x-2 justify-center">
-                        {leadership.slice(0, 4).map((member) => (
+                        {executives.map((member) => (
                           <Avatar key={member.id} className="h-10 w-10 border-2 border-background">
                             <AvatarImage src={member.avatar} />
                             <AvatarFallback className="bg-primary text-xs text-primary-foreground">
@@ -700,21 +883,38 @@ export default function OrganizationManagement() {
                             </AvatarFallback>
                           </Avatar>
                         ))}
-                        {leadership.length === 0 && (
+                        {executives.length === 0 && (
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
                             <Users className="h-5 w-5" />
                           </div>
                         )}
                       </div>
-                      <p className="mt-2 font-semibold">Pengurus Inti</p>
+                      <p className="mt-2 font-semibold">Ketua & Wakil Ketua</p>
                       <p className="text-xs text-muted-foreground">
-                        {leadership.length} anggota pimpinan
+                        {executives.length} pimpinan
                       </p>
                     </div>
 
                     <div className="h-8 w-px bg-border" />
-                    <div className="h-px w-[calc(100%-12rem)] bg-border" />
+                    <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
+                      {coreSupport.map((member) => (
+                        <div key={member.id} className="rounded-md border bg-card p-3 text-center shadow-sm">
+                          <Avatar className="mx-auto h-9 w-9">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback className="text-xs">
+                              {getInitials(member.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <p className="mt-2 truncate text-xs font-semibold">{member.name}</p>
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {member.position}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
 
+                    <div className="h-8 w-px bg-border" />
+                    <div className="h-px w-[calc(100%-12rem)] bg-border" />
                     <div className="grid w-full grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
                       {units.map((unit) => {
                         const unitMembers = members.filter(
@@ -728,6 +928,15 @@ export default function OrganizationManagement() {
                           <div key={unit.id} className="flex flex-col items-center">
                             <div className="h-6 w-px bg-border" />
                             <div className="w-full rounded-md border bg-card p-4 text-center shadow-sm">
+                              {unit.imageUrl && (
+                                <Image
+                                  src={unit.imageUrl}
+                                  alt=""
+                                  width={48}
+                                  height={48}
+                                  className="mx-auto mb-3 h-12 w-12 object-contain"
+                                />
+                              )}
                               <div className={`mx-auto h-2 w-12 rounded-full ${unit.color}`} />
                               <Badge variant="outline" className="mt-3">
                                 {unit.type === "bureau" ? "Bureau" : "Department"}

@@ -8,7 +8,7 @@ const allowedSourceTypes = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ])
 
-export type UploadPurpose = "article-image" | "article-source"
+export type UploadPurpose = "article-image" | "article-source" | "organization-image"
 
 export type StoragePathContext = {
   year?: number | string | null
@@ -31,7 +31,7 @@ function startsWith(bytes: Uint8Array, signature: number[]) {
 async function hasValidFileSignature(file: File, purpose: UploadPurpose) {
   const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer())
 
-  if (purpose === "article-image") {
+  if (purpose === "article-image" || purpose === "organization-image") {
     if (file.type === "image/jpeg") return startsWith(bytes, [0xff, 0xd8, 0xff])
     if (file.type === "image/png") return startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
     if (file.type === "image/gif") {
@@ -62,7 +62,7 @@ async function hasValidFileSignature(file: File, purpose: UploadPurpose) {
 }
 
 export async function validateUploadFile(file: File, purpose: UploadPurpose) {
-  if (purpose === "article-image") {
+  if (purpose === "article-image" || purpose === "organization-image") {
     if (!allowedImageTypes.has(file.type)) {
       return { ok: false as const, error: "File gambar harus JPEG, PNG, WebP, atau GIF." }
     }
@@ -140,6 +140,15 @@ function getDefaultPathContext(purpose: UploadPurpose): DefaultStoragePathContex
       section: "articles",
       category: "berita-acara",
       kind: "source",
+    }
+  }
+
+  if (purpose === "organization-image") {
+    return {
+      year,
+      section: "profile",
+      category: "organization",
+      kind: "unit",
     }
   }
 

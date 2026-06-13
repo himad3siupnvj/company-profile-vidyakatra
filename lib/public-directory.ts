@@ -1,57 +1,81 @@
-import { and, asc, eq, isNull } from "drizzle-orm"
-import { getDb } from "@/db"
-import { divisions, members, organizationalUnits, periods } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
+import { fromFirestore } from "@/db/firestore-data"
+import type { Division, Member, OrganizationalUnit } from "@/db/models"
+import { getActivePeriodId } from "@/lib/active-period"
+
+function byOrderAndName(
+  left: { sortOrder: number; name: string },
+  right: { sortOrder: number; name: string },
+) {
+  return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name)
+}
 
 export async function getPublicMembers() {
-  const db = getDb()
+  const periodId = await getActivePeriodId()
+  if (!periodId) return []
 
-  return db
-    .select({
-      id: members.id,
-      name: members.name,
-      position: members.position,
-      organizationalUnitId: members.organizationalUnitId,
-      divisionId: members.divisionId,
-      avatarUrl: members.avatarUrl,
-      sortOrder: members.sortOrder,
-    })
-    .from(members)
-    .innerJoin(periods, eq(members.periodId, periods.id))
-    .where(and(isNull(members.deletedAt), eq(periods.status, "active")))
-    .orderBy(asc(members.sortOrder), asc(members.name))
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.members)
+    .where("periodId", "==", periodId)
+    .get()
+
+  return snapshot.docs
+    .map((document) => fromFirestore<Member>(document))
+    .filter((member) => !member.deletedAt)
+    .sort(byOrderAndName)
+    .map(({ id, name, position, organizationalUnitId, divisionId, avatarUrl, sortOrder }) => ({
+      id,
+      name,
+      position,
+      organizationalUnitId,
+      divisionId,
+      avatarUrl,
+      sortOrder,
+    }))
 }
 
 export async function getPublicOrganizationalUnits() {
-  const db = getDb()
+  const periodId = await getActivePeriodId()
+  if (!periodId) return []
 
-  return db
-    .select({
-      id: organizationalUnits.id,
-      name: organizationalUnits.name,
-      type: organizationalUnits.type,
-      description: organizationalUnits.description,
-      color: organizationalUnits.color,
-      sortOrder: organizationalUnits.sortOrder,
-    })
-    .from(organizationalUnits)
-    .innerJoin(periods, eq(organizationalUnits.periodId, periods.id))
-    .where(and(isNull(organizationalUnits.deletedAt), eq(periods.status, "active")))
-    .orderBy(asc(organizationalUnits.sortOrder), asc(organizationalUnits.name))
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.organizationalUnits)
+    .where("periodId", "==", periodId)
+    .get()
+
+  return snapshot.docs
+    .map((document) => fromFirestore<OrganizationalUnit>(document))
+    .filter((unit) => !unit.deletedAt)
+    .sort(byOrderAndName)
+    .map(({ id, name, type, description, imageUrl, color, sortOrder }) => ({
+      id,
+      name,
+      type,
+      description,
+      imageUrl,
+      color,
+      sortOrder,
+    }))
 }
 
 export async function getPublicDivisions() {
-  const db = getDb()
+  const periodId = await getActivePeriodId()
+  if (!periodId) return []
 
-  return db
-    .select({
-      id: divisions.id,
-      name: divisions.name,
-      organizationalUnitId: divisions.organizationalUnitId,
-      description: divisions.description,
-      sortOrder: divisions.sortOrder,
-    })
-    .from(divisions)
-    .innerJoin(periods, eq(divisions.periodId, periods.id))
-    .where(and(isNull(divisions.deletedAt), eq(periods.status, "active")))
-    .orderBy(asc(divisions.sortOrder), asc(divisions.name))
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.divisions)
+    .where("periodId", "==", periodId)
+    .get()
+
+  return snapshot.docs
+    .map((document) => fromFirestore<Division>(document))
+    .filter((division) => !division.deletedAt)
+    .sort(byOrderAndName)
+    .map(({ id, name, organizationalUnitId, description, sortOrder }) => ({
+      id,
+      name,
+      organizationalUnitId,
+      description,
+      sortOrder,
+    }))
 }
