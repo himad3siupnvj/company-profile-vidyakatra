@@ -79,10 +79,10 @@ export async function POST(request: NextRequest) {
   }
 
   const name = member.name.trim()
-  const email = member.email?.trim().toLowerCase() ?? ""
+  const email = String(payload.email ?? "").trim().toLowerCase()
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json(
-      { error: "Anggota harus memiliki alamat email yang valid sebelum dibuatkan akun CMS." },
+      { error: "Alamat email akun CMS harus valid." },
       { status: 400 },
     )
   }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ user: serializeUser(created) })
   } catch {
-    return NextResponse.json({ error: "Email anggota sudah digunakan oleh akun lain." }, { status: 409 })
+    return NextResponse.json({ error: "Email akun CMS sudah digunakan oleh akun lain." }, { status: 409 })
   }
 }
 

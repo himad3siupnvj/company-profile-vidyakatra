@@ -55,7 +55,6 @@ interface User {
 interface MemberOption {
   id: string
   name: string
-  email: string
   department: string
   position: string
 }
@@ -239,7 +238,7 @@ export default function UserManagement() {
       ...newUser,
       memberId,
       name: selectedMember?.name ?? newUser.name,
-      email: selectedMember?.email ?? newUser.email,
+      email: "",
     })
   }
 
@@ -304,8 +303,10 @@ export default function UserManagement() {
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                   placeholder="email@himad3si.ac.id"
-                  readOnly={Boolean(newUser.memberId)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Email ini khusus untuk login CMS dan tidak disimpan di data anggota.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Peran</Label>

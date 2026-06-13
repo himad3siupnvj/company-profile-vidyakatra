@@ -60,7 +60,6 @@ interface Member {
   name: string
   position: string
   department: string
-  email: string
   avatar: string
   status: "active" | "inactive"
   joinDate: string
@@ -134,7 +133,6 @@ export default function OrganizationManagement() {
     name: "",
     position: "",
     department: "",
-    email: "",
   })
 
   const loadOrganization = async () => {
@@ -170,8 +168,7 @@ export default function OrganizationManagement() {
       const matchesSearch =
         !query ||
         member.name.toLowerCase().includes(query) ||
-        member.position.toLowerCase().includes(query) ||
-        member.email.toLowerCase().includes(query)
+        member.position.toLowerCase().includes(query)
       const matchesUnit = filterUnit === "all" || member.department === filterUnit
       return matchesSearch && matchesUnit
     })
@@ -298,7 +295,7 @@ export default function OrganizationManagement() {
 
       const data = await response.json()
       setMembers((current) => [...current, data.member])
-      setNewMember({ name: "", position: "", department: "", email: "" })
+      setNewMember({ name: "", position: "", department: "" })
       setIsAddMemberOpen(false)
     } catch {
       setErrorMessage("Anggota belum berhasil ditambahkan. Periksa kembali datanya.")
@@ -529,16 +526,6 @@ export default function OrganizationManagement() {
                     </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newMember.email}
-                    onChange={(event) => setNewMember({ ...newMember, email: event.target.value })}
-                    placeholder="email@example.com"
-                  />
-                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>
@@ -657,7 +644,6 @@ export default function OrganizationManagement() {
                       <TableHead>Anggota</TableHead>
                       <TableHead>Jabatan</TableHead>
                       <TableHead>Departemen / Biro</TableHead>
-                      <TableHead>Kontak</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-12" />
                     </TableRow>
@@ -689,7 +675,6 @@ export default function OrganizationManagement() {
                         <TableCell>
                           <Badge variant="secondary">{member.department}</Badge>
                         </TableCell>
-                        <TableCell>{member.email || "-"}</TableCell>
                         <TableCell>
                           <Badge variant={member.status === "active" ? "default" : "secondary"}>
                             {member.status}
