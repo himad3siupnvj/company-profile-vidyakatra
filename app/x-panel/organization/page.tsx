@@ -5,7 +5,6 @@ import Image from "next/image"
 import {
   Building2,
   Edit,
-  ImagePlus,
   MoreHorizontal,
   Network,
   Plus,
@@ -25,7 +24,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -54,7 +52,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { OrganizationChart } from "@/components/admin/organization-chart"
 import { AdminPageSkeleton } from "@/components/admin/admin-page-skeleton"
-import { optimizeImageForUpload } from "@/lib/client-image-processing"
 
 interface Member {
   id: string
@@ -62,8 +59,6 @@ interface Member {
   position: string
   department: string
   avatar: string
-  status: "active" | "inactive"
-  joinDate: string
 }
 
 interface OrganizationalUnit {
@@ -121,15 +116,14 @@ export default function OrganizationManagement() {
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
+  const [editingMember, setEditingMember] = useState<Member | null>(null)
   const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false)
   const [editingUnit, setEditingUnit] = useState<OrganizationalUnit | null>(null)
   const [unitForm, setUnitForm] = useState<UnitForm>(emptyUnitForm)
   const [isSavingUnit, setIsSavingUnit] = useState(false)
   const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null)
   const [isUploadingUnitImages, setIsUploadingUnitImages] = useState(false)
-  const [isUploadingMemberImages, setIsUploadingMemberImages] = useState(false)
   const unitImagesInputRef = useRef<HTMLInputElement>(null)
-  const memberImagesInputRef = useRef<HTMLInputElement>(null)
   const [newMember, setNewMember] = useState({
     name: "",
     position: "",
@@ -156,7 +150,11 @@ export default function OrganizationManagement() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get("action") === "add") setIsAddMemberOpen(true)
+    if (params.get("action") === "add") {
+      setEditingMember(null)
+      setNewMember({ name: "", position: "", department: "" })
+      setIsAddMemberOpen(true)
+    }
     if (params.get("tab") === "structure") setActiveTab("structure")
     if (params.get("tab") === "units") setActiveTab("units")
     void loadOrganization()
@@ -224,94 +222,77 @@ export default function OrganizationManagement() {
     }
   }
 
-  const handleMemberImagesUpload = async (files: FileList | null) => {
-    if (!files?.length) return
+  const openCreateMember = () => {
+    setEditingMember(null)
+    setNewMember({ name: "", position: "", department: "" })
+    setIsAddMemberOpen(true)
+  }
 
-    setIsUploadingMemberImages(true)
+  const openEditMember = (member: Member) => {
+    setEditingMember(member)
+    setNewMember({
+      name: member.name,
+      position: member.position,
+      department: member.department === "Unassigned" ? "" : member.department,
+    })
+    setIsAddMemberOpen(true)
+  }
+
+  const handleSaveMember = async () => {
     setErrorMessage("")
     setSuccessMessage("")
 
-    try {
-      const formData = new FormData()
-      const optimizedFiles = await Promise.all(
-        Array.from(files).map((file) =>
-          optimizeImageForUpload(file, {
-            maxWidth: 900,
-            maxHeight: 1200,
-            quality: 0.82,
-          }),
-        ),
-      )
-      optimizedFiles.forEach((file) => formData.append("files", file))
-
-      const response = await fetch("/api/admin/organization/member-images", {
-        method: "POST",
-        body: formData,
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || "Upload foto anggota gagal.")
-
-      const uploaded = data.uploaded ?? []
-      const unmatched = data.unmatched ?? []
-      setMembers((current) =>
-        current.map((member) => {
-          const result = uploaded.find(
-            (item: { memberId: string; url: string }) => item.memberId === member.id,
-          )
-          return result ? { ...member, avatar: result.url } : member
-        }),
-      )
-
-      if (uploaded.length) {
-        setSuccessMessage(`${uploaded.length} foto anggota berhasil dipasang.`)
-      }
-      if (unmatched.length) {
-        setErrorMessage(
-          `Belum terpasang: ${unmatched
-            .map((item: { fileName: string }) => item.fileName)
-            .join(", ")}. Gunakan nama lengkap anggota sebagai nama file.`,
-        )
-      }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Upload foto anggota gagal.",
-      )
-    } finally {
-      setIsUploadingMemberImages(false)
-      if (memberImagesInputRef.current) memberImagesInputRef.current.value = ""
+    if (!newMember.name.trim() || !newMember.position.trim()) {
+      setErrorMessage("Nama lengkap dan jabatan wajib diisi.")
+      return
     }
-  }
-
-  const handleAddMember = async () => {
-    setErrorMessage("")
 
     try {
       const response = await fetch("/api/admin/organization", {
-        method: "POST",
+        method: editingMember ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "member", ...newMember }),
+        body: JSON.stringify({
+          type: "member",
+          id: editingMember?.id,
+          avatar: editingMember?.avatar,
+          ...newMember,
+        }),
       })
 
-      if (!response.ok) throw new Error("Failed to add member")
+      if (!response.ok) throw new Error("Failed to save member")
 
       const data = await response.json()
-      setMembers((current) => [...current, data.member])
+      setMembers((current) =>
+        editingMember
+          ? current.map((member) => (member.id === data.member.id ? data.member : member))
+          : [...current, data.member],
+      )
       setNewMember({ name: "", position: "", department: "" })
+      setEditingMember(null)
       setIsAddMemberOpen(false)
+      setSuccessMessage(
+        editingMember ? "Data anggota berhasil diperbarui." : "Anggota berhasil ditambahkan.",
+      )
     } catch {
-      setErrorMessage("Anggota belum berhasil ditambahkan. Periksa kembali datanya.")
+      setErrorMessage("Data anggota belum berhasil disimpan. Periksa kembali datanya.")
     }
   }
 
   const handleDeleteMember = async (id: string) => {
+    const member = members.find((item) => item.id === id)
+    if (!member || !window.confirm(`Hapus ${member.name} dari data organisasi?`)) return
+
     const previousMembers = members
     setMembers((current) => current.filter((member) => member.id !== id))
+    setErrorMessage("")
+    setSuccessMessage("")
 
     try {
       const response = await fetch(`/api/admin/organization?id=${id}&type=member`, {
         method: "DELETE",
       })
       if (!response.ok) throw new Error("Failed to delete member")
+      setSuccessMessage("Anggota berhasil dihapus.")
     } catch {
       setMembers(previousMembers)
       setErrorMessage("Anggota belum berhasil dihapus.")
@@ -371,6 +352,11 @@ export default function OrganizationManagement() {
       setIsUnitDialogOpen(false)
       setEditingUnit(null)
       setUnitForm(emptyUnitForm)
+      setSuccessMessage(
+        editingUnit
+          ? "Departemen atau biro berhasil diperbarui."
+          : "Departemen atau biro berhasil ditambahkan.",
+      )
     } catch {
       setErrorMessage("Departemen atau biro belum berhasil disimpan.")
     } finally {
@@ -401,6 +387,7 @@ export default function OrganizationManagement() {
         ),
       )
       if (filterUnit === unit.name) setFilterUnit("all")
+      setSuccessMessage("Departemen atau biro berhasil dihapus.")
     } catch {
       setErrorMessage("Departemen atau biro belum berhasil dihapus.")
     } finally {
@@ -417,87 +404,45 @@ export default function OrganizationManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Pengelolaan Organisasi</h1>
           <p className="text-muted-foreground">
             Kelola pengurus, departemen, biro, dan struktur organisasi Kabinet Vidyakatra.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <input
-            ref={unitImagesInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            multiple
-            className="hidden"
-            onChange={(event) => void handleUnitImagesUpload(event.target.files)}
-          />
-          <input
-            ref={memberImagesInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            className="hidden"
-            onChange={(event) => void handleMemberImagesUpload(event.target.files)}
-          />
-          <Button
-            variant="outline"
-            className="gap-2"
-            disabled={isUploadingMemberImages || members.length === 0}
-            onClick={() => memberImagesInputRef.current?.click()}
-          >
-            <ImagePlus className="h-4 w-4" />
-            {isUploadingMemberImages ? "Uploading..." : "Upload Foto Anggota"}
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            disabled={isUploadingUnitImages || units.length === 0}
-            onClick={() => unitImagesInputRef.current?.click()}
-          >
-            <Upload className="h-4 w-4" />
-            {isUploadingUnitImages ? "Uploading..." : "Upload Gambar Unit"}
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={openCreateUnit}>
-            <Building2 className="h-4 w-4" />
-            Add Department
-          </Button>
-          <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+        <input
+          ref={unitImagesInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          multiple
+          className="hidden"
+          onChange={(event) => void handleUnitImagesUpload(event.target.files)}
+        />
+        <Dialog
+          open={isAddMemberOpen}
+          onOpenChange={(open) => {
+            setIsAddMemberOpen(open)
+            if (!open) setEditingMember(null)
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Tambah Anggota</DialogTitle>
-                <DialogDescription>Add a new member to the organization.</DialogDescription>
+                <DialogTitle>{editingMember ? "Edit Anggota" : "Tambah Anggota"}</DialogTitle>
+                <DialogDescription>
+                  {editingMember
+                    ? "Perbarui nama, jabatan, atau penempatan unit anggota."
+                    : "Tambahkan nama dan jabatan untuk kebutuhan statistik serta struktur organisasi."}
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                <div className="flex justify-center">
-                  <div className="relative">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-muted">
-                      <ImagePlus className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
-                      aria-label="Add member photo"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Nama Lengkap</Label>
                   <Input
                     id="name"
                     value={newMember.name}
                     onChange={(event) => setNewMember({ ...newMember, name: event.target.value })}
-                    placeholder="Enter full name"
+                    placeholder="Masukkan nama lengkap"
                   />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -509,7 +454,7 @@ export default function OrganizationManagement() {
                       onChange={(event) =>
                         setNewMember({ ...newMember, position: event.target.value })
                       }
-                      placeholder="e.g., Staff"
+                      placeholder="Contoh: Staff"
                     />
                   </div>
                   <div className="space-y-2">
@@ -519,7 +464,7 @@ export default function OrganizationManagement() {
                       onValueChange={(value) => setNewMember({ ...newMember, department: value })}
                     >
                       <SelectTrigger id="member-unit">
-                        <SelectValue placeholder="Select unit" />
+                        <SelectValue placeholder="Pilih unit (opsional)" />
                       </SelectTrigger>
                       <SelectContent>
                         {units.map((unit) => (
@@ -534,13 +479,14 @@ export default function OrganizationManagement() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>
-                  Cancel
+                  Batal
                 </Button>
-                <Button onClick={handleAddMember}>Tambah Anggota</Button>
+                <Button onClick={handleSaveMember}>
+                  {editingMember ? "Simpan Perubahan" : "Tambah Anggota"}
+                </Button>
               </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {errorMessage && (
@@ -554,7 +500,7 @@ export default function OrganizationManagement() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-4 p-5">
             <div className="rounded-md bg-primary/10 p-3">
@@ -588,19 +534,6 @@ export default function OrganizationManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-5">
-            <div className="rounded-md bg-emerald-500/10 p-3">
-              <Network className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Anggota Aktif</p>
-              <p className="text-2xl font-bold">
-                {members.filter((member) => member.status === "active").length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -614,7 +547,12 @@ export default function OrganizationManagement() {
           <Card>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <CardTitle>Semua Anggota</CardTitle>
+                <div>
+                  <CardTitle>Semua Anggota</CardTitle>
+                  <CardDescription className="mt-1">
+                    Data ini dipakai untuk statistik jumlah anggota dan penyusunan bagan.
+                  </CardDescription>
+                </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -638,6 +576,10 @@ export default function OrganizationManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <Button className="gap-2" onClick={openCreateMember}>
+                    <Plus className="h-4 w-4" />
+                    Tambah Anggota
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -649,7 +591,6 @@ export default function OrganizationManagement() {
                       <TableHead>Anggota</TableHead>
                       <TableHead>Jabatan</TableHead>
                       <TableHead>Departemen / Biro</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
@@ -666,13 +607,6 @@ export default function OrganizationManagement() {
                             </Avatar>
                             <div>
                               <p className="font-medium">{member.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Joined{" "}
-                                {new Date(member.joinDate).toLocaleDateString("id-ID", {
-                                  month: "short",
-                                  year: "numeric",
-                                })}
-                              </p>
                             </div>
                           </div>
                         </TableCell>
@@ -681,19 +615,14 @@ export default function OrganizationManagement() {
                           <Badge variant="secondary">{member.department}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={member.status === "active" ? "default" : "secondary"}>
-                            {member.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" aria-label={`Actions for ${member.name}`}>
+                              <Button variant="ghost" size="icon" aria-label={`Aksi untuk ${member.name}`}>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openEditMember(member)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
                               </DropdownMenuItem>
@@ -702,7 +631,7 @@ export default function OrganizationManagement() {
                                 onClick={() => handleDeleteMember(member.id)}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                Hapus
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -711,7 +640,7 @@ export default function OrganizationManagement() {
                     ))}
                     {!isLoading && filteredMembers.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                        <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
                           Anggota tidak ditemukan.
                         </TableCell>
                       </TableRow>
@@ -724,19 +653,29 @@ export default function OrganizationManagement() {
         </TabsContent>
 
         <TabsContent value="units" className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold">Departemen & Biro</h2>
               <p className="text-sm text-muted-foreground">
-                Unit yang tampil di profil publik. Untuk gambar unit, gunakan nama file
-                sesuai nama unit atau singkatannya, misalnya medkom.png, psdm.jpg, atau
-                sosial-politik.webp.
+                Buat unit terlebih dahulu, lalu unggah gambar secara massal dengan nama
+                file yang sesuai, misalnya medkom.png, psdm.jpg, atau sosial-politik.webp.
               </p>
             </div>
-            <Button size="sm" className="gap-2" onClick={openCreateUnit}>
-              <Plus className="h-4 w-4" />
-              Add Unit
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={isUploadingUnitImages || units.length === 0}
+                onClick={() => unitImagesInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+                {isUploadingUnitImages ? "Mengunggah..." : "Unggah Gambar Unit"}
+              </Button>
+              <Button className="gap-2" onClick={openCreateUnit}>
+                <Plus className="h-4 w-4" />
+                Tambah Departemen / Biro
+              </Button>
+            </div>
           </div>
 
           {units.length > 0 ? (
@@ -760,18 +699,18 @@ export default function OrganizationManagement() {
                       <div className="min-w-0">
                         <div className="mb-2 flex items-center gap-2">
                           <Badge variant="outline">
-                            {unit.type === "bureau" ? "Bureau" : "Department"}
+                            {unit.type === "bureau" ? "Biro" : "Departemen"}
                           </Badge>
                           <Badge variant="secondary">{unit.memberCount} anggota</Badge>
                         </div>
                         <CardTitle className="text-base">{unit.name}</CardTitle>
                         <CardDescription className="mt-1 line-clamp-2 min-h-10">
-                          {unit.description || "No description yet."}
+                          {unit.description || "Belum ada deskripsi."}
                         </CardDescription>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label={`Actions for ${unit.name}`}>
+                          <Button variant="ghost" size="icon" aria-label={`Aksi untuk ${unit.name}`}>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -786,7 +725,7 @@ export default function OrganizationManagement() {
                             onClick={() => handleDeleteUnit(unit)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            Hapus
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -801,7 +740,7 @@ export default function OrganizationManagement() {
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium">
-                        {unit.head === "-" ? "Not assigned" : unit.head}
+                        {unit.head === "-" ? "Belum ditentukan" : unit.head}
                       </span>
                     </div>
                   </CardContent>
@@ -817,7 +756,7 @@ export default function OrganizationManagement() {
               </p>
               <Button className="mt-4 gap-2" onClick={openCreateUnit}>
                 <Plus className="h-4 w-4" />
-                Add Unit
+                Tambah Departemen / Biro
               </Button>
             </div>
           )}
@@ -851,9 +790,9 @@ export default function OrganizationManagement() {
       <Dialog open={isUnitDialogOpen} onOpenChange={setIsUnitDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingUnit ? "Edit Organizational Unit" : "Add Organizational Unit"}</DialogTitle>
+            <DialogTitle>{editingUnit ? "Edit Departemen / Biro" : "Tambah Departemen / Biro"}</DialogTitle>
             <DialogDescription>
-              Create a department or bureau for member assignment and the public profile.
+              Unit ini digunakan untuk penempatan anggota, profil publik, dan bagan organisasi.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -863,7 +802,7 @@ export default function OrganizationManagement() {
                 id="unit-name"
                 value={unitForm.name}
                 onChange={(event) => setUnitForm({ ...unitForm, name: event.target.value })}
-                placeholder="e.g., Media and Information"
+                placeholder="Contoh: Media dan Komunikasi"
               />
             </div>
             <div className="space-y-2">
@@ -892,7 +831,7 @@ export default function OrganizationManagement() {
                 onChange={(event) =>
                   setUnitForm({ ...unitForm, description: event.target.value })
                 }
-                placeholder="Brief responsibility of this unit"
+                placeholder="Jelaskan tanggung jawab singkat unit ini"
               />
             </div>
             <div className="space-y-2">
@@ -916,10 +855,10 @@ export default function OrganizationManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsUnitDialogOpen(false)}>
-              Cancel
+              Batal
             </Button>
             <Button onClick={handleSaveUnit} disabled={isSavingUnit}>
-              {isSavingUnit ? "Saving..." : editingUnit ? "Save Changes" : "Add Unit"}
+              {isSavingUnit ? "Menyimpan..." : editingUnit ? "Simpan Perubahan" : "Tambah Unit"}
             </Button>
           </DialogFooter>
         </DialogContent>
