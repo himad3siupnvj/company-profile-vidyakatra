@@ -9,7 +9,6 @@ import {
   FileText,
   Network,
   Newspaper,
-  Share2,
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 import { RecentActivity } from "@/components/admin/recent-activity"
@@ -168,7 +167,6 @@ export default function AdminDashboard() {
 
   const articleStats = summary?.stats.articles
   const organizationStats = summary?.stats.organization
-  const userStats = summary?.stats.users
   const articleWorkflowTotal = articleStats
     ? articleStats.byStatus.published + articleStats.byStatus.submitted + articleStats.byStatus.draft + articleStats.byStatus.rejected
     : 0
@@ -193,19 +191,9 @@ export default function AdminDashboard() {
           : "Siap tayang",
       value: articleWorkflowTotal ? Math.round((articleStats!.byStatus.published / articleWorkflowTotal) * 100) : 0,
     },
-    {
-      label: "Akun CMS",
-      description: userStats
-        ? `${userStats.active} aktif, ${userStats.unclaimed} belum claim.`
-        : "Memuat status akun dari database.",
-      status: userStats && userStats.total > 0 && userStats.unclaimed === 0 ? "Siap tayang" : "Perlu update",
-      value: userStats?.total ? Math.round((userStats.active / userStats.total) * 100) : 0,
-    },
   ]
   const visibleContentHealth = contentHealth.filter((item) => {
     if (item.label === "Profil organisasi") return canManageSettings || canManageOrg
-    if (item.label === "Akun CMS") return canManageSettings
-
     return true
   })
 
@@ -245,9 +233,9 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {isLoadingSummary ? (
-          Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[142px]" />)
+          Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-[142px]" />)
         ) : (
           <>
             <StatsCard
@@ -263,13 +251,6 @@ export default function AdminDashboard() {
               change={`${summary?.stats.organization.departments ?? 0} departemen, ${summary?.stats.organization.bureaus ?? 0} biro`}
               changeType="neutral"
               icon={Building2}
-            />}
-            {canManageSettings && <StatsCard
-              title="Akun CMS"
-              value={summary?.stats.users.total ?? 0}
-              change={`${summary?.stats.users.active ?? 0} aktif, ${summary?.stats.users.unclaimed ?? 0} belum claim`}
-              changeType={(summary?.stats.users.unclaimed ?? 0) > 0 ? "neutral" : "positive"}
-              icon={Share2}
             />}
             <StatsCard
               title="Total Dilihat"

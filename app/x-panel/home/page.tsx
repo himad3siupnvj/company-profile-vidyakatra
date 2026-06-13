@@ -15,6 +15,7 @@ import {
   type PublicHomeContent,
 } from "@/lib/home-content"
 import { validateHomeContent } from "@/lib/settings-validation"
+import { AdminPageSkeleton } from "@/components/admin/admin-page-skeleton"
 
 type HomeStats = {
   activeMembers: number
@@ -116,12 +117,7 @@ export default function HomePageManagement() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-64 items-center justify-center text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Memuat pengaturan Beranda...
-      </div>
-    )
+    return <AdminPageSkeleton cards={2} />
   }
 
   return (

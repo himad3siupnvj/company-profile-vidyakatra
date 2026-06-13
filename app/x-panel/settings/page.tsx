@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Archive, Download, Save, Globe, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Music2 } from "lucide-react"
 import { officialSocialUrls, type SocialMediaUrls } from "@/lib/social-links"
 import { validatePublicSettings } from "@/lib/settings-validation"
+import { AdminPageSkeleton } from "@/components/admin/admin-page-skeleton"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
@@ -132,6 +133,10 @@ export default function SettingsPage() {
     ))
   }
 
+  if (isLoading) {
+    return <AdminPageSkeleton tabs={4} cards={2} />
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -148,11 +153,6 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      {isLoading && (
-        <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          Memuat pengaturan...
-        </div>
-      )}
       {message && (
         <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
           {message}

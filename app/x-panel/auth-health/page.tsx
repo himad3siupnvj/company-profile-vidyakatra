@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Activity, AlertCircle, CheckCircle2, Database, RefreshCw, ShieldCheck, Users } from "lucide-react"
+import { Activity, AlertCircle, CheckCircle2, Database, RefreshCw, ShieldCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AdminPageSkeleton } from "@/components/admin/admin-page-skeleton"
 
 type EnvCheck = {
   key: string
@@ -22,14 +23,6 @@ type HealthPayload = {
     latencyMs: number | null
     serverTime: string | null
     error: string | null
-  }
-  users: {
-    total: number
-    byStatus: {
-      unclaimed: number
-      active: number
-      inactive: number
-    }
   }
 }
 
@@ -85,6 +78,10 @@ export default function AuthHealthPage() {
 
   const missingEnv = useMemo(() => health?.env.filter((item) => item.required && !item.configured) ?? [], [health])
 
+  if (isLoading && !health) {
+    return <AdminPageSkeleton cards={3} />
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -95,7 +92,7 @@ export default function AuthHealthPage() {
           </Badge>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Kesehatan Autentikasi</h1>
           <p className="max-w-2xl text-muted-foreground">
-            Cek kesiapan konfigurasi login, claim account, storage, dan koneksi database untuk operasional CMS.
+            Cek kesiapan konfigurasi login admin, storage, dan koneksi database untuk operasional CMS.
           </p>
         </div>
         <Button variant="outline" className="gap-2" onClick={loadHealth} disabled={isLoading}>
@@ -110,7 +107,7 @@ export default function AuthHealthPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardContent className="flex items-center justify-between gap-4 p-5">
             <div>
@@ -127,15 +124,6 @@ export default function AuthHealthPage() {
               <p className="mt-1 text-2xl font-bold">{health?.database.latencyMs ?? "-"} ms</p>
             </div>
             <Database className={health?.database.ok ? "h-5 w-5 text-primary" : "h-5 w-5 text-destructive"} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between gap-4 p-5">
-            <div>
-              <p className="text-sm text-muted-foreground">Pengguna CMS</p>
-              <p className="mt-1 text-2xl font-bold">{health?.users.total ?? "-"}</p>
-            </div>
-            <Users className="h-5 w-5 text-primary" />
           </CardContent>
         </Card>
       </div>
@@ -161,7 +149,6 @@ export default function AuthHealthPage() {
                 <StatusBadge ok={item.configured} />
               </div>
             ))}
-            {isLoading && !health && <p className="text-sm text-muted-foreground">Memuat konfigurasi...</p>}
           </CardContent>
         </Card>
 
@@ -188,26 +175,6 @@ export default function AuthHealthPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Akses Pengguna</CardTitle>
-              <CardDescription>Ringkasan status akun CMS.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              <div className="flex items-center justify-between rounded-lg border border-white/10 p-3">
-                <span className="text-sm text-muted-foreground">Aktif</span>
-                <span className="font-semibold">{health?.users.byStatus.active ?? "-"}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-white/10 p-3">
-                <span className="text-sm text-muted-foreground">Belum diklaim</span>
-                <span className="font-semibold">{health?.users.byStatus.unclaimed ?? "-"}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-white/10 p-3">
-                <span className="text-sm text-muted-foreground">Tidak aktif</span>
-                <span className="font-semibold">{health?.users.byStatus.inactive ?? "-"}</span>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
@@ -215,7 +182,7 @@ export default function AuthHealthPage() {
         <CardContent className="flex items-start gap-3 p-4">
           <Activity className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="text-sm leading-6 text-muted-foreground">
-            Gunakan halaman ini saat login, claim account, upload, atau database terasa bermasalah di production.
+            Gunakan halaman ini saat login admin, upload, atau database terasa bermasalah di production.
           </p>
         </CardContent>
       </Card>

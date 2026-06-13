@@ -18,6 +18,7 @@ import {
   type ProfileMission,
   type ProfileValue,
 } from "@/lib/profile-content-data"
+import { AdminPageSkeleton } from "@/components/admin/admin-page-skeleton"
 
 const valueIcons = {
   star: Star,
@@ -110,6 +111,10 @@ export default function CabinetsManagement() {
     setMessage("Leader dihapus dari draft. Klik Save Changes untuk menyimpan.")
   }
 
+  if (isLoading) {
+    return <AdminPageSkeleton tabs={6} cards={2} />
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -133,7 +138,6 @@ export default function CabinetsManagement() {
         </div>
       </div>
 
-      {isLoading && <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">Memuat konten profil...</div>}
       {message && <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">{message}</div>}
 
       <Tabs defaultValue="intro" className="space-y-6">

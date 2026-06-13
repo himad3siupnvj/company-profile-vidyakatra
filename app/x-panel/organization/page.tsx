@@ -53,6 +53,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { OrganizationChart } from "@/components/admin/organization-chart"
+import { AdminPageSkeleton } from "@/components/admin/admin-page-skeleton"
 import { optimizeImageForUpload } from "@/lib/client-image-processing"
 
 interface Member {
@@ -409,6 +410,10 @@ export default function OrganizationManagement() {
 
   const departmentCount = units.filter((unit) => unit.type === "department").length
   const bureauCount = units.filter((unit) => unit.type === "bureau").length
+
+  if (isLoading) {
+    return <AdminPageSkeleton tabs={3} cards={2} />
+  }
 
   return (
     <div className="space-y-6">
