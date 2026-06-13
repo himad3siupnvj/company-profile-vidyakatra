@@ -1,7 +1,7 @@
+import { and, eq, isNull } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
-import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
-import { fromFirestore } from "@/db/firestore-data"
-import type { OrganizationalUnit } from "@/db/models"
+import { getDb } from "@/db"
+import { assets, organizationalUnits } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { getActivePeriodId } from "@/lib/active-period"
 import { writeAuditLog } from "@/lib/audit"
@@ -33,8 +33,7 @@ function getAcronym(value: string) {
 }
 
 function getUnitAliases(value: string) {
-  const normalized = normalizeName(value)
-  const knownAliases: Record<string, string[]> = {
+  const aliases: Record<string, string[]> = {
     "media dan komunikasi": ["medkom"],
     "pengembangan sumber daya mahasiswa": ["psdm"],
     "ekonomi kreatif": ["ekraf"],
@@ -42,23 +41,22 @@ function getUnitAliases(value: string) {
     "hubungan mahasiswa": ["humsiwa"],
   }
 
-  return knownAliases[normalized] ?? []
+  return aliases[normalizeName(value)] ?? []
 }
 
-function findMatchingUnit(fileName: string, units: OrganizationalUnit[]) {
+function findMatchingUnit(
+  fileName: string,
+  units: Array<typeof organizationalUnits.$inferSelect>,
+) {
   const normalizedFile = normalizeName(fileName)
   const compactFile = normalizedFile.replace(/\s+/g, "")
-
   const matches = units.filter((unit) => {
-    const normalizedUnit = normalizeName(unit.name)
-    const compactUnit = normalizedUnit.replace(/\s+/g, "")
-    const acronym = getAcronym(unit.name)
-    const aliases = getUnitAliases(unit.name)
+    const compactUnit = normalizeName(unit.name).replace(/\s+/g, "")
 
     return (
       compactFile === compactUnit ||
-      compactFile === acronym ||
-      aliases.includes(compactFile) ||
+      compactFile === getAcronym(unit.name) ||
+      getUnitAliases(unit.name).includes(compactFile) ||
       compactFile.includes(compactUnit) ||
       compactUnit.includes(compactFile)
     )
@@ -83,20 +81,20 @@ export async function POST(request: NextRequest) {
   const files = formData
     .getAll("files")
     .filter((value): value is File => value instanceof File && value.size > 0)
-
   if (!files.length) {
     return NextResponse.json({ error: "Pilih minimal satu file gambar." }, { status: 400 })
   }
 
-  const db = getFirestoreDb()
-  const unitSnapshot = await db
-    .collection(firestoreCollections.organizationalUnits)
-    .where("periodId", "==", activePeriodId)
-    .get()
-  const units = unitSnapshot.docs
-    .map((document) => fromFirestore<OrganizationalUnit>(document))
-    .filter((unit) => !unit.deletedAt)
-
+  const db = getDb()
+  const units = await db
+    .select()
+    .from(organizationalUnits)
+    .where(
+      and(
+        eq(organizationalUnits.periodId, activePeriodId),
+        isNull(organizationalUnits.deletedAt),
+      ),
+    )
   const uploaded: Array<{ fileName: string; unitId: string; unitName: string; url: string }> = []
   const unmatched: Array<{ fileName: string; reason: string }> = []
 
@@ -124,24 +122,20 @@ export async function POST(request: NextRequest) {
       const url = await uploadFileToStorage(file, path)
       const now = new Date()
 
-      await Promise.all([
-        db.collection(firestoreCollections.organizationalUnits).doc(unit.id).update({
-          imageUrl: url,
-          updatedAt: now,
-        }),
-        db.collection(firestoreCollections.assets).add({
+      await db.transaction(async (tx) => {
+        await tx
+          .update(organizationalUnits)
+          .set({ imageUrl: url, updatedAt: now })
+          .where(eq(organizationalUnits.id, unit.id))
+        await tx.insert(assets).values({
           url,
           fileName: file.name,
           mimeType: file.type || "application/octet-stream",
           sizeBytes: file.size,
           uploadedBy: guard.user?.id ?? null,
-          purpose: "organization-image",
-          organizationalUnitId: unit.id,
           createdAt: now,
-          deletedAt: null,
-          deletedBy: null,
-        }),
-      ])
+        })
+      })
 
       uploaded.push({ fileName: file.name, unitId: unit.id, unitName: unit.name, url })
     } catch (error) {
@@ -161,7 +155,6 @@ export async function POST(request: NextRequest) {
       unmatched,
     },
   })
-
   if (uploaded.length) revalidateProfileContent()
 
   return NextResponse.json({ uploaded, unmatched })

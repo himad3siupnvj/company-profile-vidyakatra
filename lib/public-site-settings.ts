@@ -1,5 +1,7 @@
+import { inArray } from "drizzle-orm"
 import { unstable_cache } from "next/cache"
-import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
+import { getDb } from "@/db"
+import { siteSettings } from "@/db/schema"
 import { publicCacheTags } from "@/lib/cache-tags"
 import { officialSocialUrls, type SocialMediaUrls } from "@/lib/social-links"
 import {
@@ -96,19 +98,19 @@ function normalizeHomeContent(value: unknown): PublicHomeContent {
 export const getPublicSiteSettings = unstable_cache(
   async function getPublicSiteSettings() {
     try {
-      const keys = new Set([
-        "socialMedia",
-        "contactInfo",
-        "footerSettings",
-        "quickLinks",
-        "homeContent",
-      ])
-      const snapshot = await getFirestoreDb()
-        .collection(firestoreCollections.siteSettings)
-        .get()
-      const rows = snapshot.docs
-        .map((document) => document.data() as { key: string; value: unknown })
-        .filter((row) => keys.has(row.key))
+      const db = getDb()
+      const rows = await db
+        .select({ key: siteSettings.key, value: siteSettings.value })
+        .from(siteSettings)
+        .where(
+          inArray(siteSettings.key, [
+            "socialMedia",
+            "contactInfo",
+            "footerSettings",
+            "quickLinks",
+            "homeContent",
+          ]),
+        )
       const values = Object.fromEntries(rows.map((row) => [row.key, row.value]))
       const social = asObject(values.socialMedia)
       const contact = asObject(values.contactInfo)

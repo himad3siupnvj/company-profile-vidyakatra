@@ -149,6 +149,7 @@ export const organizationalUnits = pgTable("organizational_units", {
     onDelete: "set null",
   }),
   description: text("description"),
+  imageUrl: text("image_url"),
   color: varchar("color", { length: 80 }),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })

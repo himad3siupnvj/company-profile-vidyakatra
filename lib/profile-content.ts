@@ -1,5 +1,7 @@
+import { eq } from "drizzle-orm"
 import { unstable_cache } from "next/cache"
-import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
+import { getDb } from "@/db"
+import { siteSettings } from "@/db/schema"
 import { publicCacheTags } from "@/lib/cache-tags"
 import {
   defaultProfileContent,
@@ -10,13 +12,10 @@ import {
 export const getProfileContent = unstable_cache(
   async function getProfileContent() {
     try {
-      const snapshot = await getFirestoreDb()
-        .collection(firestoreCollections.siteSettings)
-        .where("key", "==", profileContentKey)
-        .limit(1)
-        .get()
+      const db = getDb()
+      const [row] = await db.select().from(siteSettings).where(eq(siteSettings.key, profileContentKey)).limit(1)
 
-      return normalizeProfileContent(snapshot.docs[0]?.data().value)
+      return normalizeProfileContent(row?.value)
     } catch {
       return defaultProfileContent
     }

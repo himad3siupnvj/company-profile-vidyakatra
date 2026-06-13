@@ -1,7 +1,7 @@
+import { and, eq, isNull } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
-import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
-import { fromFirestore } from "@/db/firestore-data"
-import type { Member } from "@/db/models"
+import { getDb } from "@/db"
+import { assets, members } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { getActivePeriodId } from "@/lib/active-period"
 import { writeAuditLog } from "@/lib/audit"
@@ -19,14 +19,17 @@ function normalizeName(value: string) {
     .replace(/\.[^.]+$/, "")
     .toLowerCase()
     .replace(/\b(foto|photo|profile|profil|anggota|member)\b/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, "")
+    .replace(/[^a-z0-9]+/g, "")
 }
 
-function findMatchingMember(fileName: string, members: Member[]) {
+function findMatchingMember(
+  fileName: string,
+  memberRows: Array<typeof members.$inferSelect>,
+) {
   const normalizedFile = normalizeName(fileName)
-  const matches = members.filter((member) => normalizeName(member.name) === normalizedFile)
+  const matches = memberRows.filter(
+    (member) => normalizeName(member.name) === normalizedFile,
+  )
 
   return matches.length === 1 ? matches[0] : null
 }
@@ -47,19 +50,15 @@ export async function POST(request: NextRequest) {
   const files = formData
     .getAll("files")
     .filter((value): value is File => value instanceof File && value.size > 0)
-
   if (!files.length) {
     return NextResponse.json({ error: "Pilih minimal satu foto anggota." }, { status: 400 })
   }
 
-  const db = getFirestoreDb()
-  const memberSnapshot = await db
-    .collection(firestoreCollections.members)
-    .where("periodId", "==", activePeriodId)
-    .get()
-  const members = memberSnapshot.docs
-    .map((document) => fromFirestore<Member>(document))
-    .filter((member) => !member.deletedAt)
+  const db = getDb()
+  const memberRows = await db
+    .select()
+    .from(members)
+    .where(and(eq(members.periodId, activePeriodId), isNull(members.deletedAt)))
   const uploaded: Array<{
     fileName: string
     memberId: string
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
   const unmatched: Array<{ fileName: string; reason: string }> = []
 
   for (const file of files) {
-    const member = findMatchingMember(file.name, members)
+    const member = findMatchingMember(file.name, memberRows)
     if (!member) {
       unmatched.push({
         fileName: file.name,
@@ -92,24 +91,20 @@ export async function POST(request: NextRequest) {
       const url = await uploadFileToStorage(file, path)
       const now = new Date()
 
-      await Promise.all([
-        db.collection(firestoreCollections.members).doc(member.id).update({
-          avatarUrl: url,
-          updatedAt: now,
-        }),
-        db.collection(firestoreCollections.assets).add({
+      await db.transaction(async (tx) => {
+        await tx
+          .update(members)
+          .set({ avatarUrl: url, updatedAt: now })
+          .where(eq(members.id, member.id))
+        await tx.insert(assets).values({
           url,
           fileName: file.name,
           mimeType: file.type || "application/octet-stream",
           sizeBytes: file.size,
           uploadedBy: guard.user?.id ?? null,
-          purpose: "member-image",
-          memberId: member.id,
           createdAt: now,
-          deletedAt: null,
-          deletedBy: null,
-        }),
-      ])
+        })
+      })
 
       uploaded.push({
         fileName: file.name,
@@ -134,7 +129,6 @@ export async function POST(request: NextRequest) {
       unmatched,
     },
   })
-
   if (uploaded.length) revalidateProfileContent()
 
   return NextResponse.json({ uploaded, unmatched })

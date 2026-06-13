@@ -1,5 +1,7 @@
+import { eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
-import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
+import { getDb } from "@/db"
+import { siteSettings } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
 import {
@@ -15,17 +17,10 @@ export async function GET() {
   const guard = await requireApiPermission("settings.manage")
   if (guard.response) return guard.response
 
-  const snapshot = await getFirestoreDb()
-    .collection(firestoreCollections.siteSettings)
-    .where("key", "==", profileContentKey)
-    .limit(1)
-    .get()
+  const db = getDb()
+  const [row] = await db.select().from(siteSettings).where(eq(siteSettings.key, profileContentKey)).limit(1)
 
-  return NextResponse.json({
-    profileContent: normalizeProfileContent(
-      snapshot.docs[0]?.data().value ?? defaultProfileContent,
-    ),
-  })
+  return NextResponse.json({ profileContent: normalizeProfileContent(row?.value ?? defaultProfileContent) })
 }
 
 export async function POST(request: NextRequest) {
@@ -34,24 +29,25 @@ export async function POST(request: NextRequest) {
 
   const payload = await request.json()
   const profileContent = normalizeProfileContent(payload.profileContent ?? payload)
-  const db = getFirestoreDb()
+  const db = getDb()
   const now = new Date()
-  const existing = await db
-    .collection(firestoreCollections.siteSettings)
-    .where("key", "==", profileContentKey)
-    .limit(1)
-    .get()
-  const reference =
-    existing.docs[0]?.ref ?? db.collection(firestoreCollections.siteSettings).doc()
-  await reference.set(
-    {
+
+  await db
+    .insert(siteSettings)
+    .values({
       key: profileContentKey,
       value: profileContent,
       updatedAt: now,
-      updatedBy: guard.user?.id ?? null,
-    },
-    { merge: true },
-  )
+      updatedBy: guard.user?.id,
+    })
+    .onConflictDoUpdate({
+      target: siteSettings.key,
+      set: {
+        value: profileContent,
+        updatedAt: now,
+        updatedBy: guard.user?.id,
+      },
+    })
 
   await writeAuditLog({
     actorId: guard.user?.id,

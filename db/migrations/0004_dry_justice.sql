@@ -1,0 +1,1 @@
+ALTER TABLE "organizational_units" ADD COLUMN "image_url" text;
