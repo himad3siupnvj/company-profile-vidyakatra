@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { MemberCarousel } from "@/components/public/member-carousel"
+// import { MemberCarousel } from "@/components/public/member-carousel"
 import { getPublicWorkUnits } from "@/lib/public-profile"
 
 type UnitDetailPageProps = {
@@ -72,6 +72,7 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
         </div>
       </section>
 
+      {/* Section anggota disembunyikan sementara sampai foto pengurus siap ditampilkan.
       <section className="py-14 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-8 flex items-end justify-between gap-4">
@@ -84,6 +85,7 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
           <MemberCarousel members={unit.members} />
         </div>
       </section>
+      */}
 
       <section className="border-y border-border/50 bg-card/30 py-14 md:py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
