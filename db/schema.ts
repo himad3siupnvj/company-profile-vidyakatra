@@ -150,6 +150,14 @@ export const organizationalUnits = pgTable("organizational_units", {
   }),
   description: text("description"),
   imageUrl: text("image_url"),
+  workPrograms: jsonb("work_programs")
+    .$type<Array<{
+      name: string
+      description: string
+      status: "Rutin" | "Berjalan" | "Rencana"
+    }>>()
+    .notNull()
+    .default([]),
   color: varchar("color", { length: 80 }),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })

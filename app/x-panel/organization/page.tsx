@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import {
   Building2,
+  ClipboardList,
   Edit,
   MoreHorizontal,
   Network,
@@ -71,6 +72,13 @@ interface OrganizationalUnit {
   memberCount: number
   color: string
   sortOrder: number
+  workPrograms: WorkProgram[]
+}
+
+type WorkProgram = {
+  name: string
+  description: string
+  status: "Rutin" | "Berjalan" | "Rencana"
 }
 
 interface UnitForm {
@@ -121,6 +129,10 @@ export default function OrganizationManagement() {
   const [editingUnit, setEditingUnit] = useState<OrganizationalUnit | null>(null)
   const [unitForm, setUnitForm] = useState<UnitForm>(emptyUnitForm)
   const [isSavingUnit, setIsSavingUnit] = useState(false)
+  const [isProgramDialogOpen, setIsProgramDialogOpen] = useState(false)
+  const [programUnit, setProgramUnit] = useState<OrganizationalUnit | null>(null)
+  const [programsForm, setProgramsForm] = useState<WorkProgram[]>([])
+  const [isSavingPrograms, setIsSavingPrograms] = useState(false)
   const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null)
   const [isUploadingUnitImages, setIsUploadingUnitImages] = useState(false)
   const unitImagesInputRef = useRef<HTMLInputElement>(null)
@@ -335,6 +347,7 @@ export default function OrganizationManagement() {
           name: unitForm.name,
           unitType: unitForm.type,
           description: unitForm.description,
+          workPrograms: editingUnit?.workPrograms ?? [],
           color: unitForm.color,
           sortOrder: editingUnit?.sortOrder ?? units.length,
         }),
@@ -392,6 +405,86 @@ export default function OrganizationManagement() {
       setErrorMessage("Departemen atau biro belum berhasil dihapus.")
     } finally {
       setDeletingUnitId(null)
+    }
+  }
+
+  const openProgramsDialog = (unit: OrganizationalUnit) => {
+    setProgramUnit(unit)
+    setProgramsForm(unit.workPrograms)
+    setIsProgramDialogOpen(true)
+  }
+
+  const addProgram = () => {
+    setProgramsForm((current) => [
+      ...current,
+      { name: "", description: "", status: "Rencana" },
+    ])
+  }
+
+  const updateProgram = (index: number, patch: Partial<WorkProgram>) => {
+    setProgramsForm((current) =>
+      current.map((program, programIndex) =>
+        programIndex === index ? { ...program, ...patch } : program,
+      ),
+    )
+  }
+
+  const removeProgram = (index: number) => {
+    setProgramsForm((current) =>
+      current.filter((_, programIndex) => programIndex !== index),
+    )
+  }
+
+  const handleSavePrograms = async () => {
+    if (!programUnit) return
+
+    const workPrograms = programsForm.map((program) => ({
+      ...program,
+      name: program.name.trim(),
+      description: program.description.trim(),
+    }))
+
+    if (workPrograms.some((program) => !program.name)) {
+      setErrorMessage("Nama setiap program kerja wajib diisi.")
+      return
+    }
+
+    setIsSavingPrograms(true)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const response = await fetch("/api/admin/organization", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "organizational-unit",
+          id: programUnit.id,
+          name: programUnit.name,
+          unitType: programUnit.type,
+          description: programUnit.description,
+          imageUrl: programUnit.imageUrl,
+          color: programUnit.color,
+          sortOrder: programUnit.sortOrder,
+          workPrograms,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Program kerja gagal disimpan.")
+
+      const savedUnit = data.organizationalUnit as OrganizationalUnit
+      setUnits((current) =>
+        current.map((unit) => (unit.id === savedUnit.id ? { ...unit, ...savedUnit } : unit)),
+      )
+      setIsProgramDialogOpen(false)
+      setProgramUnit(null)
+      setSuccessMessage(`Program kerja ${savedUnit.name} berhasil disimpan.`)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Program kerja gagal disimpan.",
+      )
+    } finally {
+      setIsSavingPrograms(false)
     }
   }
 
@@ -743,6 +836,17 @@ export default function OrganizationManagement() {
                         {unit.head === "-" ? "Belum ditentukan" : unit.head}
                       </span>
                     </div>
+                    <Button
+                      variant="outline"
+                      className="mt-4 w-full gap-2"
+                      onClick={() => openProgramsDialog(unit)}
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      Kelola Proker
+                      <Badge variant="secondary" className="ml-auto">
+                        {unit.workPrograms.length}
+                      </Badge>
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -859,6 +963,103 @@ export default function OrganizationManagement() {
             </Button>
             <Button onClick={handleSaveUnit} disabled={isSavingUnit}>
               {isSavingUnit ? "Menyimpan..." : editingUnit ? "Simpan Perubahan" : "Tambah Unit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isProgramDialogOpen}
+        onOpenChange={(open) => {
+          setIsProgramDialogOpen(open)
+          if (!open) setProgramUnit(null)
+        }}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Kelola Proker {programUnit?.name}</DialogTitle>
+            <DialogDescription>
+              Daftar ini langsung tampil pada halaman detail departemen atau biro.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {programsForm.map((program, index) => (
+              <div key={index} className="space-y-4 rounded-lg border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">Program kerja {index + 1}</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Hapus program kerja ${index + 1}`}
+                    onClick={() => removeProgram(index)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
+                  <div className="space-y-2">
+                    <Label htmlFor={`program-name-${index}`}>Nama Proker</Label>
+                    <Input
+                      id={`program-name-${index}`}
+                      value={program.name}
+                      onChange={(event) => updateProgram(index, { name: event.target.value })}
+                      placeholder="Contoh: Study Club"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select
+                      value={program.status}
+                      onValueChange={(value: WorkProgram["status"]) =>
+                        updateProgram(index, { status: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Rutin">Rutin</SelectItem>
+                        <SelectItem value="Berjalan">Berjalan</SelectItem>
+                        <SelectItem value="Rencana">Rencana</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`program-description-${index}`}>Deskripsi</Label>
+                  <Textarea
+                    id={`program-description-${index}`}
+                    rows={3}
+                    value={program.description}
+                    onChange={(event) =>
+                      updateProgram(index, { description: event.target.value })
+                    }
+                    placeholder="Jelaskan tujuan atau bentuk kegiatan proker"
+                  />
+                </div>
+              </div>
+            ))}
+
+            {programsForm.length === 0 && (
+              <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                Belum ada program kerja untuk unit ini.
+              </div>
+            )}
+
+            <Button type="button" variant="outline" className="w-full gap-2" onClick={addProgram}>
+              <Plus className="h-4 w-4" />
+              Tambah Program Kerja
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProgramDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleSavePrograms} disabled={isSavingPrograms}>
+              {isSavingPrograms ? "Menyimpan..." : "Simpan Proker"}
             </Button>
           </DialogFooter>
         </DialogContent>

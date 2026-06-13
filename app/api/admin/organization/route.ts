@@ -16,11 +16,37 @@ function serializeOrgUnit(row: typeof organizationalUnits.$inferSelect & { membe
     type: row.type,
     description: row.description ?? "",
     imageUrl: row.imageUrl ?? "",
+    workPrograms: row.workPrograms ?? [],
     head: row.head ?? "-",
     memberCount: row.memberCount ?? 0,
     color: row.color ?? "bg-primary",
     sortOrder: row.sortOrder,
   }
+}
+
+type WorkProgramInput = {
+  name: string
+  description: string
+  status: "Rutin" | "Berjalan" | "Rencana"
+}
+
+function parseWorkPrograms(value: unknown): WorkProgramInput[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null
+      const record = item as Record<string, unknown>
+      const name = String(record.name ?? "").trim()
+      const description = String(record.description ?? "").trim()
+      const status: WorkProgramInput["status"] =
+        record.status === "Rutin" || record.status === "Berjalan" || record.status === "Rencana"
+          ? record.status
+          : "Rencana"
+
+      return name ? { name, description, status } : null
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
 }
 
 function serializeDivision(row: typeof divisions.$inferSelect & { unitName?: string | null }) {
@@ -183,6 +209,7 @@ export async function POST(request: NextRequest) {
         periodId: activePeriodId,
         description: String(payload.description ?? ""),
         imageUrl: typeof payload.imageUrl === "string" ? payload.imageUrl : null,
+        workPrograms: parseWorkPrograms(payload.workPrograms),
         color: String(payload.color ?? "bg-primary"),
         sortOrder: Number(payload.sortOrder ?? 0),
         createdAt: now,
@@ -317,6 +344,7 @@ export async function PUT(request: NextRequest) {
         type: unitType,
         description: String(payload.description ?? ""),
         imageUrl: typeof payload.imageUrl === "string" ? payload.imageUrl : undefined,
+        workPrograms: parseWorkPrograms(payload.workPrograms),
         color: String(payload.color ?? "bg-primary"),
         sortOrder: Number(payload.sortOrder ?? 0),
         updatedAt: now,

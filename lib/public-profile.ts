@@ -37,9 +37,9 @@ export const getPublicWorkUnits = unstable_cache(
           name: unit.name,
           description: unit.description ?? fallback.description,
           logo: unit.imageUrl || fallback.logo,
-          programs: fallback.programs,
+          programs: unit.workPrograms.map((program) => program.name),
           members: mappedMembers.length ? mappedMembers : fallback.members,
-          workPrograms: fallback.workPrograms,
+          workPrograms: unit.workPrograms,
         }
       })
     } catch {

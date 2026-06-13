@@ -49,13 +49,15 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
               <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted-foreground">
                 {unit.description}
               </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {unit.programs.map((program) => (
-                  <Badge key={program} variant="secondary">
-                    {program}
-                  </Badge>
-                ))}
-              </div>
+              {unit.programs.length > 0 && (
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {unit.programs.map((program) => (
+                    <Badge key={program} variant="secondary">
+                      {program}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mx-auto flex aspect-square w-56 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 p-8">
@@ -97,8 +99,9 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
             </p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            {unit.workPrograms.map((program) => (
+          {unit.workPrograms.length > 0 ? (
+            <div className="grid gap-4 lg:grid-cols-3">
+              {unit.workPrograms.map((program) => (
               <Card key={program.name} className="border-border/50 bg-background/70">
                 <CardContent className="p-5">
                   <div className="mb-4 flex items-center justify-between gap-3">
@@ -113,8 +116,13 @@ export default async function UnitDetailPage({ params }: UnitDetailPageProps) {
                   </p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+              Program kerja belum ditambahkan.
+            </div>
+          )}
         </div>
       </section>
     </>

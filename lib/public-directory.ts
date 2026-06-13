@@ -31,6 +31,7 @@ export async function getPublicOrganizationalUnits() {
       type: organizationalUnits.type,
       description: organizationalUnits.description,
       imageUrl: organizationalUnits.imageUrl,
+      workPrograms: organizationalUnits.workPrograms,
       color: organizationalUnits.color,
       sortOrder: organizationalUnits.sortOrder,
     })

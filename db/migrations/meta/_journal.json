@@ -50,6 +50,13 @@
       "when": 1781342578411,
       "tag": "0006_single_admin_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781367458700,
+      "tag": "0007_marvelous_maximus",
+      "breakpoints": true
     }
   ]
 }
