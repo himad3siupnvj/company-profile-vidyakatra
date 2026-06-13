@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDb } from "@/db"
-import { siteSettings } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
 import { officialSocialUrls } from "@/lib/social-links"
@@ -48,8 +47,10 @@ export async function GET() {
   const guard = await requireApiPermission("settings.manage")
   if (guard.response) return guard.response
 
-  const db = getDb()
-  const rows = await db.select().from(siteSettings)
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.siteSettings)
+    .get()
+  const rows = snapshot.docs.map((document) => document.data())
   const settings = { ...defaultSettings } as Record<string, unknown>
 
   for (const row of rows) {
@@ -93,21 +94,22 @@ export async function POST(request: NextRequest) {
     })
     if (error) return NextResponse.json({ error }, { status: 400 })
   }
-  const db = getDb()
+  const db = getFirestoreDb()
   const now = new Date()
 
   await Promise.all(
     Object.entries(payload)
       .filter(([key]) => key in defaultSettings)
-      .map(([key, value]) =>
-        db
-          .insert(siteSettings)
-          .values({ key, value, updatedAt: now })
-          .onConflictDoUpdate({
-            target: siteSettings.key,
-            set: { value, updatedAt: now },
-          })
-      )
+      .map(async ([key, value]) => {
+        const existing = await db
+          .collection(firestoreCollections.siteSettings)
+          .where("key", "==", key)
+          .limit(1)
+          .get()
+        const reference =
+          existing.docs[0]?.ref ?? db.collection(firestoreCollections.siteSettings).doc()
+        await reference.set({ key, value, updatedAt: now }, { merge: true })
+      }),
   )
 
   await writeAuditLog({

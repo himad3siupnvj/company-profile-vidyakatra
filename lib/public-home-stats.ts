@@ -1,46 +1,43 @@
-import { and, count, eq, isNull } from "drizzle-orm"
 import { unstable_cache } from "next/cache"
-import { getDb } from "@/db"
-import { articles, members, organizationalUnits, periods } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
+import { getActivePeriodId } from "@/lib/active-period"
 import { publicCacheTags } from "@/lib/cache-tags"
 
 export const getPublicHomeStats = unstable_cache(
   async function getPublicHomeStats() {
     try {
-      const db = getDb()
-      const [memberRows, unitRows, articleRows, activePeriods] = await Promise.all([
+      const db = getFirestoreDb()
+      const periodId = await getActivePeriodId()
+      if (!periodId) {
+        return {
+          activeMembers: 0,
+          activeUnits: 0,
+          publishedArticles: 0,
+          activePeriod: "-",
+        }
+      }
+
+      const period = await db
+        .collection(firestoreCollections.periods)
+        .doc(periodId)
+        .get()
+      const [members, units, articles] = await Promise.all([
+        db.collection(firestoreCollections.members).where("periodId", "==", periodId).get(),
         db
-          .select({ value: count() })
-          .from(members)
-          .innerJoin(periods, eq(members.periodId, periods.id))
-          .where(and(eq(periods.status, "active"), isNull(members.deletedAt))),
-        db
-          .select({ value: count() })
-          .from(organizationalUnits)
-          .innerJoin(periods, eq(organizationalUnits.periodId, periods.id))
-          .where(and(eq(periods.status, "active"), isNull(organizationalUnits.deletedAt))),
-        db
-          .select({ value: count() })
-          .from(articles)
-          .innerJoin(periods, eq(articles.periodId, periods.id))
-          .where(
-            and(
-              eq(periods.status, "active"),
-              eq(articles.status, "published"),
-              isNull(articles.deletedAt),
-            ),
-          ),
-        db
-          .select({ name: periods.name })
-          .from(periods)
-          .where(eq(periods.status, "active"))
-          .limit(1),
+          .collection(firestoreCollections.organizationalUnits)
+          .where("periodId", "==", periodId)
+          .get(),
+        db.collection(firestoreCollections.articles).where("periodId", "==", periodId).get(),
       ])
+
       return {
-        activeMembers: memberRows[0]?.value ?? 0,
-        activeUnits: unitRows[0]?.value ?? 0,
-        publishedArticles: articleRows[0]?.value ?? 0,
-        activePeriod: activePeriods[0]?.name ?? "-",
+        activeMembers: members.docs.filter((document) => !document.data().deletedAt).length,
+        activeUnits: units.docs.filter((document) => !document.data().deletedAt).length,
+        publishedArticles: articles.docs.filter((document) => {
+          const article = document.data()
+          return article.status === "published" && !article.deletedAt
+        }).length,
+        activePeriod: String(period.data()?.name ?? "-"),
       }
     } catch {
       return {

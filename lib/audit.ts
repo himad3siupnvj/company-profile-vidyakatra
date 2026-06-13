@@ -1,5 +1,4 @@
-import { getDb } from "@/db"
-import { auditLogs } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
 
 type AuditInput = {
   actorId?: string | null
@@ -10,9 +9,7 @@ type AuditInput = {
 }
 
 export async function writeAuditLog(input: AuditInput) {
-  const db = getDb()
-
-  await db.insert(auditLogs).values({
+  await getFirestoreDb().collection(firestoreCollections.auditLogs).add({
     actorId: input.actorId ?? null,
     action: input.action,
     entityType: input.entityType ?? null,

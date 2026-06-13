@@ -23,6 +23,8 @@ type HomeStats = {
   activePeriod: string
 }
 
+const homeRequestTimeoutMs = 10000
+
 export default function HomePageManagement() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [content, setContent] = useState<PublicHomeContent>(defaultHomeContent)
@@ -33,25 +35,59 @@ export default function HomePageManagement() {
   const [message, setMessage] = useState("")
 
   useEffect(() => {
+    let active = true
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), homeRequestTimeoutMs)
+
     async function loadData() {
       try {
-        const [settingsResponse, statsResponse] = await Promise.all([
-          fetch("/api/admin/settings"),
-          fetch("/api/admin/home-stats"),
+        const [settingsResult, statsResult] = await Promise.allSettled([
+          fetch("/api/admin/settings", {
+            cache: "no-store",
+            signal: controller.signal,
+          }),
+          fetch("/api/admin/home-stats", {
+            cache: "no-store",
+            signal: controller.signal,
+          }),
         ])
-        if (settingsResponse.ok) {
-          const settings = await settingsResponse.json()
-          if (settings.homeContent) setContent(settings.homeContent)
+
+        let failedRequests = 0
+
+        if (settingsResult.status === "fulfilled" && settingsResult.value.ok) {
+          const settings = await settingsResult.value.json()
+          if (active && settings.homeContent) setContent(settings.homeContent)
+        } else {
+          failedRequests += 1
         }
-        if (statsResponse.ok) {
-          const data = await statsResponse.json()
-          setStats(data)
+
+        if (statsResult.status === "fulfilled" && statsResult.value.ok) {
+          const data = await statsResult.value.json()
+          if (active) setStats(data)
+        } else {
+          failedRequests += 1
+        }
+
+        if (failedRequests > 0) {
+          if (active) setMessage(
+            controller.signal.aborted
+              ? "Sebagian data belum dimuat karena koneksi database terlalu lama merespons."
+              : "Sebagian data Beranda gagal dimuat. Form tetap dapat digunakan.",
+          )
         }
       } finally {
-        setIsLoading(false)
+        window.clearTimeout(timeoutId)
+        if (active) setIsLoading(false)
       }
     }
-    loadData()
+
+    void loadData()
+
+    return () => {
+      active = false
+      window.clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [])
 
   async function saveChanges() {

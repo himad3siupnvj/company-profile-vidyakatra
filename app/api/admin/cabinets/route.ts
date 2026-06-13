@@ -1,7 +1,5 @@
-import { eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
-import { getDb } from "@/db"
-import { siteSettings } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
 import {
@@ -17,10 +15,17 @@ export async function GET() {
   const guard = await requireApiPermission("settings.manage")
   if (guard.response) return guard.response
 
-  const db = getDb()
-  const [row] = await db.select().from(siteSettings).where(eq(siteSettings.key, profileContentKey)).limit(1)
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.siteSettings)
+    .where("key", "==", profileContentKey)
+    .limit(1)
+    .get()
 
-  return NextResponse.json({ profileContent: normalizeProfileContent(row?.value ?? defaultProfileContent) })
+  return NextResponse.json({
+    profileContent: normalizeProfileContent(
+      snapshot.docs[0]?.data().value ?? defaultProfileContent,
+    ),
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -29,25 +34,24 @@ export async function POST(request: NextRequest) {
 
   const payload = await request.json()
   const profileContent = normalizeProfileContent(payload.profileContent ?? payload)
-  const db = getDb()
+  const db = getFirestoreDb()
   const now = new Date()
-
-  await db
-    .insert(siteSettings)
-    .values({
+  const existing = await db
+    .collection(firestoreCollections.siteSettings)
+    .where("key", "==", profileContentKey)
+    .limit(1)
+    .get()
+  const reference =
+    existing.docs[0]?.ref ?? db.collection(firestoreCollections.siteSettings).doc()
+  await reference.set(
+    {
       key: profileContentKey,
       value: profileContent,
       updatedAt: now,
-      updatedBy: guard.user?.id,
-    })
-    .onConflictDoUpdate({
-      target: siteSettings.key,
-      set: {
-        value: profileContent,
-        updatedAt: now,
-        updatedBy: guard.user?.id,
-      },
-    })
+      updatedBy: guard.user?.id ?? null,
+    },
+    { merge: true },
+  )
 
   await writeAuditLog({
     actorId: guard.user?.id,

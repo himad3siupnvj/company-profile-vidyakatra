@@ -1,10 +1,10 @@
 import { scryptSync, timingSafeEqual } from "crypto"
 import bcrypt from "bcryptjs"
 import { cookies } from "next/headers"
-import { eq } from "drizzle-orm"
 import { jwtVerify, SignJWT } from "jose"
-import { getDb } from "@/db"
-import { users } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
+import { convertFirestoreValue } from "@/db/firestore-data"
+import type { CmsUser } from "@/db/models"
 import { hasPermission, type Permission, type UserRole } from "@/lib/permissions"
 
 export const sessionCookieName = "cms_session"
@@ -107,18 +107,14 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null
   }
 
-  const db = getDb()
-  const [user] = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      role: users.role,
-      status: users.status,
-    })
-    .from(users)
-    .where(eq(users.id, session.sub))
-    .limit(1)
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.users)
+    .doc(session.sub)
+    .get()
+  const userData = convertFirestoreValue(snapshot.data()) as Record<string, unknown>
+  const user = snapshot.exists
+    ? ({ id: snapshot.id, ...userData } as CmsUser)
+    : null
 
   if (!user || user.status !== "active") {
     return null
@@ -133,19 +129,26 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 }
 
 export async function getUserByCredentials(email: string, password: string) {
-  const db = getDb()
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email.toLowerCase()))
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.users)
+    .where("email", "==", email.toLowerCase())
     .limit(1)
+    .get()
+  const document = snapshot.docs[0]
+  const userData = convertFirestoreValue(document?.data()) as Record<string, unknown>
+  const user = document
+    ? ({ id: document.id, ...userData } as CmsUser)
+    : null
 
   if (!user || user.status !== "active" || !user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
     return null
   }
 
   try {
-    await getDb().update(users).set({ lastLoginAt: new Date(), updatedAt: new Date() }).where(eq(users.id, user.id))
+    await getFirestoreDb()
+      .collection(firestoreCollections.users)
+      .doc(user.id)
+      .update({ lastLoginAt: new Date(), updatedAt: new Date() })
   } catch (error) {
     console.warn("Failed to update lastLoginAt after successful login.", error)
   }

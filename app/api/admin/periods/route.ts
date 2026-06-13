@@ -1,19 +1,17 @@
-import { asc, eq, ne, sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
-import { getDb } from "@/db"
-import { periods } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
+import { fromFirestore } from "@/db/firestore-data"
+import type { Period, PeriodStatus } from "@/db/models"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
-type PeriodStatus = "upcoming" | "active" | "archived"
-
 function isPeriodStatus(value: unknown): value is PeriodStatus {
   return value === "upcoming" || value === "active" || value === "archived"
 }
 
-function serializePeriod(row: typeof periods.$inferSelect) {
+function serializePeriod(row: Period) {
   return {
     id: row.id,
     name: row.name,
@@ -25,12 +23,31 @@ function serializePeriod(row: typeof periods.$inferSelect) {
   }
 }
 
+async function archiveOtherActivePeriods(
+  transaction: FirebaseFirestore.Transaction,
+  currentId: string,
+  now: Date,
+) {
+  const active = await transaction.get(
+    getFirestoreDb()
+      .collection(firestoreCollections.periods)
+      .where("status", "==", "active"),
+  )
+  for (const document of active.docs) {
+    if (document.id !== currentId) {
+      transaction.update(document.ref, { status: "archived", updatedAt: now })
+    }
+  }
+}
+
 export async function GET() {
   const guard = await requireApiPermission("period.manage")
   if (guard.response) return guard.response
 
-  const db = getDb()
-  const rows = await db.select().from(periods).orderBy(asc(periods.name))
+  const snapshot = await getFirestoreDb().collection(firestoreCollections.periods).get()
+  const rows = snapshot.docs
+    .map((document) => fromFirestore<Period>(document))
+    .sort((left, right) => left.name.localeCompare(right.name))
 
   return NextResponse.json({ periods: rows.map(serializePeriod) })
 }
@@ -42,46 +59,46 @@ export async function POST(request: NextRequest) {
   const payload = await request.json()
   const name = String(payload.name ?? "").trim()
   const status = isPeriodStatus(payload.status) ? payload.status : "upcoming"
-
   if (!name) {
     return NextResponse.json({ error: "Period name is required" }, { status: 400 })
   }
 
+  const db = getFirestoreDb()
+  const reference = db.collection(firestoreCollections.periods).doc()
   const now = new Date()
-  const db = getDb()
-  const created = await db.transaction(async (tx) => {
+  const period: Period = {
+    id: reference.id,
+    name,
+    status,
+    startDate: payload.startDate || null,
+    endDate: payload.endDate || null,
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  await db.runTransaction(async (transaction) => {
     if (status === "active") {
-      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('cms-active-period'))`)
-      await tx
-        .update(periods)
-        .set({ status: "archived", updatedAt: now })
-        .where(eq(periods.status, "active"))
+      await archiveOtherActivePeriods(transaction, reference.id, now)
     }
-
-    const [row] = await tx
-      .insert(periods)
-      .values({
-        name,
-        status,
-        startDate: payload.startDate || null,
-        endDate: payload.endDate || null,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
-
-    return row
+    transaction.set(reference, {
+      name: period.name,
+      status: period.status,
+      startDate: period.startDate,
+      endDate: period.endDate,
+      createdAt: now,
+      updatedAt: now,
+    })
   })
 
   await writeAuditLog({
     actorId: guard.user?.id,
     action: "period.create",
     entityType: "period",
-    entityId: created.id,
+    entityId: reference.id,
     metadata: { status },
   })
 
-  return NextResponse.json({ period: serializePeriod({ ...created, status }) })
+  return NextResponse.json({ period: serializePeriod(period) })
 }
 
 export async function PUT(request: NextRequest) {
@@ -92,36 +109,40 @@ export async function PUT(request: NextRequest) {
   const id = String(payload.id ?? "")
   const name = String(payload.name ?? "").trim()
   const status = isPeriodStatus(payload.status) ? payload.status : null
-
   if (!id || !name || !status) {
-    return NextResponse.json({ error: "Valid id, name, and status are required" }, { status: 400 })
+    return NextResponse.json(
+      { error: "Valid id, name, and status are required" },
+      { status: 400 },
+    )
   }
 
-  const db = getDb()
-  const updated = await db.transaction(async (tx) => {
+  const db = getFirestoreDb()
+  const reference = db.collection(firestoreCollections.periods).doc(id)
+  const updated = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference)
+    if (!snapshot.exists) return null
+
     const now = new Date()
-
     if (status === "active") {
-      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('cms-active-period'))`)
-      await tx
-        .update(periods)
-        .set({ status: "archived", updatedAt: now })
-        .where(ne(periods.id, id))
+      await archiveOtherActivePeriods(transaction, id, now)
     }
+    transaction.update(reference, {
+      name,
+      status,
+      startDate: payload.startDate || null,
+      endDate: payload.endDate || null,
+      updatedAt: now,
+    })
 
-    const [row] = await tx
-      .update(periods)
-      .set({
-        name,
-        status,
-        startDate: payload.startDate || null,
-        endDate: payload.endDate || null,
-        updatedAt: now,
-      })
-      .where(eq(periods.id, id))
-      .returning()
-
-    return row
+    return {
+      id,
+      ...(snapshot.data() as Omit<Period, "id">),
+      name,
+      status,
+      startDate: payload.startDate || null,
+      endDate: payload.endDate || null,
+      updatedAt: now,
+    } as Period
   })
 
   if (!updated) {
@@ -144,21 +165,24 @@ export async function DELETE(request: NextRequest) {
   if (guard.response) return guard.response
 
   const id = request.nextUrl.searchParams.get("id")
-
   if (!id) {
     return NextResponse.json({ error: "Valid id is required" }, { status: 400 })
   }
 
-  const db = getDb()
-  const [updated] = await db
-    .update(periods)
-    .set({ status: "archived", updatedAt: new Date() })
-    .where(eq(periods.id, id))
-    .returning()
-
-  if (!updated) {
+  const reference = getFirestoreDb().collection(firestoreCollections.periods).doc(id)
+  const snapshot = await reference.get()
+  if (!snapshot.exists) {
     return NextResponse.json({ error: "Period not found" }, { status: 404 })
   }
+
+  const now = new Date()
+  await reference.update({ status: "archived", updatedAt: now })
+  const period = {
+    id,
+    ...snapshot.data(),
+    status: "archived",
+    updatedAt: now,
+  } as Period
 
   await writeAuditLog({
     actorId: guard.user?.id,
@@ -167,5 +191,5 @@ export async function DELETE(request: NextRequest) {
     entityId: id,
   })
 
-  return NextResponse.json({ period: serializePeriod(updated) })
+  return NextResponse.json({ period: serializePeriod(period) })
 }

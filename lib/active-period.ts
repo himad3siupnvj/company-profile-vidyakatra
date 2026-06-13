@@ -1,14 +1,11 @@
-import { eq } from "drizzle-orm"
-import { getDb } from "@/db"
-import { periods } from "@/db/schema"
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
 
 export async function getActivePeriodId() {
-  const db = getDb()
-  const [activePeriod] = await db
-    .select({ id: periods.id })
-    .from(periods)
-    .where(eq(periods.status, "active"))
+  const snapshot = await getFirestoreDb()
+    .collection(firestoreCollections.periods)
+    .where("status", "==", "active")
     .limit(1)
+    .get()
 
-  return activePeriod?.id ?? null
+  return snapshot.docs[0]?.id ?? null
 }

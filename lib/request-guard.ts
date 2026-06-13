@@ -1,43 +1,5 @@
-import { sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
-import { getDb } from "@/db"
-
-let rateLimitTableReady: Promise<void> | null = null
-
-function ensureRateLimitTable() {
-  if (!rateLimitTableReady) {
-    const db = getDb()
-
-    rateLimitTableReady = db
-      .execute(sql`
-        create table if not exists request_rate_limits (
-          bucket_key text primary key,
-          count integer not null default 0,
-          reset_at timestamp with time zone not null,
-          updated_at timestamp with time zone not null default now()
-        )
-      `)
-      .then(() =>
-        Promise.all([
-          db.execute(sql`
-            create index if not exists articles_public_feed_idx
-            on articles (status, deleted_at, published_at)
-          `),
-          db.execute(sql`
-            create index if not exists articles_author_idx
-            on articles (author_id, deleted_at, updated_at)
-          `),
-        ]),
-      )
-      .then(() => undefined)
-      .catch((error) => {
-        rateLimitTableReady = null
-        throw error
-      })
-  }
-
-  return rateLimitTableReady
-}
+import { getFirestoreDb, firestoreCollections } from "@/db/firestore"
 
 function getClientIp(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
@@ -45,45 +7,51 @@ function getClientIp(request: NextRequest) {
   return forwardedFor || request.headers.get("x-real-ip") || "unknown"
 }
 
-export async function enforceRateLimit(request: NextRequest, key: string, limit: number, windowMs: number) {
-  await ensureRateLimitTable()
-
+export async function enforceRateLimit(
+  request: NextRequest,
+  key: string,
+  limit: number,
+  windowMs: number,
+) {
   const now = Date.now()
   const bucketKey = `${key}:${getClientIp(request)}`
-  const nextResetAt = new Date(now + windowMs).toISOString()
-  const rows = await getDb().execute(sql`
-    with cleanup as (
-      delete from request_rate_limits
-      where reset_at < now() - interval '1 day'
-    ),
-    updated_bucket as (
-      insert into request_rate_limits (bucket_key, count, reset_at, updated_at)
-      values (${bucketKey}, 1, ${nextResetAt}::timestamptz, now())
-      on conflict (bucket_key) do update set
-        count = case
-          when request_rate_limits.reset_at <= now() then 1
-          else request_rate_limits.count + 1
-        end,
-        reset_at = case
-          when request_rate_limits.reset_at <= now() then ${nextResetAt}::timestamptz
-          else request_rate_limits.reset_at
-        end,
-        updated_at = now()
-      returning count, reset_at as "resetAt"
+  const reference = getFirestoreDb()
+    .collection(firestoreCollections.requestRateLimits)
+    .doc(bucketKey)
+
+  const result = await getFirestoreDb().runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference)
+    const current = snapshot.data()
+    const currentResetAt =
+      current?.resetAt?.toDate?.().getTime?.() ??
+      (current?.resetAt instanceof Date ? current.resetAt.getTime() : 0)
+    const expired = !snapshot.exists || currentResetAt <= now
+    const count = expired ? 1 : Number(current?.count ?? 0) + 1
+    const resetAt = expired ? new Date(now + windowMs) : new Date(currentResetAt)
+
+    transaction.set(
+      reference,
+      {
+        bucketKey,
+        count,
+        resetAt,
+        updatedAt: new Date(),
+      },
+      { merge: true },
     )
-    select count, "resetAt" from updated_bucket
-  `)
-  const current = rows[0] as { count: number; resetAt: Date | string } | undefined
 
-  if (current && Number(current.count) > limit) {
-    const resetAt = new Date(current.resetAt).getTime()
+    return { count, resetAt }
+  })
 
+  if (result.count > limit) {
     return NextResponse.json(
       { error: "Too many requests" },
       {
         status: 429,
         headers: {
-          "Retry-After": String(Math.max(1, Math.ceil((resetAt - now) / 1000))),
+          "Retry-After": String(
+            Math.max(1, Math.ceil((result.resetAt.getTime() - now) / 1000)),
+          ),
         },
       },
     )
