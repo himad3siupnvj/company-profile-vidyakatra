@@ -11,7 +11,6 @@ import {
   Network,
   Newspaper,
   Share2,
-  Users,
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 import { RecentActivity } from "@/components/admin/recent-activity"
@@ -91,12 +90,17 @@ function getInitials(name: string) {
     .slice(0, 2)
 }
 
-function isExecutivePosition(position: string) {
-  return /^(wakil\s+)?ketua(\s+umum)?$/i.test(position.trim())
-}
+function getCorePositionOrder(position: string) {
+  const normalized = position.toLowerCase().trim()
 
-function isCoreSupportPosition(position: string) {
-  return /koordinator|sekretaris|bendahara/i.test(position)
+  if (/^ketua(\s+umum)?$/.test(normalized)) return 0
+  if (/^wakil\s+ketua(\s+umum)?$/.test(normalized)) return 1
+  if (/^sekretaris/.test(normalized)) return 2
+  if (/^bendahara/.test(normalized)) return 3
+  if (/^koordinator$/.test(normalized)) return 4
+  if (/^wakil\s+koordinator$/.test(normalized)) return 5
+
+  return null
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -186,12 +190,14 @@ export default function AdminDashboard() {
     void loadOrganization()
   }, [canManageOrg])
 
-  const executives = organizationMembers.filter((member) =>
-    isExecutivePosition(member.position),
-  )
-  const coreSupport = organizationMembers.filter((member) =>
-    isCoreSupportPosition(member.position),
-  )
+  const coreMembers = organizationMembers
+    .filter((member) => getCorePositionOrder(member.position) !== null)
+    .sort(
+      (left, right) =>
+        getCorePositionOrder(left.position)! -
+          getCorePositionOrder(right.position)! ||
+        left.name.localeCompare(right.name),
+    )
 
   const articleStats = summary?.stats.articles
   const organizationStats = summary?.stats.organization
@@ -336,51 +342,31 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="overflow-x-auto pb-2">
-                <div className="mx-auto flex min-w-[720px] max-w-6xl flex-col items-center px-3">
-                  <div className="rounded-lg border-2 border-primary bg-card px-8 py-4 text-center">
-                    <div className="flex -space-x-2 justify-center">
-                      {executives.map((member) => (
-                        <Avatar key={member.id} className="h-10 w-10 border-2 border-background">
+                <div className="mx-auto flex min-w-[1100px] max-w-7xl flex-col items-center px-3">
+                  <p className="mb-3 text-sm font-semibold text-primary">Pengurus Inti</p>
+                  <div className="grid w-full max-w-6xl grid-cols-6 gap-3">
+                    {coreMembers.map((member, index) => (
+                      <div key={member.id} className="relative rounded-lg border bg-card p-3 text-center">
+                        <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                          {index + 1}
+                        </span>
+                        <Avatar className="mx-auto h-10 w-10">
                           <AvatarImage src={member.avatar} />
-                          <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                          <AvatarFallback className="text-xs">
                             {getInitials(member.name)}
                           </AvatarFallback>
                         </Avatar>
-                      ))}
-                      {executives.length === 0 && (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                          <Users className="h-5 w-5" />
-                        </div>
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm font-semibold">Ketua & Wakil Ketua</p>
+                        <p className="mt-2 truncate text-xs font-semibold">{member.name}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {member.position}
+                        </p>
+                      </div>
+                    ))}
                   </div>
 
                   <div className="h-6 w-px bg-border" />
-                  {coreSupport.length > 0 && (
-                    <>
-                      <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-                        {coreSupport.map((member) => (
-                          <div key={member.id} className="rounded-lg border bg-card p-3 text-center">
-                            <Avatar className="mx-auto h-9 w-9">
-                              <AvatarImage src={member.avatar} />
-                              <AvatarFallback className="text-xs">
-                                {getInitials(member.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <p className="mt-2 truncate text-xs font-semibold">{member.name}</p>
-                            <p className="truncate text-[11px] text-muted-foreground">
-                              {member.position}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="h-6 w-px bg-border" />
-                    </>
-                  )}
-
-                  <div className="h-px w-[calc(100%-12rem)] bg-border" />
-                  <div className="grid w-full grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-3 xl:grid-cols-4">
+                  <div className="h-px w-[calc(100%-10rem)] bg-border" />
+                  <div className="grid w-full grid-cols-6 gap-x-4">
                     {organizationUnits.map((unit) => {
                       const unitMembers = organizationMembers.filter(
                         (member) => member.department === unit.name,
