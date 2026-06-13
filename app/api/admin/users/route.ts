@@ -2,16 +2,11 @@ import { randomBytes } from "crypto"
 import { desc, eq, sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/db"
-import { members, users } from "@/db/schema"
+import { users } from "@/db/schema"
 import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
-import { userRoles, type UserRole } from "@/lib/permissions"
 
 export const runtime = "nodejs"
-
-function isUserRole(value: unknown): value is UserRole {
-  return typeof value === "string" && (userRoles as readonly string[]).includes(value)
-}
 
 function serializeUser(row: typeof users.$inferSelect) {
   return {
@@ -60,65 +55,11 @@ export async function POST(request: NextRequest) {
   const guard = await requireApiPermission("user.manage")
   if (guard.response) return guard.response
 
-  const payload = await request.json()
-  const memberId = String(payload.memberId ?? "").trim()
-
-  if (!memberId) {
-    return NextResponse.json({ error: "Anggota terkait wajib dipilih." }, { status: 400 })
-  }
-
-  if (!isUserRole(payload.role)) {
-    return NextResponse.json({ error: "Valid role is required" }, { status: 400 })
-  }
-
-  const db = getDb()
-  const [member] = await db.select().from(members).where(eq(members.id, memberId)).limit(1)
-
-  if (!member) {
-    return NextResponse.json({ error: "Anggota terkait tidak ditemukan." }, { status: 400 })
-  }
-
-  const name = member.name.trim()
-  const email = String(payload.email ?? "").trim().toLowerCase()
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json(
-      { error: "Alamat email akun CMS harus valid." },
-      { status: 400 },
-    )
-  }
-
-  const now = new Date()
-  const claimCode = randomBytes(8).toString("hex").toUpperCase()
-
-  try {
-    const [created] = await db
-      .insert(users)
-      .values({
-        name,
-        email,
-        passwordHash: null,
-        claimCode,
-        role: payload.role,
-        memberId,
-        periodId: member.periodId,
-        status: "unclaimed",
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
-
-    await writeAuditLog({
-      actorId: guard.user?.id,
-      action: "user.create",
-      entityType: "user",
-      entityId: created.id,
-      metadata: { role: created.role, status: created.status, memberId },
-    })
-
-    return NextResponse.json({ user: serializeUser(created) })
-  } catch {
-    return NextResponse.json({ error: "Email akun CMS sudah digunakan oleh akun lain." }, { status: 409 })
-  }
+  void request
+  return NextResponse.json(
+    { error: "CMS menggunakan satu akun administrator. Pembuatan akun dinonaktifkan." },
+    { status: 403 },
+  )
 }
 
 export async function PATCH(request: NextRequest) {

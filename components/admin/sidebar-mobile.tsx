@@ -13,7 +13,6 @@ import {
   Target,
   Newspaper,
   Settings,
-  UserCog,
   ShieldCheck,
 } from "lucide-react"
 import { getAccessibleAdminNavigation } from "@/lib/admin-access"
@@ -26,7 +25,6 @@ const navigationIcons = {
   Cabinets: Target,
   "Berita Acara": Newspaper,
   Settings,
-  "User Management": UserCog,
   "Auth Health": ShieldCheck,
 } as const
 

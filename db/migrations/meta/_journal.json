@@ -43,6 +43,13 @@
       "when": 1781341998635,
       "tag": "0005_null_member_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781342578411,
+      "tag": "0006_single_admin_mode",
+      "breakpoints": true
     }
   ]
 }

@@ -13,7 +13,6 @@ import {
   Target,
   Newspaper,
   Settings,
-  UserCog,
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
@@ -36,7 +35,6 @@ const navigationIcons = {
   Cabinets: Target,
   "Berita Acara": Newspaper,
   Settings,
-  "User Management": UserCog,
   "Auth Health": ShieldCheck,
 } as const
 
