@@ -7,9 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { coreTeams, getCoreTeam } from "@/lib/public-core-team"
-import ketuaLead from "@/assets/lead/Sakhaa_BPH_Final.jpg"
-import wakilLead from "@/assets/lead/Latanza_BPH.jpg"
-import { getProfileContent } from "@/lib/profile-content"
 
 type CoreTeamDetailPageProps = {
   params: Promise<{ slug: string }>
@@ -17,35 +14,18 @@ type CoreTeamDetailPageProps = {
 
 export const revalidate = 3600
 
-const leaderImages = {
-  ketuaLead,
-  wakilLead,
-}
-
-function getLeaderSlug(imageKey: keyof typeof leaderImages) {
-  return imageKey === "ketuaLead" ? "ketua-umum" : "wakil-ketua"
-}
-
 export async function generateStaticParams() {
-  const profile = await getProfileContent()
-  return [
-    ...coreTeams.map((team) => ({ slug: team.slug })),
-    ...profile.leaders.map((leader) => ({ slug: getLeaderSlug(leader.imageKey) })),
-  ]
+  return coreTeams.map((team) => ({ slug: team.slug }))
 }
 
 export async function generateMetadata({ params }: CoreTeamDetailPageProps): Promise<Metadata> {
   const { slug } = await params
   const team = getCoreTeam(slug)
-  const profile = await getProfileContent()
-  const leader = profile.leaders.find(
-    (item) => item.enabled && getLeaderSlug(item.imageKey) === slug,
-  )
 
-  return team || leader
+  return team
     ? {
-        title: team?.name ?? leader?.name,
-        description: team?.description ?? leader?.description,
+        title: team.name,
+        description: team.description,
         alternates: { canonical: `/profil/pengurus-inti/${slug}` },
       }
     : {}
@@ -54,23 +34,10 @@ export async function generateMetadata({ params }: CoreTeamDetailPageProps): Pro
 export default async function CoreTeamDetailPage({ params }: CoreTeamDetailPageProps) {
   const { slug } = await params
   const team = getCoreTeam(slug)
-  const profile = await getProfileContent()
-  const leader = profile.leaders.find(
-    (item) => item.enabled && getLeaderSlug(item.imageKey) === slug,
-  )
 
-  if (!team && !leader) notFound()
+  if (!team) notFound()
 
-  const name = team?.name ?? leader!.name
-  const description = team?.description ?? leader!.description
-  const type = team?.type ?? leader!.position
-  const logo = team?.logo ?? leaderImages[leader!.imageKey]
-  const programs = team?.programs ?? ["Arah Strategis", "Koordinasi Kabinet", "Evaluasi Organisasi"]
-  const responsibilities = team?.responsibilities ?? [
-    "Menjaga arah gerak kabinet tetap selaras dengan visi dan kebutuhan mahasiswa.",
-    "Menguatkan koordinasi antarbidang serta komunikasi internal organisasi.",
-    "Mengawal evaluasi program kerja dan keberlanjutan budaya kabinet.",
-  ]
+  const { name, description, type, logo, programs, responsibilities } = team
 
   return (
     <>

@@ -23,7 +23,6 @@ type CabinetLeadPerson = {
   position: string
   description: string
   image: StaticImageData
-  slug: string
 }
 
 const leaderImages: Record<ProfileLeader["imageKey"], StaticImageData> = {
@@ -72,12 +71,6 @@ function LeaderBio({ person, reversed }: LeaderProfileProps) {
       <p className="mx-auto mt-5 max-w-2xl text-justify text-sm leading-7 text-muted-foreground md:mx-0">
         {person.description}
       </p>
-      <Link
-        href={`/profil/pengurus-inti/${person.slug}`}
-        className="mt-5 inline-flex text-sm font-semibold text-primary hover:underline"
-      >
-        Lihat detail
-      </Link>
     </div>
   )
 }
@@ -276,7 +269,6 @@ export default async function ProfilPage() {
                   position: leader.position,
                   description: leader.description,
                   image: leaderImages[leader.imageKey],
-                  slug: leader.imageKey === "ketuaLead" ? "ketua-umum" : "wakil-ketua",
                 }}
                 reversed={index % 2 === 1}
               />
