@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -16,12 +15,12 @@ import { StatsCard } from "@/components/admin/stats-card"
 import { RecentActivity } from "@/components/admin/recent-activity"
 import { QuickActions } from "@/components/admin/quick-actions"
 import { LiveDateTime } from "@/components/admin/live-date-time"
+import { OrganizationChart } from "@/components/admin/organization-chart"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAdminUser } from "@/components/admin/admin-user-context"
 import { hasPermission } from "@/lib/permissions"
 import type { RecentActivityItem } from "@/components/admin/recent-activity"
@@ -78,29 +77,6 @@ type OrganizationUnit = {
   imageUrl: string
   color: string
   memberCount: number
-}
-
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
-}
-
-function getCorePositionOrder(position: string) {
-  const normalized = position.toLowerCase().trim()
-
-  if (/^ketua(\s+umum)?$/.test(normalized)) return 0
-  if (/^wakil\s+ketua(\s+umum)?$/.test(normalized)) return 1
-  if (/^sekretaris/.test(normalized)) return 2
-  if (/^bendahara/.test(normalized)) return 3
-  if (/^koordinator$/.test(normalized)) return 4
-  if (/^wakil\s+koordinator$/.test(normalized)) return 5
-
-  return null
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -189,15 +165,6 @@ export default function AdminDashboard() {
 
     void loadOrganization()
   }, [canManageOrg])
-
-  const coreMembers = organizationMembers
-    .filter((member) => getCorePositionOrder(member.position) !== null)
-    .sort(
-      (left, right) =>
-        getCorePositionOrder(left.position)! -
-          getCorePositionOrder(right.position)! ||
-        left.name.localeCompare(right.name),
-    )
 
   const articleStats = summary?.stats.articles
   const organizationStats = summary?.stats.organization
@@ -341,79 +308,10 @@ export default function AdminDashboard() {
                 Struktur organisasi belum memiliki data.
               </div>
             ) : (
-              <div className="overflow-x-auto pb-2">
-                <div className="mx-auto flex min-w-[1100px] max-w-7xl flex-col items-center px-3">
-                  <p className="mb-3 text-sm font-semibold text-primary">Pengurus Inti</p>
-                  <div className="grid w-full max-w-6xl grid-cols-6 gap-3">
-                    {coreMembers.map((member, index) => (
-                      <div key={member.id} className="relative rounded-lg border bg-card p-3 text-center">
-                        <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                          {index + 1}
-                        </span>
-                        <Avatar className="mx-auto h-10 w-10">
-                          <AvatarImage src={member.avatar} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(member.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <p className="mt-2 truncate text-xs font-semibold">{member.name}</p>
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {member.position}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="h-6 w-px bg-border" />
-                  <div className="h-px w-[calc(100%-10rem)] bg-border" />
-                  <div className="grid w-full grid-cols-6 gap-x-4">
-                    {organizationUnits.map((unit) => {
-                      const unitMembers = organizationMembers.filter(
-                        (member) => member.department === unit.name,
-                      )
-                      const head =
-                        unitMembers.find((member) =>
-                          /kepala|ketua|koordinator/i.test(member.position),
-                        ) ?? unitMembers[0]
-
-                      return (
-                        <div key={unit.id} className="flex flex-col items-center">
-                          <div className="h-5 w-px bg-border" />
-                          <div className="w-full rounded-lg border bg-card p-3 text-center">
-                            {unit.imageUrl ? (
-                              <Image
-                                src={unit.imageUrl}
-                                alt=""
-                                width={40}
-                                height={40}
-                                className="mx-auto h-10 w-10 object-contain"
-                              />
-                            ) : (
-                              <Building2 className="mx-auto h-8 w-8 text-muted-foreground" />
-                            )}
-                            <div className={`mx-auto mt-2 h-1.5 w-10 rounded-full ${unit.color}`} />
-                            <p className="mt-2 text-xs font-semibold">{unit.name}</p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {unit.type === "bureau" ? "Biro" : "Departemen"} · {unit.memberCount} anggota
-                            </p>
-                            <div className="mt-3 flex items-center justify-center gap-2 border-t pt-3">
-                              <Avatar className="h-7 w-7">
-                                <AvatarImage src={head?.avatar} />
-                                <AvatarFallback className="text-[9px]">
-                                  {head ? getInitials(head.name) : "?"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <p className="max-w-28 truncate text-[11px] font-medium">
-                                {head?.name ?? "Belum ditentukan"}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
+              <OrganizationChart
+                members={organizationMembers}
+                units={organizationUnits}
+              />
             )}
           </CardContent>
         </Card>
