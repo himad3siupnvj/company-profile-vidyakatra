@@ -2,8 +2,7 @@ overrides:
   esbuild: 0.28.0
   postcss: 8.5.15
 allowBuilds:
+  '@firebase/util': true
   esbuild: true
+  protobufjs: true
   sharp: true
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
