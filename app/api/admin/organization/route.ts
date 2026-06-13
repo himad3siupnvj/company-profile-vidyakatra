@@ -6,6 +6,7 @@ import { requireApiPermission } from "@/lib/api-guard"
 import { writeAuditLog } from "@/lib/audit"
 import { getActivePeriodId } from "@/lib/active-period"
 import { revalidateProfileContent } from "@/lib/profile-cache"
+import { getPublicCoreTeamAssets } from "@/lib/core-team-assets"
 
 export const runtime = "nodejs"
 
@@ -119,6 +120,7 @@ export async function GET() {
   if (guard.response) return guard.response
 
   const db = getDb()
+  const coreTeamAssets = await getPublicCoreTeamAssets()
   const orgUnitRows = await db
     .select()
     .from(organizationalUnits)
@@ -176,6 +178,7 @@ export async function GET() {
     departments: unitSummaries,
     divisions: divisionRows.map(serializeDivision),
     members: memberRows.map(serializeMember),
+    coreTeamAssets,
   })
 }
 

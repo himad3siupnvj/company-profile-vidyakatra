@@ -7,9 +7,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { getProfileContent } from "@/lib/profile-content"
-import type { ProfileLeader } from "@/lib/profile-content-data"
 import { getPublicWorkUnits } from "@/lib/public-profile"
-import { coreTeams } from "@/lib/public-core-team"
+import { getPublicCoreTeams } from "@/lib/public-core-team"
+import { getPublicMembers } from "@/lib/public-directory"
+import type { ProfileLeader } from "@/lib/profile-content-data"
 import {
   Eye,
   Target,
@@ -22,10 +23,10 @@ type CabinetLeadPerson = {
   name: string
   position: string
   description: string
-  image: StaticImageData
+  image: string | StaticImageData
 }
 
-const leaderImages: Record<ProfileLeader["imageKey"], StaticImageData> = {
+const leaderFallbackImages: Record<ProfileLeader["imageKey"], StaticImageData> = {
   ketuaLead,
   wakilLead,
 }
@@ -106,9 +107,17 @@ const etymology = [
 
 export default async function ProfilPage() {
   const profileContent = await getProfileContent()
-  const workUnits = await getPublicWorkUnits()
+  const [workUnits, coreTeams, publicMembers] = await Promise.all([
+    getPublicWorkUnits(),
+    getPublicCoreTeams(),
+    getPublicMembers(),
+  ])
   const activeMissions = profileContent.missions.filter((mission) => mission.enabled)
   const activeLeaders = profileContent.leaders.filter((leader) => leader.enabled)
+  const leaderPhoto = (leader: ProfileLeader) =>
+    publicMembers.find(
+      (member) => member.name.toLowerCase().trim() === leader.name.toLowerCase().trim(),
+    )?.avatarUrl || leaderFallbackImages[leader.imageKey]
 
   return (
     <>
@@ -268,7 +277,7 @@ export default async function ProfilPage() {
                   name: leader.name,
                   position: leader.position,
                   description: leader.description,
-                  image: leaderImages[leader.imageKey],
+                  image: leaderPhoto(leader),
                 }}
                 reversed={index % 2 === 1}
               />

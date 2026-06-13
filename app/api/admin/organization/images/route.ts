@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData()
+  const requestedUnitId = String(formData.get("unitId") ?? "").trim()
   const files = formData
     .getAll("files")
     .filter((value): value is File => value instanceof File && value.size > 0)
@@ -99,7 +100,9 @@ export async function POST(request: NextRequest) {
   const unmatched: Array<{ fileName: string; reason: string }> = []
 
   for (const file of files) {
-    const unit = findMatchingUnit(file.name, units)
+    const unit = requestedUnitId
+      ? units.find((row) => row.id === requestedUnitId) ?? null
+      : findMatchingUnit(file.name, units)
     if (!unit) {
       unmatched.push({
         fileName: file.name,

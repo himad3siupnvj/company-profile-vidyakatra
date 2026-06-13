@@ -6,6 +6,7 @@ import {
   Building2,
   ClipboardList,
   Edit,
+  ImagePlus,
   MoreHorizontal,
   Network,
   Plus,
@@ -53,6 +54,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { OrganizationChart } from "@/components/admin/organization-chart"
 import { AdminPageSkeleton } from "@/components/admin/admin-page-skeleton"
+import { optimizeImageForUpload } from "@/lib/client-image-processing"
 
 interface Member {
   id: string
@@ -80,6 +82,16 @@ type WorkProgram = {
   description: string
   status: "Rutin" | "Berjalan" | "Rencana"
 }
+
+type CoreTeamKey = "sekretaris" | "bendahara" | "koordinator"
+
+type CoreTeamAssets = Record<CoreTeamKey, string>
+
+const coreTeamLabels: Array<{ key: CoreTeamKey; label: string }> = [
+  { key: "sekretaris", label: "Sekretaris" },
+  { key: "bendahara", label: "Bendahara" },
+  { key: "koordinator", label: "Koordinator" },
+]
 
 interface UnitForm {
   name: string
@@ -125,6 +137,7 @@ export default function OrganizationManagement() {
   const [successMessage, setSuccessMessage] = useState("")
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
+  const [isUploadingMemberImage, setIsUploadingMemberImage] = useState(false)
   const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false)
   const [editingUnit, setEditingUnit] = useState<OrganizationalUnit | null>(null)
   const [unitForm, setUnitForm] = useState<UnitForm>(emptyUnitForm)
@@ -135,7 +148,15 @@ export default function OrganizationManagement() {
   const [isSavingPrograms, setIsSavingPrograms] = useState(false)
   const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null)
   const [isUploadingUnitImages, setIsUploadingUnitImages] = useState(false)
+  const [uploadingUnitId, setUploadingUnitId] = useState<string | null>(null)
+  const [coreTeamAssets, setCoreTeamAssets] = useState<CoreTeamAssets>({
+    sekretaris: "/placeholder-logo.svg",
+    bendahara: "/placeholder-logo.svg",
+    koordinator: "/placeholder-logo.svg",
+  })
+  const [uploadingCoreTeam, setUploadingCoreTeam] = useState<CoreTeamKey | null>(null)
   const unitImagesInputRef = useRef<HTMLInputElement>(null)
+  const memberImageInputRef = useRef<HTMLInputElement>(null)
   const [newMember, setNewMember] = useState({
     name: "",
     position: "",
@@ -153,6 +174,7 @@ export default function OrganizationManagement() {
       const data = await response.json()
       setMembers(data.members ?? [])
       setUnits(data.organizationalUnits ?? data.departments ?? [])
+      setCoreTeamAssets((current) => data.coreTeamAssets ?? current)
     } catch {
       setErrorMessage("Data organisasi belum bisa dimuat. Coba refresh halaman.")
     } finally {
@@ -234,6 +256,83 @@ export default function OrganizationManagement() {
     }
   }
 
+  const handleSingleUnitImageUpload = async (
+    unit: OrganizationalUnit,
+    file: File | undefined,
+  ) => {
+    if (!file) return
+
+    setUploadingUnitId(unit.id)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const optimizedFile = await optimizeImageForUpload(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.86,
+      })
+      const formData = new FormData()
+      formData.append("unitId", unit.id)
+      formData.append("files", optimizedFile)
+
+      const response = await fetch("/api/admin/organization/images", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json()
+      if (!response.ok || !data.uploaded?.[0]) {
+        throw new Error(data.error || data.unmatched?.[0]?.reason || "Logo gagal diunggah.")
+      }
+
+      const imageUrl = data.uploaded[0].url as string
+      setUnits((current) =>
+        current.map((item) => (item.id === unit.id ? { ...item, imageUrl } : item)),
+      )
+      setSuccessMessage(`Logo ${unit.name} berhasil diperbarui.`)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Logo gagal diunggah.")
+    } finally {
+      setUploadingUnitId(null)
+    }
+  }
+
+  const handleCoreTeamImageUpload = async (
+    team: CoreTeamKey,
+    file: File | undefined,
+  ) => {
+    if (!file) return
+
+    setUploadingCoreTeam(team)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const optimizedFile = await optimizeImageForUpload(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.86,
+      })
+      const formData = new FormData()
+      formData.append("team", team)
+      formData.append("file", optimizedFile)
+
+      const response = await fetch("/api/admin/organization/core-team-image", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Logo gagal diunggah.")
+
+      setCoreTeamAssets(data.coreTeamAssets)
+      setSuccessMessage(`Logo ${coreTeamLabels.find((item) => item.key === team)?.label} berhasil diperbarui.`)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Logo gagal diunggah.")
+    } finally {
+      setUploadingCoreTeam(null)
+    }
+  }
+
   const openCreateMember = () => {
     setEditingMember(null)
     setNewMember({ name: "", position: "", department: "" })
@@ -287,6 +386,47 @@ export default function OrganizationManagement() {
       )
     } catch {
       setErrorMessage("Data anggota belum berhasil disimpan. Periksa kembali datanya.")
+    }
+  }
+
+  const handleMemberImageUpload = async (file: File | undefined) => {
+    if (!file || !editingMember) return
+
+    setIsUploadingMemberImage(true)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const optimizedFile = await optimizeImageForUpload(file, {
+        maxWidth: 900,
+        maxHeight: 1200,
+        quality: 0.82,
+      })
+      const formData = new FormData()
+      formData.append("memberId", editingMember.id)
+      formData.append("files", optimizedFile)
+
+      const response = await fetch("/api/admin/organization/member-images", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json()
+      if (!response.ok || !data.uploaded?.[0]) {
+        throw new Error(data.error || data.unmatched?.[0]?.reason || "Foto gagal diunggah.")
+      }
+
+      const avatar = data.uploaded[0].url as string
+      const updatedMember = { ...editingMember, avatar }
+      setEditingMember(updatedMember)
+      setMembers((current) =>
+        current.map((member) => (member.id === updatedMember.id ? updatedMember : member)),
+      )
+      setSuccessMessage(`Foto ${editingMember.name} berhasil diperbarui.`)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Foto gagal diunggah.")
+    } finally {
+      setIsUploadingMemberImage(false)
+      if (memberImageInputRef.current) memberImageInputRef.current.value = ""
     }
   }
 
@@ -529,6 +669,44 @@ export default function OrganizationManagement() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
+                {editingMember && (
+                  <div className="flex items-center gap-4 rounded-lg border p-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={editingMember.avatar} />
+                      <AvatarFallback>{getInitials(editingMember.name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">Foto profil publik</p>
+                      <p className="text-xs text-muted-foreground">
+                        Dipakai untuk Ketua, Wakil, Sekben, Koordinator, dan struktur organisasi.
+                      </p>
+                      <input
+                        ref={memberImageInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(event) =>
+                          void handleMemberImageUpload(event.target.files?.[0])
+                        }
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 gap-2"
+                        disabled={isUploadingMemberImage}
+                        onClick={() => memberImageInputRef.current?.click()}
+                      >
+                        <ImagePlus className="h-4 w-4" />
+                        {isUploadingMemberImage
+                          ? "Mengunggah..."
+                          : editingMember.avatar
+                            ? "Ganti Foto"
+                            : "Unggah Foto"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="name">Nama Lengkap</Label>
                   <Input
@@ -847,6 +1025,20 @@ export default function OrganizationManagement() {
                         {unit.workPrograms.length}
                       </Badge>
                     </Button>
+                    <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent">
+                      <ImagePlus className="h-4 w-4" />
+                      {uploadingUnitId === unit.id ? "Mengunggah..." : "Ganti Logo"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        disabled={uploadingUnitId !== null}
+                        onChange={(event) => {
+                          void handleSingleUnitImageUpload(unit, event.target.files?.[0])
+                          event.currentTarget.value = ""
+                        }}
+                      />
+                    </label>
                   </CardContent>
                 </Card>
               ))}
@@ -867,7 +1059,48 @@ export default function OrganizationManagement() {
         </TabsContent>
 
         <TabsContent value="structure">
-          <Card>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Logo Pengurus Inti</CardTitle>
+                <CardDescription>
+                  Logo ini tampil pada kartu Sekretaris, Bendahara, dan Koordinator di profil publik.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-3">
+                {coreTeamLabels.map((team) => (
+                  <div key={team.key} className="flex items-center gap-4 rounded-lg border p-4">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-background p-2">
+                      <Image
+                        src={coreTeamAssets[team.key]}
+                        alt={`Logo ${team.label}`}
+                        width={56}
+                        height={56}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">{team.label}</p>
+                      <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-accent">
+                        <ImagePlus className="h-4 w-4" />
+                        {uploadingCoreTeam === team.key ? "Mengunggah..." : "Ganti Logo"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          disabled={uploadingCoreTeam !== null}
+                          onChange={(event) => {
+                            void handleCoreTeamImageUpload(team.key, event.target.files?.[0])
+                            event.currentTarget.value = ""
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <Card>
             <CardHeader>
               <CardTitle>Bagan Organisasi</CardTitle>
               <CardDescription>
@@ -887,7 +1120,8 @@ export default function OrganizationManagement() {
                 <OrganizationChart members={members} units={units} />
               )}
             </CardContent>
-          </Card>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

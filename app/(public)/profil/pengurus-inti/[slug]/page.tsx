@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { coreTeams, getCoreTeam } from "@/lib/public-core-team"
+import { getPublicCoreTeam, getPublicCoreTeams } from "@/lib/public-core-team"
 
 type CoreTeamDetailPageProps = {
   params: Promise<{ slug: string }>
@@ -15,12 +15,13 @@ type CoreTeamDetailPageProps = {
 export const revalidate = 3600
 
 export async function generateStaticParams() {
-  return coreTeams.map((team) => ({ slug: team.slug }))
+  const teams = await getPublicCoreTeams()
+  return teams.map((team) => ({ slug: team.slug }))
 }
 
 export async function generateMetadata({ params }: CoreTeamDetailPageProps): Promise<Metadata> {
   const { slug } = await params
-  const team = getCoreTeam(slug)
+  const team = await getPublicCoreTeam(slug)
 
   return team
     ? {
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: CoreTeamDetailPageProps): Pro
 
 export default async function CoreTeamDetailPage({ params }: CoreTeamDetailPageProps) {
   const { slug } = await params
-  const team = getCoreTeam(slug)
+  const team = await getPublicCoreTeam(slug)
 
   if (!team) notFound()
 
